@@ -1,0 +1,7 @@
+# ignore vscode specific folders
+.vscode/
+commands/
+
+**/bin/
+**/bin-int/
+*.h.gch

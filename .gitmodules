@@ -1,0 +1,9 @@
+[submodule "oilengine/vendor/imgui"]
+	path = oilengine/vendor/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "oilengine/vendor/spdlog"]
+	path = oilengine/vendor/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "oilengine/vendor/glfw"]
+	path = oilengine/vendor/glfw
+	url = https://github.com/glfw/glfw
