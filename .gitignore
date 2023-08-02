@@ -1,7 +1,9 @@
-# ignore vscode specific folders
+# Build specific
 .vscode/
 commands/
 
+#binaries
 **/bin/
 **/bin-int/
+
 *.h.gch
