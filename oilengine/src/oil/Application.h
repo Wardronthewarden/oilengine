@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core.h"
+#include "events/Event.h"
 
 namespace oil {
     class OIL_API Application{

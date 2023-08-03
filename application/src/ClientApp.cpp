@@ -11,5 +11,6 @@ public:
 
 
 oil::Application* oil::CreateApplication(){
+    OIL_INFO("Initialized client app!");
     return new Barrel();
 }
