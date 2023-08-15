@@ -1,3 +1,4 @@
+#include "pch/oilpch.h"
 #include "Application.h"
 
 #include "oil/events/ApplicationEvent.h"
@@ -6,7 +7,7 @@
 namespace oil{
 oil::Application::Application()
 {
-
+    m_Window = std::unique_ptr<Window>(Window::Create());
 }
 
 Application::~Application()
@@ -14,11 +15,9 @@ Application::~Application()
 }
 void Application::Run()
 {
-    WindowResizeEvent e(1280, 720);
-    OIL_TRACE(e);
 
-    while (true){
-        
+    while (running){
+        m_Window->OnUpdate();
     };
 }
 }
