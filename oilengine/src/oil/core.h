@@ -1,13 +1,9 @@
 #pragma once
 
 #ifdef OIL_PLATFORM_WINDOWS
-    #ifdef OIL_BUILD_DLL
-        #define OIL_API __declspec(dllexport)
-    #else 
-        #define OIL_API __declspec(dllimport)
-     #endif
+    #include "oilengine_export.h"
 #else
-    #error Only windows suppoted currently
+    #error Only windows supported currently!
 #endif
 
 #define BIT(x) (1<<x)
