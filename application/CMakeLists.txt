@@ -13,6 +13,7 @@ include_directories(${ENGINE_DIR}/include
                     ${ENGINE_DIR}/build 
                     ${ENGINE_DIR}/src
                     ${ENGINE_DIR}/vendor/spdlog/include
+                    ${ENGINE_DIR}/vendor/glfw/include
 
 )
 

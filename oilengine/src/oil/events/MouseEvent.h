@@ -49,7 +49,7 @@ namespace oil{
 
     };
 
-    class OIL_API MouseMuttonEvent : public Event{
+    class OIL_API MouseButtonEvent : public Event{
     public:
         inline int GetMouseButton() const { return m_Button; }
 
@@ -61,12 +61,12 @@ namespace oil{
 
         int m_Button;  
 
-    }
+    };
 
     class OIL_API MouseButtonPressedEvent : public MouseButtonEvent{
         public:
         MouseButtonPressedEvent(int button)
-            : MouseButtonEvent(buton) {}
+            : MouseButtonEvent(button) {}
 
 
         std::string ToString() const override{
@@ -91,5 +91,5 @@ namespace oil{
         }
 
         EVENT_CLASS_TYPE(MouseButtonReleased)
-    }
+    };
 }

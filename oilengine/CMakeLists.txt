@@ -6,6 +6,9 @@ configure_file(OilengineConfig.h.in OilengineConfig.h)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+add_subdirectory(vendor/glfw)
+
+
 include_directories(${PROJECT_BINARY_DIR})
 
 set(INCLUDE_FILE include/oil.h)
@@ -15,7 +18,11 @@ add_library(oilengine SHARED
                 ${INCLUDE_FILE}
                 src/oil/Application.cpp
                 src/oil/Log.cpp
+                src/Platform/Windows/WindowsWindow.cpp
 )
+
+              
+
 
 set(oilengine ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 include(GenerateExportHeader)
@@ -31,10 +38,19 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_compile_definitions(oilengine PRIVATE -DOIL_PLATFORM_WINDOWS -DOIL_BUILD_DLL)
 
+target_precompile_headers(oilengine PUBLIC src/pch/oilpch.h)
+
 target_include_directories(oilengine PRIVATE
         src
         vendor/spdlog/include
+        vendor/glfw/include
 )
+
+target_link_directories(${PROJECT_NAME} 
+                                PRIVATE vendor/glfw/build/src
+) 
+
+target_link_libraries(${PROJECT_NAME} glfw3)
 
 add_custom_command(TARGET oilengine POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 

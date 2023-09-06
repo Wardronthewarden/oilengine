@@ -18,16 +18,16 @@ namespace oil{
         int m_KeyCode;
     };
 
-    class OIL_API KeyPressedEvent{
+    class OIL_API KeyPressedEvent : public KeyEvent{
     public:
         KeyPressedEvent(int keycode, int repeatCount)
             : KeyEvent(keycode), m_RepeatCount(repeatCount) {}
 
-        inline int GetRepeatCount const {return m_RepeatCount; }
+        inline int GetRepeatCount() const {return m_RepeatCount; }
 
         std::string ToString() const override{
             std::stringstream ss;
-            ss << "KeyPressedEvent: " << m_Keycode << " (" << m_RepeatCount << " repeats)";
+            ss << "KeyPressedEvent: " << m_KeyCode << " (" << m_RepeatCount << " repeats)";
             return ss.str();
 
         }
@@ -48,8 +48,9 @@ namespace oil{
         std::string ToString() const override{
             std::stringstream ss;
             ss << "KeyReleased event: " << m_KeyCode;
+            return ss.str();
         }
 
         EVENT_CLASS_TYPE(KeyReleased)
-    }
+    };
 }
