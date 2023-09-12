@@ -20,6 +20,7 @@ class Barrel : public oil::Application{
 public:
     Barrel() {
         PushLayer(new ExampleLayer());
+        PushOverlay(new oil::ImGuiLayer());
     };
     ~Barrel() {};
 

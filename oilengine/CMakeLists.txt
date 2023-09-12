@@ -8,6 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(vendor/glfw)
 add_subdirectory(vendor/GLAD)
+add_subdirectory(vendor/imgui)
 
 
 include_directories(${PROJECT_BINARY_DIR})
@@ -22,6 +23,8 @@ add_library(oilengine SHARED
                 src/oil/Layer.cpp
                 src/oil/LayerStack.cpp
                 src/Platform/Windows/WindowsWindow.cpp
+                src/oil/imGui/imGuiLayer.cpp
+                src/Platform/OpenGL/imGuiOpenGLRenderer.cpp
 )
 
               
@@ -49,6 +52,7 @@ target_include_directories(oilengine PRIVATE
         vendor/spdlog/include
         vendor/glfw/include
         vendor/GLAD/include
+        vendor/imgui
 )
 
 target_link_directories(${PROJECT_NAME} 
@@ -56,7 +60,7 @@ target_link_directories(${PROJECT_NAME}
                                 PRIVATE vendor/
 ) 
 
-target_link_libraries(${PROJECT_NAME} glfw3 glad opengl32)
+target_link_libraries(${PROJECT_NAME} glfw3 glad imgui opengl32)
 
 add_custom_command(TARGET oilengine POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 

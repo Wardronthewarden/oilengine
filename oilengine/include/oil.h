@@ -8,6 +8,7 @@
 #include "oil/Application.h"
 #include "oil/Layer.h"
 #include "oil/Log.h"
+#include "oil/imGui/imGuiLayer.h"
 
 //-------Entry point------------
 
