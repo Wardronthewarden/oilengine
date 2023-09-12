@@ -6,6 +6,7 @@
 #include "oilengine_export.h"
 
 #include "oil/Application.h"
+#include "oil/Layer.h"
 #include "oil/Log.h"
 
 //-------Entry point------------

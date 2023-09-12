@@ -18,6 +18,8 @@ add_library(oilengine SHARED
                 ${INCLUDE_FILE}
                 src/oil/Application.cpp
                 src/oil/Log.cpp
+                src/oil/Layer.cpp
+                src/oil/LayerStack.cpp
                 src/Platform/Windows/WindowsWindow.cpp
 )
 

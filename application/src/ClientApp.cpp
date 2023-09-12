@@ -2,9 +2,25 @@
 
 #include "oilengine_export.h"
 
+class ExampleLayer : public oil::Layer{
+public:
+    ExampleLayer()
+        :Layer("Example"){}
+
+    void OnUpdate() override{
+        OIL_INFO("ExampleLayer: Update");
+    }
+
+    void OnEvent(oil::Event& event) override{
+        OIL_TRACE("{0}", event);
+    }
+};
+
 class Barrel : public oil::Application{
 public:
-    Barrel() {};
+    Barrel() {
+        PushLayer(new ExampleLayer());
+    };
     ~Barrel() {};
 
 
