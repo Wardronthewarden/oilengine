@@ -3,6 +3,8 @@
 
 #include "oil/Log.h"
 
+#include <GLAD/glad.h>
+
 namespace oil{
 
 #define BIND_EVENT_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
@@ -21,6 +23,8 @@ void Application::Run()
     while (m_Running){
 
         m_Window->OnUpdate();
+        glClearColor(1,0,1,1);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         for (Layer* layer : m_LayerStack)
             layer->OnUpdate();

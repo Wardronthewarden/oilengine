@@ -7,6 +7,7 @@ configure_file(OilengineConfig.h.in OilengineConfig.h)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(vendor/glfw)
+add_subdirectory(vendor/GLAD)
 
 
 include_directories(${PROJECT_BINARY_DIR})
@@ -38,7 +39,8 @@ generate_export_header(oilengine
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 
-target_compile_definitions(oilengine PRIVATE -DOIL_PLATFORM_WINDOWS -DOIL_BUILD_DLL)
+target_compile_definitions(oilengine PRIVATE -DOIL_PLATFORM_WINDOWS -DOIL_BUILD_DLL -DGLFW_INCLUDE_NONE)
+
 
 target_precompile_headers(oilengine PUBLIC src/pch/oilpch.h)
 
@@ -46,13 +48,15 @@ target_include_directories(oilengine PRIVATE
         src
         vendor/spdlog/include
         vendor/glfw/include
+        vendor/GLAD/include
 )
 
 target_link_directories(${PROJECT_NAME} 
                                 PRIVATE vendor/glfw/build/src
+                                PRIVATE vendor/
 ) 
 
-target_link_libraries(${PROJECT_NAME} glfw3)
+target_link_libraries(${PROJECT_NAME} glfw3 glad opengl32)
 
 add_custom_command(TARGET oilengine POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 
