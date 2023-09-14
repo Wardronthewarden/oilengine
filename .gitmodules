@@ -7,3 +7,6 @@
 [submodule "oilengine/vendor/glfw"]
 	path = oilengine/vendor/glfw
 	url = https://github.com/glfw/glfw
+[submodule "oilengine/vendor/glm"]
+	path = oilengine/vendor/glm
+	url = https://github.com/g-truc/glm
