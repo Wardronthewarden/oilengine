@@ -22,13 +22,14 @@ add_library(oilengine SHARED
                 src/oil/Log.cpp
                 src/oil/Layer.cpp
                 src/oil/LayerStack.cpp
-                src/Platform/Windows/WindowsWindow.cpp
+                src/oil/imGui/imGuiBuild.cpp
                 src/oil/imGui/imGuiLayer.cpp
-                src/Platform/OpenGL/imGuiOpenGLRenderer.cpp
+                src/Platform/Windows/WindowsWindow.cpp
+                src/Platform/Windows/WindowsInput.cpp
 )
 
               
-
+set_property(TARGET oilengine PROPERTY CXX_STANDARD 23)
 
 set(oilengine ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 include(GenerateExportHeader)
@@ -53,6 +54,7 @@ target_include_directories(oilengine PRIVATE
         vendor/glfw/include
         vendor/GLAD/include
         vendor/imgui
+        vendor/glm
 )
 
 target_link_directories(${PROJECT_NAME} 

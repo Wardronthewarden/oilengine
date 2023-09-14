@@ -7,6 +7,7 @@
 #include "events/Event.h"
 #include "oil/events/ApplicationEvent.h"
 #include "oil/LayerStack.h"
+#include "oil/imGui/imGuiLayer.h"
 
 namespace oil {
     class OIL_API Application{
@@ -27,6 +28,7 @@ namespace oil {
         bool OnWindowClose(WindowCloseEvent& e);
 
         std::unique_ptr<Window> m_Window;
+        ImGuiLayer* m_ImGuiLayer;
         bool m_Running = true;
         LayerStack m_LayerStack;
 
