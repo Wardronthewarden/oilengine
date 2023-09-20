@@ -5,7 +5,8 @@
 #include "oil/events/MouseEvent.h"
 #include "oil/events/KeyEvent.h"
 
-#include "GLAD/glad.h"
+#include "Platform/OpenGL/OpenGLContext.h"
+
 
 
 namespace oil{
@@ -33,6 +34,7 @@ namespace oil{
         m_Data.Width = props.Width;
         m_Data.Height = props.Height;
 
+
         OIL_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
         if (!s_GLFWInitialized){
@@ -45,9 +47,11 @@ namespace oil{
         }
 
         m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-        glfwMakeContextCurrent(m_Window);
-        int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-        OIL_CORE_ASSERT(status, "Failed to initialize GLAD");
+
+        m_Context = new OpenGLContext(m_Window);
+        m_Context->Init();
+        //^^
+        
         glfwSetWindowUserPointer(m_Window, &m_Data);
         SetVSync(true);
 
@@ -134,7 +138,7 @@ namespace oil{
 
     void WindowsWindow::OnUpdate(){
         glfwPollEvents();
-        glfwSwapBuffers(m_Window);
+        m_Context->SwapBuffers();
     }
 
     void WindowsWindow::SetVSync(bool enabled){

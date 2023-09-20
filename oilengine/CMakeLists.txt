@@ -26,6 +26,12 @@ add_library(oilengine SHARED
                 src/oil/imGui/imGuiLayer.cpp
                 src/Platform/Windows/WindowsWindow.cpp
                 src/Platform/Windows/WindowsInput.cpp
+                src/Platform/OpenGL/OpenGLContext.cpp
+                src/Platform/OpenGL/OpenGLBuffer.cpp
+                src/oil/Renderer/Renderer.cpp
+                src/oil/Renderer/Buffer.cpp
+                src/oil/Renderer/Shader.cpp
+
 )
 
               
@@ -48,7 +54,7 @@ target_compile_definitions(oilengine PRIVATE -DOIL_PLATFORM_WINDOWS -DOIL_BUILD_
 
 target_precompile_headers(oilengine PUBLIC src/pch/oilpch.h)
 
-target_include_directories(oilengine PRIVATE
+target_include_directories(oilengine PUBLIC
         src
         vendor/spdlog/include
         vendor/glfw/include
@@ -58,8 +64,8 @@ target_include_directories(oilengine PRIVATE
 )
 
 target_link_directories(${PROJECT_NAME} 
-                                PRIVATE vendor/glfw/build/src
-                                PRIVATE vendor/
+                                PUBLIC vendor/glfw/build/src
+                                PUBLIC vendor/
 ) 
 
 target_link_libraries(${PROJECT_NAME} glfw3 glad imgui opengl32)

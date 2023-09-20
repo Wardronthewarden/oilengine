@@ -1,8 +1,10 @@
 #pragma once
 
 #include "oil/Window.h"
+#include "oil/Renderer/GraphicsContext.h"
 
 #include <GLFW/glfw3.h>
+
 
 namespace oil{
     class WindowsWindow : public Window{
@@ -26,6 +28,7 @@ namespace oil{
         virtual void Shutdown();
     private:
         GLFWwindow* m_Window;
+        GraphicsContext* m_Context;
 
         struct WindowData{
             std::string Title;
