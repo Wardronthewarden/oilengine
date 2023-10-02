@@ -13,6 +13,7 @@
 #include "oil/Renderer/Buffer.h"
 #include "oil/Renderer/VertexArray.h"
 
+#include "oil/Renderer/OrthographicCamera.h"
 
 
 namespace oil {
@@ -37,14 +38,6 @@ namespace oil {
         ImGuiLayer* m_ImGuiLayer;
         bool m_Running = true;
         LayerStack m_LayerStack;
-
-        std::shared_ptr<Shader> m_Shader;
-        std::shared_ptr<VertexArray> m_VertexArray;
-        
-
-        std::shared_ptr<VertexArray> m_SquareVA;
-        std::shared_ptr<Shader> m_Shader2;
-
 
     private:
         static Application* s_Instance;

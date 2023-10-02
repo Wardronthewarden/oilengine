@@ -3,6 +3,8 @@
 
 #include <GLAD/glad.h>
 
+#include <glm/gtc/type_ptr.hpp>
+
 oil::Shader::Shader(const std::string &vertexSrc, const std::string &fragmentSrc)
 {
 // Create an empty vertex shader handle
@@ -129,4 +131,10 @@ void oil::Shader::Bind() const
 void oil::Shader::Unbind() const
 {
     glUseProgram(0);
+}
+
+void oil::Shader::UploadUniformMat4(const std::string& name, const glm::mat4 &matrix)
+{
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 }

@@ -16,7 +16,7 @@ include_directories(${PROJECT_BINARY_DIR})
 set(INCLUDE_FILE include/oil.h)
 set(${INCLUDE_FILE} HEADER_FILE_ONLY ON)
 
-add_library(oilengine SHARED 
+add_library(oilengine STATIC 
                 ${INCLUDE_FILE}
                 src/oil/Application.cpp
                 src/oil/Log.cpp
@@ -29,10 +29,14 @@ add_library(oilengine SHARED
                 src/Platform/OpenGL/OpenGLContext.cpp
                 src/Platform/OpenGL/OpenGLBuffer.cpp
                 src/Platform/OpenGL/OpenGLVertexArray.cpp
+                src/Platform/OpenGL/OpenGLRenderAPI.cpp
                 src/oil/Renderer/Renderer.cpp
                 src/oil/Renderer/Buffer.cpp
                 src/oil/Renderer/Shader.cpp
                 src/oil/Renderer/VertexArray.cpp
+                src/oil/Renderer/RenderAPI.cpp
+                src/oil/Renderer/RenderCommand.cpp
+                src/oil/Renderer/OrthographicCamera.cpp
 
 )
 
@@ -70,7 +74,7 @@ target_link_directories(${PROJECT_NAME}
                                 PUBLIC vendor/
 ) 
 
-target_link_libraries(${PROJECT_NAME} glfw3 glad imgui opengl32)
+target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 glad imgui opengl32)
 
 add_custom_command(TARGET oilengine POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 

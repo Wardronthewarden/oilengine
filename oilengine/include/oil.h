@@ -16,6 +16,17 @@
 
 #include "oil/imGui/imGuiLayer.h"
 
+// ------Rendering-------------
+
+#include "oil/Renderer/Renderer.h"
+#include "oil/Renderer/RenderCommand.h"
+
+#include "oil/Renderer/Buffer.h"
+#include "oil/Renderer/VertexArray.h"
+#include "oil/Renderer/Shader.h"
+
+#include "oil/Renderer/OrthographicCamera.h"
+
 //-------Entry point------------
 
 #include "oil/EntryPoint.h"
