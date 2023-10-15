@@ -2,6 +2,7 @@
 
 #include "core.h"
 #include "events/Event.h"
+#include "oil/Core/Timestep.h"
 
 namespace oil {
 
@@ -12,7 +13,7 @@ namespace oil {
 
         virtual void OnAttach() {}
         virtual void OnDetach() {}
-        virtual void OnUpdate() {}
+        virtual void OnUpdate(Timestep dt) {}
         virtual void OnImGuiRender() {}
         virtual void OnEvent(Event& event) {}
 

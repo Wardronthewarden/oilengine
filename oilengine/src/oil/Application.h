@@ -15,6 +15,9 @@
 
 #include "oil/Renderer/OrthographicCamera.h"
 
+#include "oil/Core/Timestep.h"
+
+
 
 namespace oil {
     class OIL_API Application{
@@ -39,6 +42,7 @@ namespace oil {
         bool m_Running = true;
         LayerStack m_LayerStack;
 
+        float m_LastFrameTime = 0.0f;
     private:
         static Application* s_Instance;
     };

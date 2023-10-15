@@ -9,6 +9,10 @@
 #include "oil/Layer.h"
 #include "oil/Log.h"
 
+#include "oil/Core/Timestep.h"
+
+#include "imgui.h"
+
 // INPUT
 #include "oil/Input.h"
 #include "oil/KeyCodes.h"
@@ -23,6 +27,7 @@
 
 #include "oil/Renderer/Buffer.h"
 #include "oil/Renderer/VertexArray.h"
+#include "oil/Renderer/Texture.h"
 #include "oil/Renderer/Shader.h"
 
 #include "oil/Renderer/OrthographicCamera.h"

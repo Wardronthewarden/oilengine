@@ -44,7 +44,7 @@ void OpenGLVertexArray::Unbind() const
     glBindVertexArray(0);
 }
 
-void OpenGLVertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer> &VertexBuffer)
+void OpenGLVertexArray::AddVertexBuffer(const oil::Ref<VertexBuffer> &VertexBuffer)
 {
     glBindVertexArray(m_RendererID);
     VertexBuffer->Bind();
@@ -67,7 +67,7 @@ void OpenGLVertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer> &Ver
     m_VertexBuffers.push_back(VertexBuffer);
 }
 
-void OpenGLVertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer> &IndexBuffer)
+void OpenGLVertexArray::SetIndexBuffer(const oil::Ref<IndexBuffer> &IndexBuffer)
 {
     glBindVertexArray(m_RendererID);
     IndexBuffer->Bind();

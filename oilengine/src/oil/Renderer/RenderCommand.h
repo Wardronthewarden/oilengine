@@ -6,6 +6,10 @@ namespace oil{
 
     class RenderCommand{
     public:
+        inline static void Init(){
+            s_RenderAPI->Init();
+        }
+
         inline static void SetClearColor(const glm::vec4& color){
             s_RenderAPI->SetClearColor(color);
         };
@@ -13,7 +17,7 @@ namespace oil{
             s_RenderAPI->Clear();
         };
         
-        inline static void DrawIndexed(const std::shared_ptr<VertexArray>& vertexArray){
+        inline static void DrawIndexed(const oil::Ref<VertexArray>& vertexArray){
             s_RenderAPI->DrawIndexed(vertexArray);
         }
 

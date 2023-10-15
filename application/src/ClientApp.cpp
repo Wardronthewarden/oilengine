@@ -2,11 +2,16 @@
 
 #include "oilengine_export.h"
 
+#include "Platform/OpenGL/OpenGLShader.h"
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 class ExampleLayer : public oil::Layer{
 public:
     ExampleLayer()
-    : Layer("Example"), m_Camera(-1.6f, 1.6f, -0.9f, 0.9f) {
+    : Layer("Example"), m_Camera(-1.6f, 1.6f, -0.9f, 0.9f), m_CameraPosition(0.0f), m_SquarePosition(0.0f) {
             m_VertexArray.reset(oil::VertexArray::Create());
 
     float vertices[3 * 7] = {
@@ -15,7 +20,7 @@ public:
         0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f
     };
 
-    std::shared_ptr<oil::VertexBuffer> vertexBuffer;
+    oil::Ref<oil::VertexBuffer> vertexBuffer;
     vertexBuffer.reset(oil::VertexBuffer::Create(vertices, sizeof(vertices)));
     
         oil::BufferLayout layout = {
@@ -29,29 +34,30 @@ public:
 
     
     uint32_t indices[3] = {0,1,2};
-    std::shared_ptr<oil::IndexBuffer> indexBuffer;
+    oil::Ref<oil::IndexBuffer> indexBuffer;
     indexBuffer.reset(oil::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
 
     m_VertexArray->SetIndexBuffer(indexBuffer);
 
     m_SquareVA.reset(oil::VertexArray::Create());
 
-    float squareVertices[3 * 4] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f, 
-        0.5f, 0.5f, 0.0f,
-        -0.5f, 0.5f, 0.0f
+    float squareVertices[5 * 4] = {
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
+        -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
     };    
 
-    std::shared_ptr<oil::VertexBuffer> squareVB; 
+    oil::Ref<oil::VertexBuffer> squareVB; 
     squareVB.reset(oil::VertexBuffer::Create(squareVertices, sizeof(squareVertices)));
     squareVB->SetLayout({
-            {oil::ShaderDataType::Float3, "a_Position"}
+            {oil::ShaderDataType::Float3, "a_Position"},
+            {oil::ShaderDataType::Float2, "a_TexCoord"}
 });
     m_SquareVA->AddVertexBuffer(squareVB);
 
     uint32_t squareIndices[6] = {0,1,2, 2,3,0};
-    std::shared_ptr<oil::IndexBuffer> squareIB;
+    oil::Ref<oil::IndexBuffer> squareIB;
     squareIB.reset(oil::IndexBuffer::Create(squareIndices, sizeof(squareIndices)/sizeof(uint32_t)));
     m_SquareVA->SetIndexBuffer(squareIB);
 
@@ -62,6 +68,7 @@ public:
         layout(location = 1) in vec4 a_Color;    
 
         uniform mat4 u_VPMat;
+        uniform mat4 u_Transform;
 
         out vec3 v_Position;
         out vec4 v_Color;
@@ -69,10 +76,11 @@ public:
         void main(){
             v_Position = a_Position;
             v_Color = a_Color;
-            gl_Position = u_VPMat * vec4(a_Position, 1.0f);
+            gl_Position = u_VPMat * u_Transform * vec4(a_Position, 1.0f);
         }
     )";
 
+    
     std::string fragmentSrc = R"(
         #version 330 core
 
@@ -85,7 +93,9 @@ public:
         }
     )";
 
-    m_Shader.reset(new oil::Shader(vertexSrc, fragmentSrc));
+    
+    m_Shader = oil::Shader::Create("shader", vertexSrc, fragmentSrc);
+
 
     std::string vertexSrc2 = R"(
         #version 330 core
@@ -93,12 +103,14 @@ public:
         layout(location = 0) in vec3 a_Position;   
 
         uniform mat4 u_VPMat;
+        uniform mat4 u_Transform;
+
 
         out vec3 v_Position;
 
         void main(){
             v_Position = a_Position;
-            gl_Position = u_VPMat * vec4(a_Position, 1.0f);
+            gl_Position = u_VPMat * u_Transform * vec4(a_Position, 1.0f);
         }
     )";
 
@@ -108,52 +120,113 @@ public:
         layout(location = 0) out vec4 o_Color;    
         in vec3 v_Position;
 
+        uniform vec3 u_Color;
+
         void main(){
-            o_Color = vec4(0.2, 0.3, 0.8, 1.0);
+            o_Color = vec4(u_Color, 1.0f);
         }
     )";
 
-    m_Shader2.reset(new oil::Shader(vertexSrc2, fragmentSrc2));
+    m_FlatColorShader = oil::Shader::Create("FlatShader", vertexSrc2, fragmentSrc2);
 
+    auto textureShader = m_ShaderLibrary.Load("C:\\dev\\c++\\oilengine\\application\\Assets\\Shaders\\Texture.glsl");
+
+    m_Texture = oil::Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Textures\\Checkerboard.png");
+    m_ChernoLogoTex = oil::Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Textures\\ChernoLogo.png");
+
+    std::dynamic_pointer_cast<oil::OpenGLShader>(textureShader)->Bind();
+    std::dynamic_pointer_cast<oil::OpenGLShader>(textureShader)->UploadUniformInt("u_Texture", 0);
+
+}
+
+    void OnUpdate(oil::Timestep dt) override{
+
+        if (oil::Input::IsKeyPressed(OIL_KEY_A)){
+            m_CameraPosition.x -= m_CameraSpeed * dt;
+        }
+        if (oil::Input::IsKeyPressed(OIL_KEY_D)){
+            m_CameraPosition.x += m_CameraSpeed * dt;
+        }
+        if (oil::Input::IsKeyPressed(OIL_KEY_S)){
+            m_CameraPosition.y -= m_CameraSpeed * dt;
+        }
+        if (oil::Input::IsKeyPressed(OIL_KEY_W)){
+            m_CameraPosition.y += m_CameraSpeed * dt;
         }
 
-    void OnUpdate() override{
         oil::RenderCommand::SetClearColor({0.1f,0.1f,0.1f,1});
         oil::RenderCommand::Clear();
 
         //Full implementation
         //Renderer::BeginScene(camera, lights, environment);
-        m_Camera.SetPosition({0.5f, 0.5f, 0.0f});
-        m_Camera.SetRotation(45.0f);
+        m_Camera.SetPosition(m_CameraPosition);
+        m_Camera.SetRotation(0);
 
         //Temporary impl.
         oil::Renderer::BeginScene(m_Camera);
-        m_Shader2->Bind();
-        oil::Renderer::Submit(m_Shader2, m_SquareVA);
-        m_Shader->Bind();
-        oil::Renderer::Submit(m_Shader, m_VertexArray);
 
+        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+
+        glm::vec4 redColor(0.8f, 0.2f, 0.3f, 1.0f);
+        glm::vec4 blueColor(0.2f, 0.3f, 0.8f, 1.0f);
+
+        std::dynamic_pointer_cast<oil::OpenGLShader>(m_FlatColorShader)->Bind();
+        std::dynamic_pointer_cast<oil::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);
+
+        for (int y = 0; y < 20; y++){
+            for (int x = 0; x < 20; x++){
+                glm::vec3 pos(x*0.11f, y*0.11f, 0.0f);
+                glm::mat4 transform = glm::translate(glm::mat4(1.0f), pos) * scale;
+                oil::Renderer::Submit(m_FlatColorShader, m_SquareVA, transform);
+            }
+        }
+
+        auto textureShader = m_ShaderLibrary.Get("Texture");
+        m_Texture->Bind();
+        oil::Renderer::Submit(textureShader, m_SquareVA, glm::scale(glm::mat4(1.0f), glm::vec3(1.5f)));
+
+        m_ChernoLogoTex->Bind();
+        oil::Renderer::Submit(textureShader, m_SquareVA, glm::scale(glm::mat4(1.0f), glm::vec3(1.5f)));
+       
         oil::Renderer::EndScene();
 
     }
 
     virtual void OnImGuiRender() override{
+        ImGui::Begin("Settings");
+        ImGui::ColorEdit3("Square Color", glm::value_ptr(m_SquareColor));
+        ImGui::End();
     }
 
     void OnEvent(oil::Event& event) override{
-       // OIL_TRACE("{0}", event);
+        oil::EventDispatcher dispatcher(event);
+        dispatcher.Dispatch<oil::KeyPressedEvent>(OIL_BIND_EVENT_FN(ExampleLayer::OnKeyPressedEvent));
+    }
+
+    bool OnKeyPressedEvent(oil::KeyPressedEvent& event){
+
+        return false;
     }
 
     private:
-        
-        std::shared_ptr<oil::Shader> m_Shader;
-        std::shared_ptr<oil::VertexArray> m_VertexArray;
+        oil::ShaderLibrary m_ShaderLibrary;
+        oil::Ref<oil::Shader> m_Shader;
+        oil::Ref<oil::VertexArray> m_VertexArray;
         
 
-        std::shared_ptr<oil::VertexArray> m_SquareVA;
-        std::shared_ptr<oil::Shader> m_Shader2;
+        oil::Ref<oil::VertexArray> m_SquareVA;
+        oil::Ref<oil::Shader> m_FlatColorShader;
+
+        oil::Ref<oil::Texture2D> m_Texture, m_ChernoLogoTex;
 
         oil::OrthographicCamera m_Camera;
+
+        glm::vec3 m_CameraPosition;
+        float m_CameraSpeed = 2.0f;
+
+        glm::vec3 m_SquarePosition;
+
+        glm::vec3 m_SquareColor = {0.2f, 0.3f, 0.7f};
 };
 
 class Barrel : public oil::Application{
