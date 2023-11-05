@@ -7,6 +7,7 @@ namespace oil{
 class OrthographicCamera{
     public:
         OrthographicCamera(float left, float right, float bottom, float top);
+        void SetProjection(float left, float right, float bottom, float top);
 
         glm::mat4 CalculateVP();
 
@@ -22,6 +23,7 @@ class OrthographicCamera{
         }
         const float GetRotation() const { return m_Rotation; }
 
+
         const glm::mat4& GetProjectionMatrix() const { return m_ProjMat; }
         const glm::mat4& GetViewMatrix() const { return m_ViewMat; }
         const glm::mat4& GetVPMatrix() const { return m_VP; }
@@ -35,6 +37,6 @@ class OrthographicCamera{
         float m_Rotation = 0.0f;
 
         glm::mat4 m_VP;
-    } ;
+    };
 
 }

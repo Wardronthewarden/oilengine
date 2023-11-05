@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "oil/Log.h"
+#include "oil/core/Log.h"
 #ifdef OIL_PLATFORM_WINDOWS
     #include <Windows.h>
 #endif

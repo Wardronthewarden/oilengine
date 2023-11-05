@@ -1,6 +1,6 @@
 #pragma once
 
-#include "oil/Window.h"
+#include "oil/core/Window.h"
 #include "oil/Renderer/GraphicsContext.h"
 
 #include <GLFW/glfw3.h>

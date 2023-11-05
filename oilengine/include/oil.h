@@ -5,18 +5,18 @@
 
 #include "oilengine_export.h"
 
-#include "oil/Application.h"
-#include "oil/Layer.h"
-#include "oil/Log.h"
+#include "oil/core/Application.h"
+#include "oil/core/Layer.h"
+#include "oil/core/Log.h"
 
 #include "oil/Core/Timestep.h"
 
 #include "imgui.h"
 
 // INPUT
-#include "oil/Input.h"
-#include "oil/KeyCodes.h"
-#include "oil/MouseButtonCodes.h"
+#include "oil/core/Input.h"
+#include "oil/core/KeyCodes.h"
+#include "oil/core/MouseButtonCodes.h"
 
 #include "oil/imGui/imGuiLayer.h"
 
@@ -31,9 +31,10 @@
 #include "oil/Renderer/Shader.h"
 
 #include "oil/Renderer/OrthographicCamera.h"
+#include "oil/Renderer/OrthographicCameraController.h"
 
 //-------Entry point------------
 
-#include "oil/EntryPoint.h"
+#include "oil/core/EntryPoint.h"
 
 //------------------------------

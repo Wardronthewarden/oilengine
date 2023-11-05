@@ -10,6 +10,12 @@ namespace oil{
         CalculateVP();
     }
 
+    void OrthographicCamera::SetProjection(float left, float right, float bottom, float top)
+    {
+        m_ProjMat = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+        CalculateVP();
+    }
+
     glm::mat4 OrthographicCamera::CalculateVP()
     {
         glm::mat4 transform = glm::rotate(glm::translate(glm::mat4(1.0f), m_Position), glm::radians(m_Rotation), glm::vec3(0,0,1));

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "oil/Input.h"
+#include "oil/core/Input.h"
 
 namespace oil{
     class WindowsInput : public Input{

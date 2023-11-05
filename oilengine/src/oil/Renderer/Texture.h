@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "oil/core.h"
+#include "oil/core/core.h"
 namespace oil {
 
     class Texture{

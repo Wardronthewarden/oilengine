@@ -6,9 +6,9 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
-#include "oil/Application.h"
+#include "oil/core/Application.h"
 
-#include "oil/KeyCodes.h"
+#include "oil/core/KeyCodes.h"
 
 //temp
 #include <glad/glad.h>

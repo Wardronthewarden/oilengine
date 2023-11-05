@@ -15,10 +15,10 @@ add_subdirectory(vendor/stb_image)
 include_directories(${PROJECT_BINARY_DIR})
 
 add_library(oilengine STATIC 
-                src/oil/Application.cpp
-                src/oil/Log.cpp
-                src/oil/Layer.cpp
-                src/oil/LayerStack.cpp
+                src/oil/core/Application.cpp
+                src/oil/core/Log.cpp
+                src/oil/core/Layer.cpp
+                src/oil/core/LayerStack.cpp
                 src/oil/imGui/imGuiBuild.cpp
                 src/oil/imGui/imGuiLayer.cpp
                 src/Platform/Windows/WindowsWindow.cpp
@@ -37,6 +37,7 @@ add_library(oilengine STATIC
                 src/oil/Renderer/RenderAPI.cpp
                 src/oil/Renderer/RenderCommand.cpp
                 src/oil/Renderer/OrthographicCamera.cpp
+                src/oil/Renderer/OrthographicCameraController.cpp
 
 )
 

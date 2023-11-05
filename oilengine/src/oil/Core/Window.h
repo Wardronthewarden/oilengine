@@ -2,7 +2,7 @@
 
 #include "pch/oilpch.h"
 
-#include "oil/core.h"
+#include "oil/core/core.h"
 #include "oil/events/Event.h"
 
 namespace oil{

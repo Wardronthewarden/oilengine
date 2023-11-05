@@ -2,7 +2,7 @@
 #include "WindowsInput.h"
 
 #include <GLFW/glfw3.h>
-#include "oil/Application.h"
+#include "oil/core/Application.h"
 
 namespace oil{
     Input* Input::s_Instance = new WindowsInput();

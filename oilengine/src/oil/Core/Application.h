@@ -4,9 +4,9 @@
 
 
 #include "Window.h"
-#include "events/Event.h"
+#include "oil/events/Event.h"
 #include "oil/events/ApplicationEvent.h"
-#include "oil/LayerStack.h"
+#include "oil/core/LayerStack.h"
 #include "oil/imGui/imGuiLayer.h"
 
 #include "oil/Renderer/Shader.h"
@@ -15,7 +15,7 @@
 
 #include "oil/Renderer/OrthographicCamera.h"
 
-#include "oil/Core/Timestep.h"
+#include "oil/core/Timestep.h"
 
 
 
@@ -36,10 +36,12 @@ namespace oil {
         inline Window& GetWindow() { return *m_Window; }
     private:
         bool OnWindowClose(WindowCloseEvent& e);
+        bool OnWindowResize(WindowResizeEvent& e);
 
         std::unique_ptr<Window> m_Window;
         ImGuiLayer* m_ImGuiLayer;
         bool m_Running = true;
+        bool m_Minimized = false;
         LayerStack m_LayerStack;
 
         float m_LastFrameTime = 0.0f;
