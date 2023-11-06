@@ -8,6 +8,7 @@
 #include "oil/core/Application.h"
 #include "oil/core/Layer.h"
 #include "oil/core/Log.h"
+#include "oil/core/Timer.h"
 
 #include "oil/Core/Timestep.h"
 

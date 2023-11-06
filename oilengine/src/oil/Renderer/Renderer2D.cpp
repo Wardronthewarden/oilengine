@@ -66,15 +66,20 @@ namespace oil{
         
     }
 
-    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color, const float& rotation){
+    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color, float rotation){
         DrawQuad({position.x, position.y, 0.0f}, size, color, rotation);
     }
-    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, const float& rotation){
+    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, float rotation){
         s_RenderData->TextureShader->Bind();
         s_RenderData->TextureShader->SetFloat4("u_Color", color);
         s_RenderData->WhiteTexture->Bind();
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f) * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0,0,1)), {size.x, size.y, 1.0f});
+        glm::mat4 transform;
+        if(rotation == 0.0f){
+            transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
+        }else{
+            transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f) * glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(0,0,1)), {size.x, size.y, 1.0f});
+        }
         s_RenderData->TextureShader->SetMat4("u_Transform",transform);
 
 
@@ -82,18 +87,25 @@ namespace oil{
         RenderCommand::DrawIndexed(s_RenderData->QuadVertexArray);
     }
 
-    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec4& color, const float& rotation){
-        DrawQuad({position.x, position.y, 0.0f}, size, texture, color, rotation);
+    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec2& tilingFactor, const glm::vec4& color, float rotation){
+        DrawQuad({position.x, position.y, 0.0f}, size, texture, tilingFactor, color, rotation);
     }
 
-    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec4& color, const float& rotation){
+    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec2& tilingFactor, const glm::vec4& color, float rotation){
         s_RenderData->TextureShader->SetFloat4("u_Color", color);
+        s_RenderData->TextureShader->SetFloat2("u_TilingFactor", tilingFactor);
         texture->Bind();
         
         s_RenderData->TextureShader->Bind();
+        glm::mat4 transform;
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f) * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0,0,1)), {size.x, size.y, 1.0f});
-        s_RenderData->TextureShader->SetMat4("u_Transform",transform);
+        if(rotation == 0.0f){
+            transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
+        }else{
+            OIL_TRACE("Rotated {0}!", 1);
+            transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f) * glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(0,0,1)), {size.x, size.y, 1.0f});
+        }
+        s_RenderData->TextureShader->SetMat4("u_Transform", transform);
 
         s_RenderData->QuadVertexArray->Bind();
         RenderCommand::DrawIndexed(s_RenderData->QuadVertexArray);

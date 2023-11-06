@@ -27,6 +27,7 @@ void Client2D::OnDetach()
 
 void Client2D::OnUpdate(oil::Timestep dt)
 {
+    PROFILE_SCOPE("Client2D::OnUpdate", m_ProfileResults);
     //Update 
     m_CameraController.OnUpdate(dt);
 
@@ -42,8 +43,8 @@ void Client2D::OnUpdate(oil::Timestep dt)
     //std::dynamic_pointer_cast<oil::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);
 
     oil::Renderer2D::DrawQuad({-1.0f, 0.0f}, {1.0f, 0.5f}, {1.0f, 0.5f, 0.3f, 1.0f});
-    oil::Renderer2D::DrawQuad({0.5f, 0.5f}, {0.5f, 0.75f}, {0.2f, 0.5f, 0.8f, 1.0f}, (rot +=3.0f*dt));
-    oil::Renderer2D::DrawQuad({0.0f, 0.0f, -0.1f}, {10.0f, 10.0f}, m_DefaultTexture);
+    oil::Renderer2D::DrawQuad({0.5f, 0.5f}, {0.5f, 0.75f}, {0.2f, 0.5f, 0.8f, 1.0f}, glm::radians(rot +=3.0f*dt));
+    oil::Renderer2D::DrawQuad({0.0f, 0.0f, -0.1f}, {10.0f, 10.0f}, m_DefaultTexture, {10.0f, 10.0f});
     //oil::Renderer2D::Submit(m_FlatColorShader, m_SquareVA, glm::scale(glm::mat4(1.0f), glm::vec3(1.5f)));
 
        
@@ -54,6 +55,14 @@ void Client2D::OnImGuiRender()
 {
     ImGui::Begin("Settings");
     ImGui::ColorEdit4("Square Color", glm::value_ptr(m_SquareColor));
+    for (auto& result : m_ProfileResults){
+        char label[50];
+        strcpy(label, "%.3fms   ");
+        strcat(label, result.Name);
+        
+        ImGui::Text(label, result.Time);
+    }
+    m_ProfileResults.clear();
     ImGui::End();
 }
 
