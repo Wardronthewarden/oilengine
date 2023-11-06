@@ -49,7 +49,7 @@ void OpenGLVertexArray::AddVertexBuffer(const oil::Ref<VertexBuffer> &VertexBuff
     glBindVertexArray(m_RendererID);
     VertexBuffer->Bind();
 
-    OIL_CORE_ASSERT(vertexBuffer->GetLayout()->GetElements().size(), "Vertex Buffer has no layouts!");
+    OIL_CORE_ASSERT(VertexBuffer->GetLayout().GetElements().size(), "Vertex Buffer has no layouts!");
 
     uint32_t index = 0;
     const auto& layout = VertexBuffer->GetLayout();

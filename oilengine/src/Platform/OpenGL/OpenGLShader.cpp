@@ -102,7 +102,7 @@ void OpenGLShader::UploadUniformFloat4(const std::string &name, const glm::vec4 
 void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSources)
 {
 	GLuint program = glCreateProgram();
-	OIL_CORE_ASSERT(shaderSources <= 2, "We only support 2 shaders!");
+	OIL_CORE_ASSERT(shaderSources.size() <= 2, "We only support 2 shaders!");
 	std::array<GLenum, 2> glShaderIDs;
 	int glShaderIDIndex = 0;
 	for (auto& kv : shaderSources){

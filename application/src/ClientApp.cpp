@@ -1,5 +1,11 @@
 #include <oil.h>
 
+//-------Entry point------------
+
+#include "oil/core/EntryPoint.h"
+
+//------------------------------
+
 #include "oilengine_export.h"
 
 #include "Platform/OpenGL/OpenGLShader.h"
@@ -7,12 +13,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Client2D.h"
+
 
 class ExampleLayer : public oil::Layer{
 public:
     ExampleLayer()
     : Layer("Example"), m_CameraController(1280.0f / 720.0f, true), m_SquarePosition(0.0f) {
-    m_SquareVA.reset(oil::VertexArray::Create());
+    m_SquareVA = oil::VertexArray::Create();
 
     float squareVertices[5 * 4] = {
         -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
@@ -129,7 +137,8 @@ public:
 class Barrel : public oil::Application{
 public:
     Barrel() {
-        PushLayer(new ExampleLayer());
+        //PushLayer(new ExampleLayer());
+        PushLayer(new Client2D());
     };
     ~Barrel() {};
 

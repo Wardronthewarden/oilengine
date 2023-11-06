@@ -33,8 +33,3 @@
 #include "oil/Renderer/OrthographicCamera.h"
 #include "oil/Renderer/OrthographicCameraController.h"
 
-//-------Entry point------------
-
-#include "oil/core/EntryPoint.h"
-
-//------------------------------

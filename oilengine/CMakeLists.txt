@@ -56,7 +56,7 @@ generate_export_header(oilengine
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 
-target_compile_definitions(oilengine PRIVATE -DOIL_PLATFORM_WINDOWS -DOIL_BUILD_DLL -DGLFW_INCLUDE_NONE)
+target_compile_definitions(oilengine PRIVATE -DOIL_DEBUG -DGLFW_INCLUDE_NONE)
 
 
 target_precompile_headers(oilengine PUBLIC src/pch/oilpch.h)
