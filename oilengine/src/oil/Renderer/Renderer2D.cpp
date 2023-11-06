@@ -12,8 +12,8 @@
 namespace oil{
     struct Renderer2DStorage{
         Ref<VertexArray> QuadVertexArray;
-        Ref<Shader> FlatColorShader;
         Ref<Shader> TextureShader;
+        Ref<Texture2D> WhiteTexture;   
     };
 
     static Renderer2DStorage* s_RenderData;
@@ -45,7 +45,10 @@ namespace oil{
     squareIB.reset(IndexBuffer::Create(squareIndices, sizeof(squareIndices)/sizeof(uint32_t)));
     s_RenderData->QuadVertexArray->SetIndexBuffer(squareIB);
 
-    s_RenderData->FlatColorShader = Shader::Create("Assets/Shaders/UniformColor.glsl"); 
+    s_RenderData->WhiteTexture = Texture2D::Create(1,1);
+    uint32_t whiteTextureData = 0xffffffff;
+    s_RenderData->WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
+
     s_RenderData->TextureShader = Shader::Create("Assets/Shaders/Texture.glsl"); 
     s_RenderData->TextureShader->Bind();
     s_RenderData->TextureShader->SetInt("u_Texture", 0);
@@ -56,9 +59,6 @@ namespace oil{
     }
 
     void Renderer2D::BeginScene(const OrthographicCamera& camera){
-        s_RenderData->FlatColorShader->Bind();
-        s_RenderData->FlatColorShader->SetMat4("u_VPMat", camera.GetVPMatrix());
-        
         s_RenderData->TextureShader->Bind();
         s_RenderData->TextureShader->SetMat4("u_VPMat", camera.GetVPMatrix());
     }
@@ -70,29 +70,30 @@ namespace oil{
         DrawQuad({position.x, position.y, 0.0f}, size, color, rotation);
     }
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, const float& rotation){
-        s_RenderData->FlatColorShader->Bind();
-        s_RenderData->FlatColorShader->SetFloat4("u_Color", color);
+        s_RenderData->TextureShader->Bind();
+        s_RenderData->TextureShader->SetFloat4("u_Color", color);
+        s_RenderData->WhiteTexture->Bind();
 
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f) * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0,0,1)), {size.x, size.y, 1.0f});
-        s_RenderData->FlatColorShader->SetMat4("u_Transform",transform);
+        s_RenderData->TextureShader->SetMat4("u_Transform",transform);
 
 
         s_RenderData->QuadVertexArray->Bind();
         RenderCommand::DrawIndexed(s_RenderData->QuadVertexArray);
     }
 
-    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const float& rotation){
-        DrawQuad({position.x, position.y, 0.0f}, size, texture, rotation);
+    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec4& color, const float& rotation){
+        DrawQuad({position.x, position.y, 0.0f}, size, texture, color, rotation);
     }
 
-    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, const float& rotation){
+    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec4& color, const float& rotation){
+        s_RenderData->TextureShader->SetFloat4("u_Color", color);
+        texture->Bind();
+        
         s_RenderData->TextureShader->Bind();
 
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f) * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0,0,1)), {size.x, size.y, 1.0f});
         s_RenderData->TextureShader->SetMat4("u_Transform",transform);
-
-        texture->Bind();
-
 
         s_RenderData->QuadVertexArray->Bind();
         RenderCommand::DrawIndexed(s_RenderData->QuadVertexArray);
