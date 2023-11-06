@@ -1,3 +1,4 @@
+#include <pch/oilpch.h>
 #include "Client2D.h"
 #include "imgui.h"
 
@@ -6,9 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <filesystem>
-#include <iostream>
-namespace fs = std::filesystem;
+
 
 
 Client2D::Client2D()
@@ -18,34 +17,8 @@ Client2D::Client2D()
 
 void Client2D::OnAttach()
 {
-    m_SquareVA = oil::VertexArray::Create();
-
-    float squareVertices[5 * 4] = {
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
-    };  
-    
-    std::cout << "Current path is " << fs::current_path() << '\n';
-
-    oil::Ref<oil::VertexBuffer> squareVB; 
-    squareVB.reset(oil::VertexBuffer::Create(squareVertices, sizeof(squareVertices)));
-    squareVB->SetLayout({
-            {oil::ShaderDataType::Float3, "a_Position"},
-            {oil::ShaderDataType::Float2, "a_Texcoord"}
-});
-    m_SquareVA->AddVertexBuffer(squareVB);
-
-    uint32_t squareIndices[6] = {0,1,2, 2,3,0};
-    oil::Ref<oil::IndexBuffer> squareIB;
-    squareIB.reset(oil::IndexBuffer::Create(squareIndices, sizeof(squareIndices)/sizeof(uint32_t)));
-    m_SquareVA->SetIndexBuffer(squareIB);
-
-    m_FlatColorShader = oil::Shader::Create("Assets/Shaders/UniformColor.glsl");
-
-    
-    oil::RenderCommand::SetClearColor({0.1f,0.1f,0.1f,1});
+    m_DefaultTexture = oil::Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Textures\\Checkerboard.png");
+       
 }
 
 void Client2D::OnDetach()
@@ -54,26 +27,27 @@ void Client2D::OnDetach()
 
 void Client2D::OnUpdate(oil::Timestep dt)
 {
-    std::cout << "Current path is " << fs::current_path() << '\n';
-    OIL_CORE_WARN("HELLO");
     //Update 
     m_CameraController.OnUpdate(dt);
 
-    oil::RenderCommand::SetClearColor({1.0f, 0.1f, 0.1f, 1});
+    oil::RenderCommand::SetClearColor({0.1f, 0.1f, 0.1f, 1});
     oil::RenderCommand::Clear();
 
-    oil::Renderer::BeginScene(m_CameraController.GetCamera());
-
-    glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
-
-    std::dynamic_pointer_cast<oil::OpenGLShader>(m_FlatColorShader)->Bind();
-    std::dynamic_pointer_cast<oil::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);
+    oil::Renderer2D::BeginScene(m_CameraController.GetCamera());
 
 
-    oil::Renderer::Submit(m_FlatColorShader, m_SquareVA, glm::scale(glm::mat4(1.0f), glm::vec3(1.5f)));
+    //TODO: shader_setMat4, shader_setFloat4
+
+    //std::dynamic_pointer_cast<oil::OpenGLShader>(m_FlatColorShader)->Bind();
+    //std::dynamic_pointer_cast<oil::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);
+
+    oil::Renderer2D::DrawQuad({-1.0f, 0.0f}, {1.0f, 0.5f}, {1.0f, 0.5f, 0.3f, 1.0f});
+    oil::Renderer2D::DrawQuad({0.5f, 0.5f}, {0.5f, 0.75f}, {0.2f, 0.5f, 0.8f, 1.0f}, (rot +=3.0f*dt));
+    oil::Renderer2D::DrawQuad({0.0f, 0.0f, -0.1f}, {10.0f, 10.0f}, m_DefaultTexture, (rot +=3.0f*dt));
+    //oil::Renderer2D::Submit(m_FlatColorShader, m_SquareVA, glm::scale(glm::mat4(1.0f), glm::vec3(1.5f)));
 
        
-    oil::Renderer::EndScene();
+    oil::Renderer2D::EndScene();
 }
 
 void Client2D::OnImGuiRender()

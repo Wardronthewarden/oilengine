@@ -23,6 +23,7 @@
 // ------Rendering-------------
 
 #include "oil/Renderer/Renderer.h"
+#include "oil/Renderer/Renderer2D.h"
 #include "oil/Renderer/RenderCommand.h"
 
 #include "oil/Renderer/Buffer.h"

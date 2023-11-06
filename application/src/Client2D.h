@@ -19,6 +19,9 @@ private:
     oil::Ref<oil::VertexArray> m_SquareVA;
     oil::Ref<oil::Shader> m_FlatColorShader;
 
-    glm::vec4 m_SquareColor = {1.0f, 0.3, 0.8f, 1.0f};
+    oil::Ref<oil::Texture2D> m_DefaultTexture;
+
+    glm::vec4 m_SquareColor = {0.2f, 0.3, 0.8f, 1.0f};
+    mutable float rot = 0.0f;
 
 };

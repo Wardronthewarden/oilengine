@@ -30,6 +30,7 @@ add_library(oilengine STATIC
                 src/Platform/OpenGL/OpenGLShader.cpp
                 src/Platform/OpenGL/OpenGLTexture.cpp
                 src/oil/Renderer/Renderer.cpp
+                src/oil/Renderer/Renderer2D.cpp
                 src/oil/Renderer/Buffer.cpp
                 src/oil/Renderer/Shader.cpp
                 src/oil/Renderer/Texture.cpp
