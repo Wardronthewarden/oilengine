@@ -1,5 +1,7 @@
 add_subdirectory(oilengine/)
 
+set(CMAKE_DEBUG_POSTFIX d)
+
 cmake_minimum_required(VERSION 3.27.0)
 
 project(Client VERSION 1.0)
@@ -25,3 +27,4 @@ target_link_libraries(Client PUBLIC oilengine)
 target_compile_definitions(Client PRIVATE -DOIL_DEBUG)
 
 set_property(TARGET Client PROPERTY CXX_STANDARD 23)
+set_target_properties(Client PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})

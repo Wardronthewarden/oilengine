@@ -19,9 +19,9 @@ namespace oil{
     };
 
     struct Renderer2DData{
-        const uint32_t MaxQuads = 10000;
-        const uint32_t MaxVertices = MaxQuads * 4;
-        const uint32_t MaxIndices = MaxQuads * 6;
+        static const uint32_t MaxQuads = 10000;
+        static const uint32_t MaxVertices = MaxQuads * 4;
+        static const uint32_t MaxIndices = MaxQuads * 6;
         static const uint32_t MaxTextureSlots = 32; //TODO: Base on GPU query
 
         Ref<VertexArray> QuadVertexArray;
@@ -37,6 +37,8 @@ namespace oil{
         uint32_t TextureSlotIndex = 1;
 
         glm::vec4 QuadVertexPositions[4];
+
+        Renderer2D::Stats stats;
     };
 
     static Renderer2DData s_RenderData;
@@ -107,10 +109,7 @@ namespace oil{
         s_RenderData.TextureShader->Bind();
         s_RenderData.TextureShader->SetMat4("u_VPMat", camera.GetVPMatrix());
 
-        s_RenderData.QuadIndexCount = 0;
-        s_RenderData.QuadVertexBufferPtr = s_RenderData.QuadVertexBufferBase;
-
-        s_RenderData.TextureSlotIndex = 1;
+        StartNewBatch();
     }
     void Renderer2D::EndScene(){
          uint32_t dataSize = (uint8_t*)s_RenderData.QuadVertexBufferPtr - (uint8_t*)s_RenderData.QuadVertexBufferBase;
@@ -126,6 +125,17 @@ namespace oil{
         }
 
         RenderCommand::DrawIndexed(s_RenderData.QuadVertexArray, s_RenderData.QuadIndexCount);
+        
+        //statistics
+        s_RenderData.stats.DrawCalls++;
+    }
+
+    void Renderer2D::StartNewBatch(){
+        //Reset batch information
+        s_RenderData.QuadIndexCount = 0;
+        s_RenderData.QuadVertexBufferPtr = s_RenderData.QuadVertexBufferBase;
+
+        s_RenderData.TextureSlotIndex = 1;
     }
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color, float rotation){
@@ -133,6 +143,11 @@ namespace oil{
     }
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, float rotation){
 
+        if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
+            EndScene();
+            StartNewBatch();
+        }
+        
         const float texIndex  = 0.0f;
 
         glm::mat4 transform;
@@ -167,6 +182,9 @@ namespace oil{
         ++s_RenderData.QuadVertexBufferPtr;
 
         s_RenderData.QuadIndexCount +=6;
+
+        //statistics
+        s_RenderData.stats.QuadCount++;
     }
 
     void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec2& tilingFactor, const glm::vec4& color, float rotation){
@@ -174,6 +192,11 @@ namespace oil{
     }
 
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec2& tilingFactor, const glm::vec4& color, float rotation){
+        
+        if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
+            EndScene();
+            StartNewBatch();
+        }
         
         float textureIndex = 0.0f;
 
@@ -222,5 +245,16 @@ namespace oil{
         ++s_RenderData.QuadVertexBufferPtr;
 
         s_RenderData.QuadIndexCount +=6;
+
+        //statistics
+        s_RenderData.stats.QuadCount++;
+    }
+    void Renderer2D::ResetStats()
+    {
+        memset(&s_RenderData.stats, 0, sizeof(Stats));
+    }
+    Renderer2D::Stats Renderer2D::GetStats()
+    {
+        return s_RenderData.stats;
     }
 }

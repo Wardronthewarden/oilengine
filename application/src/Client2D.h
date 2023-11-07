@@ -26,5 +26,6 @@ private:
     mutable float rot2 = 0.0f;
 
     std::vector<ProfileResult> m_ProfileResults;
+    float fps = 0;
 
 };
