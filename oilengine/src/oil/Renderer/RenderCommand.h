@@ -21,8 +21,8 @@ namespace oil{
             s_RenderAPI->Clear();
         };
         
-        inline static void DrawIndexed(const oil::Ref<VertexArray>& vertexArray){
-            s_RenderAPI->DrawIndexed(vertexArray);
+        inline static void DrawIndexed(const oil::Ref<VertexArray>& vertexArray, uint32_t indexCount = 0){
+            s_RenderAPI->DrawIndexed(vertexArray, indexCount);
         }
 
     private:

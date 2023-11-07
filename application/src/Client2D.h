@@ -23,6 +23,7 @@ private:
 
     glm::vec4 m_SquareColor = {0.2f, 0.3, 0.8f, 1.0f};
     mutable float rot = 0.0f;
+    mutable float rot2 = 0.0f;
 
     std::vector<ProfileResult> m_ProfileResults;
 

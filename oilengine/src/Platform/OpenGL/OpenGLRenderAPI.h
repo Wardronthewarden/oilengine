@@ -12,7 +12,7 @@ namespace oil{
 
         virtual void Clear() override;
 
-        virtual void DrawIndexed(const oil::Ref<VertexArray>& vertexArray) override;
+        virtual void DrawIndexed(const oil::Ref<VertexArray>& vertexArray, uint32_t indexCount) override;
 
     };
 }

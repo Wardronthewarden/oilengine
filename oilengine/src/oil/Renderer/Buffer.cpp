@@ -6,21 +6,31 @@
 #include "Platform/OpenGL/OpenGLBuffer.h"
 
 namespace oil{
-    VertexBuffer *VertexBuffer::Create(float *vertices, uint32_t size)
+    Ref<VertexBuffer> VertexBuffer::Create(uint32_t size)
     {
         switch (Renderer::GetAPI()){
             case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RendererAPI::None currently not supported!");
-            case RenderAPI::API::OpenGL: return new OpenGLVertexBuffer(vertices, size);
+            case RenderAPI::API::OpenGL: return CreateRef<OpenGLVertexBuffer>(size);
         }
         OIL_CORE_ASSERT(false, "Unknown RendererAPI!")
         return nullptr;
     }
 
-    IndexBuffer *IndexBuffer::Create(uint32_t* vertices, uint32_t size)
+    Ref<VertexBuffer> VertexBuffer::Create(float *vertices, uint32_t size)
+    {
+        switch (Renderer::GetAPI()){
+            case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RendererAPI::None currently not supported!");
+            case RenderAPI::API::OpenGL: return CreateRef<OpenGLVertexBuffer>(vertices, size);
+        }
+        OIL_CORE_ASSERT(false, "Unknown RendererAPI!")
+        return nullptr;
+    }
+
+    Ref<IndexBuffer> IndexBuffer::Create(uint32_t* vertices, uint32_t count)
     {
         switch (Renderer::GetAPI()){
             case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RenderAPI::API::None currently not supported!");
-            case RenderAPI::API::OpenGL: return new OpenGLIndexBuffer(vertices, size);
+            case RenderAPI::API::OpenGL: return CreateRef<OpenGLIndexBuffer>(vertices, count);
         }
         OIL_CORE_ASSERT(false, "Unknown RenderAPI::API!")
         return nullptr;

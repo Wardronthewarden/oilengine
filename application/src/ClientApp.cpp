@@ -29,8 +29,7 @@ public:
         -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
     };    
 
-    oil::Ref<oil::VertexBuffer> squareVB; 
-    squareVB.reset(oil::VertexBuffer::Create(squareVertices, sizeof(squareVertices)));
+    oil::Ref<oil::VertexBuffer> squareVB = oil::VertexBuffer::Create(squareVertices, sizeof(squareVertices));
     squareVB->SetLayout({
             {oil::ShaderDataType::Float3, "a_Position"},
             {oil::ShaderDataType::Float2, "a_TexCoord"}
@@ -38,8 +37,7 @@ public:
     m_SquareVA->AddVertexBuffer(squareVB);
 
     uint32_t squareIndices[6] = {0,1,2, 2,3,0};
-    oil::Ref<oil::IndexBuffer> squareIB;
-    squareIB.reset(oil::IndexBuffer::Create(squareIndices, sizeof(squareIndices)/sizeof(uint32_t)));
+    oil::Ref<oil::IndexBuffer> squareIB = oil::IndexBuffer::Create(squareIndices, sizeof(squareIndices)/sizeof(uint32_t));
     m_SquareVA->SetIndexBuffer(squareIB);
 
     auto flatColorShader = m_ShaderLibrary.Load("C:\\dev\\c++\\oilengine\\application\\Assets\\Shaders\\UniformColor.glsl");

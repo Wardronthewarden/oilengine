@@ -76,6 +76,6 @@ namespace oil{
 
     void OpenGLTexture2D::Bind(uint32_t slot) const
     {
-        glBindTextureUnit(0, m_RendererID);
+        glBindTextureUnit(slot, m_RendererID);
     }
 }
