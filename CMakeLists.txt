@@ -1,6 +1,5 @@
 add_subdirectory(oilengine/)
 
-set(CMAKE_DEBUG_POSTFIX d)
 
 cmake_minimum_required(VERSION 3.27.0)
 
@@ -22,9 +21,8 @@ include_directories(${ENGINE_DIR}/include
 
 add_executable(Client application/src/ClientApp.cpp
                         application/src/Client2D.cpp)
-target_link_directories(Client PRIVATE ${ENGINE_DIR}/build/Debug)
+
 target_link_libraries(Client PUBLIC oilengine)
 target_compile_definitions(Client PRIVATE -DOIL_DEBUG)
 
 set_property(TARGET Client PROPERTY CXX_STANDARD 23)
-set_target_properties(Client PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})

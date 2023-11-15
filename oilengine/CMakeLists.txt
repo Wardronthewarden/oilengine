@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.27.0)
 
-set(CMAKE_DEBUG_POSTFIX d)
-
 project(oilengine VERSION 1.0)
 
 configure_file(OilengineConfig.h.in OilengineConfig.h)
@@ -42,7 +40,6 @@ add_library(oilengine STATIC
 
 )
 
-set_target_properties(oilengine PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
               
 set_property(TARGET oilengine PROPERTY CXX_STANDARD 23)
 
@@ -75,7 +72,7 @@ target_include_directories(oilengine PUBLIC
 
 target_link_directories(${PROJECT_NAME} 
                                 PUBLIC vendor/
-                                PUBLIC vendor/glfw/build/src
+                                PUBLIC vendor/glfw/src
 ) 
 
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 glad imgui opengl32 stb_img)
