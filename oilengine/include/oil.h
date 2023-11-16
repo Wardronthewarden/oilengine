@@ -30,6 +30,7 @@
 #include "oil/Renderer/Buffer.h"
 #include "oil/Renderer/VertexArray.h"
 #include "oil/Renderer/Texture.h"
+#include "oil/Renderer/SubTexture2D.h"
 #include "oil/Renderer/Shader.h"
 
 #include "oil/Renderer/OrthographicCamera.h"

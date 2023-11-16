@@ -20,7 +20,9 @@ include_directories(${ENGINE_DIR}/include
 
 
 add_executable(Client application/src/ClientApp.cpp
-                        application/src/Client2D.cpp)
+                        application/src/Client2D.cpp
+                        application/src/ParticleSystem.cpp
+)
 
 target_link_libraries(Client PUBLIC oilengine)
 target_compile_definitions(Client PRIVATE -DOIL_DEBUG)

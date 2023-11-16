@@ -32,6 +32,7 @@ add_library(oilengine STATIC
                 src/oil/Renderer/Buffer.cpp
                 src/oil/Renderer/Shader.cpp
                 src/oil/Renderer/Texture.cpp
+                src/oil/Renderer/SubTexture2D.cpp
                 src/oil/Renderer/VertexArray.cpp
                 src/oil/Renderer/RenderAPI.cpp
                 src/oil/Renderer/RenderCommand.cpp

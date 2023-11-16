@@ -63,3 +63,6 @@ build/
 # Assets
 *.png
 *.jpg
+
+# Third party
+oilengine/vendor/

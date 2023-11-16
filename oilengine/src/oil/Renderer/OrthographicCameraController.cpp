@@ -6,7 +6,7 @@
 
 namespace oil{
     OrthographicCameraController::OrthographicCameraController(float aspectRatio, bool rotation)
-        : m_AspectRatio(aspectRatio), m_Camera(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel), m_Rotation(rotation)
+        : m_AspectRatio(aspectRatio), m_Bounds({-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel}), m_Camera(m_Bounds.Left, m_Bounds.Right, m_Bounds.Bottom, m_Bounds.Top), m_Rotation(rotation)
     {
     }
     void OrthographicCameraController::OnUpdate(Timestep dt)
@@ -41,18 +41,23 @@ namespace oil{
         dispatcher.Dispatch<MouseScrolledEvent>(OIL_BIND_EVENT_FN(OrthographicCameraController::OnMouseScrolled));
         dispatcher.Dispatch<WindowResizeEvent>(OIL_BIND_EVENT_FN(OrthographicCameraController::OnWindowResized));
     }
+    void OrthographicCameraController::CalculateView()
+    {
+        m_Bounds = {-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel};
+        m_Camera.SetProjection(m_Bounds.Left, m_Bounds.Right, m_Bounds.Bottom, m_Bounds.Top);
+    }
     bool OrthographicCameraController::OnMouseScrolled(MouseScrolledEvent &e)
     {
         m_ZoomLevel -= e.GetYOffset() * 0.25f;
         m_ZoomLevel = std::max(m_ZoomLevel, 0.25f);
         m_CameraTransSpeed = 2.0f * m_ZoomLevel;
-        m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+        CalculateView();   
         return false;
     }
     bool OrthographicCameraController::OnWindowResized(WindowResizeEvent &e)
     {
         m_AspectRatio = (float)e.GetWidth() / (float)e.GetHeight();
-        m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+        CalculateView();        
         return false;
     }
 }

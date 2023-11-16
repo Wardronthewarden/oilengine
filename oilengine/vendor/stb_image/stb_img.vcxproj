@@ -22,7 +22,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{3E51A123-7DAF-3415-BF00-D3F9D58BDDF0}</ProjectGuid>
+    <ProjectGuid>{73AFFF4B-F77A-3D56-9B7A-4CB47BBD2B25}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
@@ -61,7 +61,7 @@
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\dev\c++\oilengine\oilengine\vendor\stb_image\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stb_img.dir\Debug\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stb_img</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stb_imgd</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\dev\c++\oilengine\oilengine\vendor\stb_image\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stb_img.dir\Release\</IntDir>
@@ -196,7 +196,7 @@
       <UseUtf8Encoding>Always</UseUtf8Encoding>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine/oilengine -BC:/dev/c++/oilengine/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine -BC:/dev/c++/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -209,7 +209,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine/oilengine -BC:/dev/c++/oilengine/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine -BC:/dev/c++/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -222,7 +222,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine/oilengine -BC:/dev/c++/oilengine/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine -BC:/dev/c++/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -235,7 +235,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine/oilengine -BC:/dev/c++/oilengine/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/dev/c++/oilengine -BC:/dev/c++/oilengine --check-stamp-file C:/dev/c++/oilengine/oilengine/vendor/stb_image/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -252,8 +252,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\dev\c++\oilengine\oilengine\vendor\stb_image\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\dev\c++\oilengine\oilengine\ZERO_CHECK.vcxproj">
-      <Project>{C2292802-6EE0-370F-BC7A-D9DB9CDA3728}</Project>
+    <ProjectReference Include="C:\dev\c++\oilengine\ZERO_CHECK.vcxproj">
+      <Project>{7ECC2D51-5C47-3260-89C9-02CC85D1C772}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
