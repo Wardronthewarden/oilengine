@@ -25,6 +25,8 @@ private:
     oil::Ref<oil::Texture2D> m_SpriteSheet;
     oil::Ref<oil::SubTexture2D> m_TextureStairs, m_TextureBarrel, m_TextureTree, m_TextureWater, m_TextureDirt;
 
+    oil::Ref<oil::FrameBuffer> m_FrameBuffer;
+
     //Tile map
     std::unordered_map<char, oil::Ref<oil::SubTexture2D>> s_TextureMap;
     uint32_t m_MapWidth, m_MapHeight;

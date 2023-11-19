@@ -66,6 +66,13 @@ namespace oil{
     {
     }
 
+    void ImGuiLayer::OnEvent(Event &e)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        e.SetHandled(e.IsInCategory(EventCategoryMouse) & io.WantCaptureMouse); 
+        e.SetHandled(e.IsInCategory(EventCategoryKeyboard) & io.WantCaptureKeyboard); 
+    }
+
     void ImGuiLayer::Begin()
     {
         ImGui_ImplOpenGL3_NewFrame();

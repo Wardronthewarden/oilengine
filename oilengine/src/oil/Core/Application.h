@@ -22,7 +22,7 @@
 namespace oil {
     class OIL_API Application{
     public:
-        Application();
+        Application(const std::string& name = "Oil App");
         virtual ~Application();
 
         void Run();
@@ -34,6 +34,8 @@ namespace oil {
 
         inline static Application& Get() { return *s_Instance; }
         inline Window& GetWindow() { return *m_Window; }
+
+        void CloseApplication();
     private:
         bool OnWindowClose(WindowCloseEvent& e);
         bool OnWindowResize(WindowResizeEvent& e);

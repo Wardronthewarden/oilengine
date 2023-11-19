@@ -15,8 +15,8 @@ static const char* s_MapTiles =
 "wwwwwdddddddddddddwwwwww"
 "wwwwwdddddddddddddwwwwww"
 "wwwwwdddddddddddddwwwwww"
-"wwwwwwwwwwwwwwwwwwwwwwww"
-"wwwwwwwwwwwwwwwwwwwwwwww"
+"wwwwwwwwwwwwwwwwwdwwwwww"
+"wwwwwwwwwwwwwwwwwdwwwwww"
 "wwwwwwwwwwwwwwwwwwwwwwww"
 ;
 
@@ -30,18 +30,22 @@ Client2D::Client2D()
 
 void Client2D::OnAttach()
 {
+    //Textures
     m_DefaultTexture = oil::Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Textures\\Checkerboard.png");
     m_SpriteSheet = oil::Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Game\\Textures\\RPGpack_sheet_2X.png");
     m_TextureStairs = oil::SubTexture2D::CreateFromCoords(m_SpriteSheet, {7, 6}, {128.0f, 128.0f});
     m_TextureBarrel = oil::SubTexture2D::CreateFromCoords(m_SpriteSheet, {8, 2}, {128.0f, 128.0f});
     m_TextureTree = oil::SubTexture2D::CreateFromCoords(m_SpriteSheet, {2, 1}, {128.0f, 128.0f}, { 1.0f, 2.0f });
 
+    //Tilemap
     s_TextureMap['w'] = oil::SubTexture2D::CreateFromCoords(m_SpriteSheet, {11, 11}, {128.0f, 128.0f});
     s_TextureMap['d'] = oil::SubTexture2D::CreateFromCoords(m_SpriteSheet, {6, 11}, {128.0f, 128.0f});
 
     m_MapWidth = 24;
     m_MapHeight = strlen(s_MapTiles)/m_MapWidth;
        
+
+    //Particles
     m_Particle.ColorBegin = {0.99f, 0.7f, 0.5f, 1.0f};
     m_Particle.ColorEnd = {0.99f, 0.35f, 0.25f, 0.8f};
     m_Particle.SizeBegin = 0.5f, m_Particle.SizeVariation = 0.2f, m_Particle.SizeEnd = 0.0f;
@@ -50,6 +54,10 @@ void Client2D::OnAttach()
     m_Particle.VelocityVariation = {3.0f, 1.0f};
     m_Particle.Position = {0.0f, 0.0f};
 
+    
+
+
+    //Camera
     m_CameraController.SetZoomLevel(5.0f);
 }
 
@@ -77,10 +85,11 @@ void Client2D::OnUpdate(oil::Timestep dt)
     oil::Renderer2D::DrawQuad({0.5f, -0.5f}, {0.5f, 0.5f}, {0.0f, 0.0f, 1.0f, 1.0f});
     oil::Renderer2D::DrawQuad({-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, 1.0f, 0.0f, 1.0f});
     oil::Renderer2D::DrawQuad({0.5f, 0.5f}, {0.5f, 0.5f}, {1.0f, 1.0f, 1.0f, 1.0f}); */
-    oil::Renderer2D::DrawQuad({0.0f, 0.0f, 0.1f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureStairs);
+    /* oil::Renderer2D::DrawQuad({0.0f, 0.0f, 0.1f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureStairs);
     oil::Renderer2D::DrawQuad({0.0f, 0.3f, 0.1f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureBarrel);
-    oil::Renderer2D::DrawQuad({-1.5f, 0.5f, 0.1f}, {1.0f, 2.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureTree);
-    //oil::Renderer2D::DrawQuad({0.0f, 0.0f, -0.05f}, {5.0f, 5.0f}, m_DefaultTexture, {15.0f, 15.0f}, m_SquareColor, (rot2 -= 0.25f * dt));
+    oil::Renderer2D::DrawQuad({-1.5f, 0.5f, 0.1f}, {1.0f, 2.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureTree); */
+    oil::Renderer2D::DrawQuad({0.0f, 0.0f, 0.5f}, {5.0f, 5.0f}, m_SpriteSheet, {15.0f, 15.0f}, m_TextureBarrel, m_SquareColor, (rot2 -= 0.25f * dt));
+    oil::Renderer2D::DrawQuad({0.0f, 0.0f, 0.5f}, {5.0f, 5.0f}, m_SpriteSheet, {15.0f, 15.0f}, m_TextureBarrel);
 
 
     for (uint32_t y = 0; y < m_MapHeight; ++y){
@@ -92,7 +101,7 @@ void Client2D::OnUpdate(oil::Timestep dt)
                 oil::Renderer2D::DrawQuad({x - m_MapWidth / 2.0f, m_MapHeight - y - m_MapHeight / 2.0f, 0.0f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, texture);
                 continue;
             }
-            oil::Renderer2D::DrawQuad({x - m_MapWidth / 2.0f, m_MapHeight - y - m_MapHeight / 2.0f, 0.0f}, {1.0f, 1.0f}, m_DefaultTexture, {1.0f, 1.0f});
+            oil::Renderer2D::DrawQuad({x - m_MapWidth / 2.0f, m_MapHeight - y - m_MapHeight / 2.0f, 0.01f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureBarrel);
         }
     }
 
@@ -122,8 +131,8 @@ void Client2D::OnUpdate(oil::Timestep dt)
             m_ParticleSystem.Emit(m_Particle);
     }
 
-    //m_ParticleSystem.OnUpdate(dt);
-    //m_ParticleSystem.OnRender(m_CameraController.GetCamera());
+    m_ParticleSystem.OnUpdate(dt);
+    m_ParticleSystem.OnRender(m_CameraController.GetCamera());
 }
 
 void Client2D::OnImGuiRender()
@@ -152,7 +161,9 @@ void Client2D::OnImGuiRender()
         ImGui::Text(label, result.Time);
     }
     m_ProfileResults.clear();
+
     ImGui::End();
+
 }
 
 void Client2D::OnEvent(oil::Event &event)

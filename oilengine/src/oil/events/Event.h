@@ -44,6 +44,7 @@ namespace oil{
         virtual std::string ToString() const { return GetName(); }
 
         inline bool GetHandled() const { return m_Handled; }
+        void SetHandled(bool handled) { m_Handled = handled; }
 
         inline bool IsInCategory(EventCategory category){
             return GetCategoryFlags() & category;

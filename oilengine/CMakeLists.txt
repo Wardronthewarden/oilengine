@@ -23,6 +23,7 @@ add_library(oilengine STATIC
                 src/Platform/Windows/WindowsInput.cpp
                 src/Platform/OpenGL/OpenGLContext.cpp
                 src/Platform/OpenGL/OpenGLBuffer.cpp
+                src/Platform/OpenGL/OpenGLFrameBuffer.cpp
                 src/Platform/OpenGL/OpenGLVertexArray.cpp
                 src/Platform/OpenGL/OpenGLRenderAPI.cpp
                 src/Platform/OpenGL/OpenGLShader.cpp
@@ -30,6 +31,7 @@ add_library(oilengine STATIC
                 src/oil/Renderer/Renderer.cpp
                 src/oil/Renderer/Renderer2D.cpp
                 src/oil/Renderer/Buffer.cpp
+                src/oil/Renderer/FrameBuffer.cpp
                 src/oil/Renderer/Shader.cpp
                 src/oil/Renderer/Texture.cpp
                 src/oil/Renderer/SubTexture2D.cpp

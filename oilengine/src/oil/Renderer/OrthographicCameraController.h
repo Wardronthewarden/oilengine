@@ -30,6 +30,8 @@ namespace oil{
         void SetZoomLevel(float level) { m_ZoomLevel = level; CalculateView(); }
         float GetZoomLevel() const { return m_ZoomLevel; }
 
+        void OnResize(float width, float height);
+
         void CalculateView();
 
         const OrthographicCameraBounds& GetBounds() const { return m_Bounds; }

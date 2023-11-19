@@ -28,6 +28,7 @@
 #include "oil/Renderer/RenderCommand.h"
 
 #include "oil/Renderer/Buffer.h"
+#include "oil/Renderer/FrameBuffer.h"
 #include "oil/Renderer/VertexArray.h"
 #include "oil/Renderer/Texture.h"
 #include "oil/Renderer/SubTexture2D.h"
