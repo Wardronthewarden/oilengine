@@ -21,6 +21,8 @@
 
 #include "oil/imGui/imGuiLayer.h"
 
+#include "oil/Scene/Scene.h"
+#include "oil/Scene/Component.h"
 // ------Rendering-------------
 
 #include "oil/Renderer/Renderer.h"

@@ -23,6 +23,8 @@ namespace oil{
         static void Flush();
 
         // Primitives
+        static void DrawQuad(const glm::mat4& transform, const glm::vec4& color);
+        static void DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, const glm::vec2& tilingFactor = {1.0f, 1.0f}, const Ref<SubTexture2D>& subTexture = nullptr, const glm::vec4& color = {1.0f, 1.0f, 1.0f, 1.0f});
         static void DrawQuad(const glm::vec2& position, const glm::vec2& size = {1.0f, 1.0f}, const glm::vec4& color = {1.0f, 0.0f, 1.0f, 1.0f}, float rotation = 0.0f);
         static void DrawQuad(const glm::vec3& position, const glm::vec2& size = {1.0f, 1.0f}, const glm::vec4& color = {1.0f, 0.0f, 1.0f, 1.0f}, float rotation = 0.0f);
         static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec2& tilingFactor = {1.0f, 1.0f}, const Ref<SubTexture2D>& subTexture = nullptr, const glm::vec4& color = {1.0f, 1.0f, 1.0f, 1.0f}, float rotation = 0.0f);

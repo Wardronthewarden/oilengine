@@ -33,6 +33,13 @@ EditorLayer::EditorLayer()
 
 void EditorLayer::OnAttach()
 {
+    //Scene
+    m_ActiveScene = CreateRef<Scene>();
+
+    auto square = m_ActiveScene->CreateEntity();
+    m_ActiveScene->Reg().emplace<TransformComponent>(square);
+    m_ActiveScene->Reg().emplace<SpriteRendererComponent>(square, glm::vec4{0.0f, 1.0f, 0.0f, 1.0f});
+
     //Textures
     m_DefaultTexture = Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Textures\\Checkerboard.png");
     m_SpriteSheet = Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Game\\Textures\\RPGpack_sheet_2X.png");
@@ -65,8 +72,12 @@ void EditorLayer::OnDetach()
 void EditorLayer::OnUpdate(Timestep dt)
 {
     //Update 
-    m_CameraController.OnUpdate(dt);
+    if(m_ViewportFocused)
+        m_CameraController.OnUpdate(dt);
     fps = 1.0f/dt.GetSeconds();
+
+    //Update scene
+    m_ActiveScene->OnUpdate(dt);
 
     //stats
     Renderer2D::ResetStats();
@@ -78,14 +89,6 @@ void EditorLayer::OnUpdate(Timestep dt)
 
     Renderer2D::BeginScene(m_CameraController.GetCamera());
 
-
-    /* Renderer2D::DrawQuad({-0.5f, -0.5f}, {0.5f, 0.5f}, {1.0f, 0.0f, 0.0f, 1.0f}, (rot += 0.25f * dt));
-    Renderer2D::DrawQuad({0.5f, -0.5f}, {0.5f, 0.5f}, {0.0f, 0.0f, 1.0f, 1.0f});
-    Renderer2D::DrawQuad({-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, 1.0f, 0.0f, 1.0f});
-    Renderer2D::DrawQuad({0.5f, 0.5f}, {0.5f, 0.5f}, {1.0f, 1.0f, 1.0f, 1.0f}); */
-    /* Renderer2D::DrawQuad({0.0f, 0.0f, 0.1f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureStairs);
-    Renderer2D::DrawQuad({0.0f, 0.3f, 0.1f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureBarrel);
-    Renderer2D::DrawQuad({-1.5f, 0.5f, 0.1f}, {1.0f, 2.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureTree); */
     Renderer2D::DrawQuad({0.0f, 0.0f, 0.5f}, {5.0f, 5.0f}, m_SpriteSheet, {15.0f, 15.0f}, m_TextureBarrel, m_SquareColor, (rot2 -= 0.25f * dt));
     Renderer2D::DrawQuad({0.0f, 0.0f, 0.5f}, {5.0f, 5.0f}, m_SpriteSheet, {15.0f, 15.0f}, m_TextureBarrel);
 
@@ -101,18 +104,8 @@ void EditorLayer::OnUpdate(Timestep dt)
             }
             Renderer2D::DrawQuad({x - m_MapWidth / 2.0f, m_MapHeight - y - m_MapHeight / 2.0f, 0.01f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureBarrel);
         }
-    }
-
-    // Testing renderer stress       
+    }       
     Renderer2D::EndScene();
-
-   /*  Renderer2D::BeginScene(m_CameraController.GetCamera());
-    for(float y = -5.0f; y <= 5.0f; y += 0.1f){
-        for(float x = -5.0f; x <= 5.0f; x += 0.1f){
-            Renderer2D::DrawQuad( {x, y}, {0.085, 0.085}, m_SquareColor);
-    }
-    }
-    Renderer2D::EndScene(); */
     m_FrameBuffer->Unbind();
 }
 
@@ -214,6 +207,12 @@ void EditorLayer::OnImGuiRender()
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0,0});
     ImGui::Begin("Viewport");
+
+    m_ViewportFocused = ImGui::IsWindowFocused() && ImGui::IsWindowHovered();
+    
+    Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused);
+    
+
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     if(m_ViewportSize != *(glm::vec2*)&viewportPanelSize){
         m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y};

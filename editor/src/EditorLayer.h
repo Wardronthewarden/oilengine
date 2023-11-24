@@ -28,6 +28,8 @@ namespace oil{
 
         Ref<FrameBuffer> m_FrameBuffer;
 
+        Ref<Scene> m_ActiveScene;
+
         //Tile map
         std::unordered_map<char, Ref<SubTexture2D>> s_TextureMap;
         uint32_t m_MapWidth, m_MapHeight;
@@ -42,6 +44,8 @@ namespace oil{
 
         //Viewport
         glm::vec2 m_ViewportSize;
+
+        bool m_ViewportFocused = false;
 
     };
 }

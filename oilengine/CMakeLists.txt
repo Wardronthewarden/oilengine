@@ -28,6 +28,7 @@ add_library(oilengine STATIC
                 src/Platform/OpenGL/OpenGLRenderAPI.cpp
                 src/Platform/OpenGL/OpenGLShader.cpp
                 src/Platform/OpenGL/OpenGLTexture.cpp
+                src/oil/Scene/Scene.cpp
                 src/oil/Renderer/Renderer.cpp
                 src/oil/Renderer/Renderer2D.cpp
                 src/oil/Renderer/Buffer.cpp
@@ -69,8 +70,9 @@ target_include_directories(oilengine PUBLIC
         vendor/glfw/include
         vendor/GLAD/include
         vendor/imgui
-        vendor/glm
         vendor/stb_image/include
+        vendor/glm
+        vendor/EnTT/include
 )
 
 target_link_directories(${PROJECT_NAME} 

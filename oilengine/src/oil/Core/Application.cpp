@@ -63,9 +63,9 @@ void Application::OnEvent(Event &e)
     dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(OnWindowResize));
 
     for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();){
-        (*--it)->OnEvent(e);
         if (e.GetHandled())
             break;
+        (*--it)->OnEvent(e);
     }
 }
 void Application::PushLayer(Layer *layer)
