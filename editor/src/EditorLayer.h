@@ -29,6 +29,8 @@ namespace oil{
         Ref<FrameBuffer> m_FrameBuffer;
 
         Ref<Scene> m_ActiveScene;
+        Entity m_SquareEntity;
+        Entity m_CameraEntity;
 
         //Tile map
         std::unordered_map<char, Ref<SubTexture2D>> s_TextureMap;

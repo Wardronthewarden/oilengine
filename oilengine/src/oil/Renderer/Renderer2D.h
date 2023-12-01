@@ -3,15 +3,9 @@
 #include "OrthographicCamera.h"
 #include "Texture.h"
 #include "SubTexture2D.h"
+#include "oil/Renderer/Camera.h"
 
 namespace oil{
-
-    static glm::vec2 s_DefaultTexCoords[4] = { 
-        {0.0f, 0.0f},
-        {1.0f, 0.0f},
-        {1.0f, 1.0f},
-        {0.0f, 1.0f}
-    };
 
     class Renderer2D{
     public:
@@ -19,6 +13,7 @@ namespace oil{
         static void ShutDown();
 
         static void BeginScene(const OrthographicCamera& camera);
+        static void BeginScene(const Camera& camera, const glm::mat4& transform);
         static void EndScene();
         static void Flush();
 

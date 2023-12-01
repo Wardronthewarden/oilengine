@@ -22,6 +22,8 @@
 #include "oil/imGui/imGuiLayer.h"
 
 #include "oil/Scene/Scene.h"
+#include "oil/Scene/Entity.h"
+#include "oil/Scene/ScriptableEntity.h"
 #include "oil/Scene/Component.h"
 // ------Rendering-------------
 

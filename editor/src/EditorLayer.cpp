@@ -36,9 +36,11 @@ void EditorLayer::OnAttach()
     //Scene
     m_ActiveScene = CreateRef<Scene>();
 
-    auto square = m_ActiveScene->CreateEntity();
-    m_ActiveScene->Reg().emplace<TransformComponent>(square);
-    m_ActiveScene->Reg().emplace<SpriteRendererComponent>(square, glm::vec4{0.0f, 1.0f, 0.0f, 1.0f});
+
+    // Entity
+    m_SquareEntity = m_ActiveScene->CreateEntity("Square");
+    m_SquareEntity.AddComponent<SpriteRendererComponent>(glm::vec4{0.0f, 1.0f, 0.0f, 1.0f});
+
 
     //Textures
     m_DefaultTexture = Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Textures\\Checkerboard.png");
@@ -63,6 +65,31 @@ void EditorLayer::OnAttach()
 
     //Camera
     m_CameraController.SetZoomLevel(5.0f);
+
+    m_CameraEntity = m_ActiveScene->CreateEntity("Camera");
+    m_CameraEntity.AddComponent<CameraComponent>();
+
+    class TestScript : public ScriptableEntity{
+    public:
+        void OnCreate(){
+        }
+
+        void OnDestroy(){};
+
+        void OnUpdate(Timestep dt){
+            auto& transform = GetComponent<TransformComponent>().Transform;
+            float speed = 5.0f;
+            if (Input::IsKeyPressed(OIL_KEY_A))
+                transform[3][0] -= speed*dt;
+            if (Input::IsKeyPressed(OIL_KEY_D))
+                transform[3][0] += speed*dt;
+            if (Input::IsKeyPressed(OIL_KEY_W))
+                transform[3][1] += speed*dt;
+            if (Input::IsKeyPressed(OIL_KEY_S))
+                transform[3][1] -= speed*dt;
+        }
+    };
+    m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<TestScript>();
 }
 
 void EditorLayer::OnDetach()
@@ -71,13 +98,22 @@ void EditorLayer::OnDetach()
 
 void EditorLayer::OnUpdate(Timestep dt)
 {
+    if (FrameBufferSpecification spec = m_FrameBuffer->GetSpecification();
+        m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f &&
+        (spec.Width != m_ViewportSize.x || spec.Height != m_ViewportSize.y)){
+            m_FrameBuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+            m_CameraController.OnResize(m_ViewportSize.x, m_ViewportSize.y);
+
+            m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+        }
+
+
     //Update 
     if(m_ViewportFocused)
         m_CameraController.OnUpdate(dt);
     fps = 1.0f/dt.GetSeconds();
 
     //Update scene
-    m_ActiveScene->OnUpdate(dt);
 
     //stats
     Renderer2D::ResetStats();
@@ -87,25 +123,9 @@ void EditorLayer::OnUpdate(Timestep dt)
     RenderCommand::SetClearColor({0.1f, 0.1f, 0.1f, 1});
     RenderCommand::Clear();
 
-    Renderer2D::BeginScene(m_CameraController.GetCamera());
-
-    Renderer2D::DrawQuad({0.0f, 0.0f, 0.5f}, {5.0f, 5.0f}, m_SpriteSheet, {15.0f, 15.0f}, m_TextureBarrel, m_SquareColor, (rot2 -= 0.25f * dt));
-    Renderer2D::DrawQuad({0.0f, 0.0f, 0.5f}, {5.0f, 5.0f}, m_SpriteSheet, {15.0f, 15.0f}, m_TextureBarrel);
+    m_ActiveScene->OnUpdate(dt);
 
 
-    for (uint32_t y = 0; y < m_MapHeight; ++y){
-        for(uint32_t x = 0; x < m_MapWidth;  ++x){
-            char tileType = s_MapTiles[x + y * m_MapWidth];
-            Ref<SubTexture2D> texture;
-            if(s_TextureMap.find(tileType) != s_TextureMap.end()){
-                texture = s_TextureMap[tileType];
-                Renderer2D::DrawQuad({x - m_MapWidth / 2.0f, m_MapHeight - y - m_MapHeight / 2.0f, 0.0f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, texture);
-                continue;
-            }
-            Renderer2D::DrawQuad({x - m_MapWidth / 2.0f, m_MapHeight - y - m_MapHeight / 2.0f, 0.01f}, {1.0f, 1.0f}, m_SpriteSheet, {1.0f, 1.0f}, m_TextureBarrel);
-        }
-    }       
-    Renderer2D::EndScene();
     m_FrameBuffer->Unbind();
 }
 
@@ -182,7 +202,23 @@ void EditorLayer::OnImGuiRender()
     }
     ImGui::Begin("Stats");
 
+
     auto stats = Renderer2D::GetStats();
+
+    if (m_SquareEntity){
+        auto& tag = m_SquareEntity.GetComponent<TagComponent>().Tag;
+        ImGui::Text("%s", tag.c_str());
+        auto& squareColor = m_SquareEntity.GetComponent<SpriteRendererComponent>().Color;
+        ImGui::ColorEdit4("Square Color", glm::value_ptr(squareColor));
+
+        ImGui::Separator();
+    }
+
+    auto& camera = m_CameraEntity.GetComponent<CameraComponent>().Camera;
+    float orthoSize = camera.GetOrthographicSize();
+    if(ImGui::DragFloat("Camera Ortho Size", &orthoSize)){
+        camera.SetOrthographicSize(orthoSize);
+    };
 
     ImGui::Text("General Stats:");
     ImGui::Text("FPS: %.2f", fps);
@@ -195,6 +231,9 @@ void EditorLayer::OnImGuiRender()
     ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
     ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
 
+
+    ImGui::Separator();
+    ImGui::Text("Profiling results: ");
     for (auto& result : m_ProfileResults){
         char label[50];
         strcpy(label, "%.3fms  | ");
@@ -210,16 +249,12 @@ void EditorLayer::OnImGuiRender()
 
     m_ViewportFocused = ImGui::IsWindowFocused() && ImGui::IsWindowHovered();
     
-    Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused);
     
+    Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused);
 
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-    if(m_ViewportSize != *(glm::vec2*)&viewportPanelSize){
-        m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y};
-        m_FrameBuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+    m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y};
 
-        m_CameraController.OnResize(viewportPanelSize.x, viewportPanelSize.y);
-    }
 
     uint32_t textureID = m_FrameBuffer->GetColorAttachmentRendererID();
     ImGui::Image((void*)textureID, ImVec2{m_ViewportSize.x, m_ViewportSize.y}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });

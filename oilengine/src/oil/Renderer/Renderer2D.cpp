@@ -43,7 +43,7 @@ namespace oil{
 
     static Renderer2DData s_RenderData;
     static size_t quadVertexCount = 4;
-    static glm::vec2 texCoords[4] = {
+    static glm::vec2 defaultTexCoords[4] = {
         {0.0f, 0.0f},
         {1.0f, 0.0f},
         {1.0f, 1.0f},
@@ -54,7 +54,7 @@ namespace oil{
 
         s_RenderData.QuadVertexArray = VertexArray::Create();
     
-    OIL_INFO("Current path is: {0}", std::filesystem::current_path());
+    OIL_INFO("Current working directory is: {0}", std::filesystem::current_path());
 
     s_RenderData.QuadVertexBuffer = VertexBuffer::Create(s_RenderData.MaxVertices * sizeof(QuadVertex));
     s_RenderData.QuadVertexBuffer->SetLayout({
@@ -118,8 +118,18 @@ namespace oil{
 
         StartNewBatch();
     }
-    void Renderer2D::EndScene(){
-         uint32_t dataSize = (uint8_t*)s_RenderData.QuadVertexBufferPtr - (uint8_t*)s_RenderData.QuadVertexBufferBase;
+    void Renderer2D::BeginScene(const Camera &camera, const glm::mat4& transform)
+    {
+        glm::mat4 VPmat = camera.GetProjection() * glm::inverse(transform);
+
+        s_RenderData.TextureShader->Bind();
+        s_RenderData.TextureShader->SetMat4("u_VPMat", VPmat);
+
+        StartNewBatch();
+    }
+    void Renderer2D::EndScene()
+    {
+        uint32_t dataSize = (uint8_t *)s_RenderData.QuadVertexBufferPtr - (uint8_t *)s_RenderData.QuadVertexBufferBase;
         s_RenderData.QuadVertexBuffer->SetData(s_RenderData.QuadVertexBufferBase, dataSize);
 
         Flush();
@@ -157,7 +167,7 @@ namespace oil{
         for(size_t i = 0; i < quadVertexCount; ++i){
             s_RenderData.QuadVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
             s_RenderData.QuadVertexBufferPtr->Color = color;
-            s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[i];
+            s_RenderData.QuadVertexBufferPtr->TexCoord = defaultTexCoords[i];
             s_RenderData.QuadVertexBufferPtr->TexIndex = texIndex;
             ++s_RenderData.QuadVertexBufferPtr;
         }
@@ -170,6 +180,44 @@ namespace oil{
 
     void Renderer2D::DrawQuad(const glm::mat4 &transform, const Ref<Texture2D> &texture, const glm::vec2 &tilingFactor, const Ref<SubTexture2D> &subTexture, const glm::vec4 &color)
     {
+        const glm::vec2 *texCoords;
+        if (subTexture)
+            texCoords = subTexture->GetTexCoords();
+        else
+            texCoords = defaultTexCoords;
+        
+        if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
+            EndScene();
+            StartNewBatch();
+        }
+        
+        float textureIndex = 0.0f;
+
+        for (uint32_t i = 1; i< s_RenderData.TextureSlotIndex; ++i){
+            if (*s_RenderData.TextureSlots[i].get() == *texture.get()){
+                textureIndex = (float)i;
+                break;
+            };
+        }
+        
+        if (textureIndex == 0.0f){
+            textureIndex = (float)s_RenderData.TextureSlotIndex;
+            s_RenderData.TextureSlots[s_RenderData.TextureSlotIndex] = texture;
+            ++s_RenderData.TextureSlotIndex;
+        }
+
+        for(size_t i = 0; i < quadVertexCount; ++i){
+            s_RenderData.QuadVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
+            s_RenderData.QuadVertexBufferPtr->Color = color;
+            s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[i];
+            s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
+            ++s_RenderData.QuadVertexBufferPtr;
+        }
+
+        s_RenderData.QuadIndexCount +=6;
+
+        //statistics
+        s_RenderData.stats.QuadCount++;
     }
 
     void Renderer2D::DrawQuad(const glm::vec2 &position, const glm::vec2 &size, const glm::vec4 &color, float rotation)
@@ -199,32 +247,7 @@ namespace oil{
     }
 
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, const glm::vec2& tilingFactor, const Ref<SubTexture2D>& subTexture, const glm::vec4& color, float rotation){
-        const glm::vec2 *texCoords;
-        if (subTexture)
-            texCoords = subTexture->GetTexCoords();
-        else
-            texCoords = s_DefaultTexCoords;
-        
-        if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
-            EndScene();
-            StartNewBatch();
-        }
-        
-        float textureIndex = 0.0f;
-
-        for (uint32_t i = 1; i< s_RenderData.TextureSlotIndex; ++i){
-            if (*s_RenderData.TextureSlots[i].get() == *texture.get()){
-                textureIndex = (float)i;
-                break;
-            };
-        }
-
-        if (textureIndex == 0.0f){
-            textureIndex = (float)s_RenderData.TextureSlotIndex;
-            s_RenderData.TextureSlots[s_RenderData.TextureSlotIndex] = texture;
-            ++s_RenderData.TextureSlotIndex;
-        }
-
+    
         glm::mat4 transform;
          if(rotation == 0.0f){
             transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
@@ -232,34 +255,7 @@ namespace oil{
             transform = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f) * glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(0,0,1)), {size.x, size.y, 1.0f});
         }
 
-        s_RenderData.QuadVertexBufferPtr->Position =  transform * s_RenderData.QuadVertexPositions[0];
-        s_RenderData.QuadVertexBufferPtr->Color = color;
-        s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[0];
-        s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
-        ++s_RenderData.QuadVertexBufferPtr;
-        
-        s_RenderData.QuadVertexBufferPtr->Position =  transform * s_RenderData.QuadVertexPositions[1];
-        s_RenderData.QuadVertexBufferPtr->Color = color;
-        s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[1];
-        s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
-        ++s_RenderData.QuadVertexBufferPtr;
-        
-        s_RenderData.QuadVertexBufferPtr->Position =  transform * s_RenderData.QuadVertexPositions[2];
-        s_RenderData.QuadVertexBufferPtr->Color = color;
-        s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[2];
-        s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
-        ++s_RenderData.QuadVertexBufferPtr;
-        
-        s_RenderData.QuadVertexBufferPtr->Position =  transform * s_RenderData.QuadVertexPositions[3];
-        s_RenderData.QuadVertexBufferPtr->Color = color;
-        s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[3];
-        s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
-        ++s_RenderData.QuadVertexBufferPtr;
-
-        s_RenderData.QuadIndexCount +=6;
-
-        //statistics
-        s_RenderData.stats.QuadCount++;
+        DrawQuad(transform, texture, tilingFactor, subTexture, color);
     }
     void Renderer2D::ResetStats()
     {

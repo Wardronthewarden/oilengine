@@ -29,6 +29,8 @@ add_library(oilengine STATIC
                 src/Platform/OpenGL/OpenGLShader.cpp
                 src/Platform/OpenGL/OpenGLTexture.cpp
                 src/oil/Scene/Scene.cpp
+                src/oil/Scene/SceneCamera.cpp
+                src/oil/Scene/Entity.cpp
                 src/oil/Renderer/Renderer.cpp
                 src/oil/Renderer/Renderer2D.cpp
                 src/oil/Renderer/Buffer.cpp
