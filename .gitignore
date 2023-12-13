@@ -67,6 +67,3 @@ build/
 
 # Initialization files
 *.ini
-
-# Third party
-oilengine/vendor/
