@@ -8,6 +8,7 @@ add_subdirectory(vendor/glfw)
 add_subdirectory(vendor/GLAD)
 add_subdirectory(vendor/imgui)
 add_subdirectory(vendor/stb_image)
+add_subdirectory(vendor/yaml-cpp)
 
 
 include_directories(${PROJECT_BINARY_DIR})
@@ -75,6 +76,7 @@ target_include_directories(oilengine PUBLIC
         vendor/stb_image/include
         vendor/glm
         vendor/EnTT/include
+        vendor/yaml-cpp/include
 )
 
 target_link_directories(${PROJECT_NAME} 

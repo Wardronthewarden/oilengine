@@ -17,6 +17,7 @@ include_directories(${ENGINE_DIR}/include
                     ${ENGINE_DIR}/vendor/glfw/include
                     ${ENGINE_DIR}/vendor/glm
                     ${ENGINE_DIR}/vendor/EnTT/include
+                    ${ENGINE_DIR}/vendor/yaml-cpp/include
 
 )
 

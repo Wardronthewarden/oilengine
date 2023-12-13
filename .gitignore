@@ -63,7 +63,7 @@ build/
 # Assets
 *.png
 *.jpg
-*.ttf
+
 
 # Initialization files
 *.ini
