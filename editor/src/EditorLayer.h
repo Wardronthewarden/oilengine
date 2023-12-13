@@ -1,7 +1,7 @@
 #pragma once
 
 #include <oil.h>
-
+#include "Panels/SceneHierarchyPanel.h"
 
 namespace oil{
     class EditorLayer : public Layer{
@@ -48,6 +48,9 @@ namespace oil{
         glm::vec2 m_ViewportSize;
 
         bool m_ViewportFocused = false;
+
+        //Panels
+        SceneHierarchyPanel m_SceneHierarchyPanel;
 
     };
 }

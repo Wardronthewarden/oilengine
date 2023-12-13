@@ -25,32 +25,38 @@ namespace oil{
         return entity;
     }
 
+    void Scene::DestroyEntity(Entity entity)
+    {
+        m_Registry.destroy(entity);
+    }
+
     void Scene::OnUpdate(Timestep dt)
     {
         //Update scripts
         {
             m_Registry.view<NativeScriptComponent>().each([=](auto entity, auto& nsc){
+            //TODO: move to OnScenePlay
                 if (!nsc.Instance){
-                    nsc.InstantiateFunction();
+                    nsc.Instance = nsc.InstantiateScript();
                     nsc.Instance->m_Entity = Entity{entity, this};
-                    nsc.OnCreateFunction(nsc.Instance);
+                    nsc.Instance->OnCreate();
                 }
 
-                nsc.OnUpdateFunction(nsc.Instance, dt);
+                nsc.Instance->OnUpdate(dt);
             });
         }
 
 
         // Render sprites
         Camera* mainCamera = nullptr;
-        glm::mat4* cameraTransform = nullptr;
+        glm::mat4 cameraTransform;
         auto view = m_Registry.view<TransformComponent, CameraComponent>();
         for (auto entity : view){
             auto [transform, camera] = view.get<TransformComponent, CameraComponent>(entity);
 
             if (camera.Primary){
                 mainCamera = &camera.Camera;
-                cameraTransform = &transform.Transform;
+                cameraTransform = transform.GetTransform();
                 break;
             }
         }
@@ -58,13 +64,13 @@ namespace oil{
 
         if (mainCamera){
 
-            Renderer2D::BeginScene(mainCamera->GetProjection(), *cameraTransform);
+            Renderer2D::BeginScene(mainCamera->GetProjection(), cameraTransform);
 
             auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
             for (auto entity : group){
                 auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
-                Renderer2D::DrawQuad(transform, sprite.Color);
+                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color);
             }
 
             Renderer2D::EndScene();
@@ -83,4 +89,36 @@ namespace oil{
             }
         }        
     }
+
+    template<typename T>
+    void Scene::OnComponentAdded(Entity entity, T& component){
+        static_assert(sizeof(T) == 0, "Invalid component type!");
+    }
+
+    template<>
+    void Scene::OnComponentAdded<TransformComponent>(Entity entity, TransformComponent& component){
+        
+    }
+
+    template<>
+    void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component){
+        component.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+        OIL_CORE_INFO("Camera added");
+    }
+
+    template<>
+    void Scene::OnComponentAdded<SpriteRendererComponent>(Entity entity, SpriteRendererComponent& component){
+
+    }
+    
+    template<>
+    void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component){
+
+    }
+    
+    template<>
+    void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component){
+
+    }
+    
 }

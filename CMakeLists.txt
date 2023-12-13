@@ -37,7 +37,10 @@ set_property(TARGET Client PROPERTY CXX_STANDARD 23)
 
 add_executable(Editor   editor/src/EditorApp.cpp
                         editor/src/EditorLayer.cpp
+                        editor/src/Panels/SceneHierarchyPanel.cpp
 )
+
+target_include_directories(Editor PUBLIC editor/src)
 
 set_property(TARGET Editor PROPERTY CXX_STANDARD 23)
 target_link_libraries(Editor PUBLIC oilengine)

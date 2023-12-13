@@ -11,9 +11,18 @@ namespace oil{
 
     void SceneCamera::SetOrthographic(float size, float nearClip, float farClip)
     {
+        m_ProjectionType = ProjectionType::Orthographic;
         m_OrthographicSize = size;
         m_OrthographicNear = nearClip;
         m_OrthographicFar = farClip;
+        RecalculateProjection();
+    }
+    void SceneCamera::SetPerspective(float verticalFov, float nearClip, float farClip)
+    {
+        m_ProjectionType = ProjectionType::Perspective;
+        m_PerspectiveFOV = verticalFov;
+        m_PerspectiveNear = nearClip;
+        m_PerspectiveFar = farClip;
         RecalculateProjection();
     }
     void SceneCamera::SetViewportSize(uint32_t width, uint32_t height)
@@ -24,10 +33,20 @@ namespace oil{
     }
     void SceneCamera::RecalculateProjection()
     {
-        float orthoLeft =  -m_OrthographicSize * 0.5 * m_AspectRatio;
-        float orthoRight =  m_OrthographicSize * 0.5 * m_AspectRatio;
-        float orthoBottom =  -m_OrthographicSize * 0.5;
-        float orthoTop =  m_OrthographicSize * 0.5;
-        m_Projection = glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, m_OrthographicNear, m_OrthographicFar);
+        float orthoLeft, orthoRight, orthoBottom, orthoTop;
+        switch(m_ProjectionType){
+            case ProjectionType::Orthographic:
+                orthoLeft =  -m_OrthographicSize * 0.5 * m_AspectRatio;
+                orthoRight =  m_OrthographicSize * 0.5 * m_AspectRatio;
+                orthoBottom =  -m_OrthographicSize * 0.5;
+                orthoTop =  m_OrthographicSize * 0.5;
+
+                m_Projection = glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, m_OrthographicNear, m_OrthographicFar);
+                break;
+            case ProjectionType::Perspective:
+                m_Projection = glm::perspective(m_PerspectiveFOV, m_AspectRatio, m_PerspectiveNear, m_PerspectiveFar);
+                break;
+
+        }
     }
 }

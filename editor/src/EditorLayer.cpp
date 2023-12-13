@@ -41,6 +41,9 @@ void EditorLayer::OnAttach()
     m_SquareEntity = m_ActiveScene->CreateEntity("Square");
     m_SquareEntity.AddComponent<SpriteRendererComponent>(glm::vec4{0.0f, 1.0f, 0.0f, 1.0f});
 
+    auto OtherSquare = m_ActiveScene->CreateEntity("Other Square");
+    OtherSquare.AddComponent<SpriteRendererComponent>(glm::vec4{1.0f, 0.0f, 0.0f, 1.0f});
+
 
     //Textures
     m_DefaultTexture = Texture2D::Create("C:\\dev\\c++\\oilengine\\application\\Assets\\Textures\\Checkerboard.png");
@@ -71,25 +74,24 @@ void EditorLayer::OnAttach()
 
     class TestScript : public ScriptableEntity{
     public:
-        void OnCreate(){
-        }
-
-        void OnDestroy(){};
 
         void OnUpdate(Timestep dt){
-            auto& transform = GetComponent<TransformComponent>().Transform;
+            auto& translation = GetComponent<TransformComponent>().Translation;
             float speed = 5.0f;
             if (Input::IsKeyPressed(OIL_KEY_A))
-                transform[3][0] -= speed*dt;
+                translation.x -= speed*dt;
             if (Input::IsKeyPressed(OIL_KEY_D))
-                transform[3][0] += speed*dt;
+                translation.x += speed*dt;
             if (Input::IsKeyPressed(OIL_KEY_W))
-                transform[3][1] += speed*dt;
+                translation.y += speed*dt;
             if (Input::IsKeyPressed(OIL_KEY_S))
-                transform[3][1] -= speed*dt;
+                translation.y -= speed*dt;
         }
     };
     m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<TestScript>();
+
+
+    m_SceneHierarchyPanel.SetContext(m_ActiveScene);
 }
 
 void EditorLayer::OnDetach()
@@ -181,12 +183,15 @@ void EditorLayer::OnImGuiRender()
 
     // Submit the DockSpace
     ImGuiIO& io = ImGui::GetIO();
+    ImGuiStyle& style = ImGui::GetStyle();
+    float minWinSizeX = style.WindowMinSize.x;
+    style.WindowMinSize.x = 370.0f;
     if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
     {
         ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
     }
-    
+    style.WindowMinSize.x = minWinSizeX;
 
     if (ImGui::BeginMenuBar())
     {
@@ -204,21 +209,6 @@ void EditorLayer::OnImGuiRender()
 
 
     auto stats = Renderer2D::GetStats();
-
-    if (m_SquareEntity){
-        auto& tag = m_SquareEntity.GetComponent<TagComponent>().Tag;
-        ImGui::Text("%s", tag.c_str());
-        auto& squareColor = m_SquareEntity.GetComponent<SpriteRendererComponent>().Color;
-        ImGui::ColorEdit4("Square Color", glm::value_ptr(squareColor));
-
-        ImGui::Separator();
-    }
-
-    auto& camera = m_CameraEntity.GetComponent<CameraComponent>().Camera;
-    float orthoSize = camera.GetOrthographicSize();
-    if(ImGui::DragFloat("Camera Ortho Size", &orthoSize)){
-        camera.SetOrthographicSize(orthoSize);
-    };
 
     ImGui::Text("General Stats:");
     ImGui::Text("FPS: %.2f", fps);
@@ -263,6 +253,7 @@ void EditorLayer::OnImGuiRender()
 
 
     ImGui::End();
+    m_SceneHierarchyPanel.OnImGuiRender();
     }
 }
 
