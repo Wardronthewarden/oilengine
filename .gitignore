@@ -63,6 +63,7 @@ build/
 # Assets
 *.png
 *.jpg
+*.oil
 
 
 # Initialization files

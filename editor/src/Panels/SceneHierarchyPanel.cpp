@@ -13,6 +13,7 @@ namespace oil{
     void SceneHierarchyPanel::SetContext(const Ref<Scene> &context)
     {
         m_Context = context;
+        m_SelectionContext = {};
     }
     void SceneHierarchyPanel::OnImGuiRender()
     {
@@ -26,7 +27,7 @@ namespace oil{
         if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
             m_SelectionContext = {};
 
-        ImGuiPopupFlags flags = ImGuiPopupFlags_NoOpenOverItems;
+        ImGuiPopupFlags flags = ImGuiPopupFlags_NoOpenOverItems | ImGuiPopupFlags_MouseButtonRight;
         if (ImGui::BeginPopupContextWindow(0, flags)){
             if (ImGui::MenuItem("Create Empty Entity"))
                 m_Context->CreateEntity("Empty Entity");
@@ -58,6 +59,24 @@ namespace oil{
             if (ImGui::BeginPopupContextItem()){
                 if (ImGui::MenuItem("Delete entity"))
                     entityDeleted = true;
+                
+                
+                if (ImGui::Button("Add Component"))
+                    ImGui::OpenPopup("AddComponent");
+
+                    if(ImGui::BeginPopup("AddComponent")){
+
+                        if (ImGui::MenuItem("Camera")){
+                            m_SelectionContext.AddComponent<CameraComponent>();
+                            ImGui::ClosePopupsExceptModals();
+                        }
+                        if (ImGui::MenuItem("Sprite Renderer")){
+                            m_SelectionContext.AddComponent<SpriteRendererComponent>();
+                            ImGui::ClosePopupsExceptModals();
+                        }
+                        ImGui::EndPopup();
+            
+                    }
                 
                 ImGui::EndPopup();
             }
@@ -167,7 +186,6 @@ namespace oil{
             if (ImGui::BeginPopup("ComponentSettings")){
                 if (ImGui::MenuItem("Remove Component"))
                     removeComponent = true;
-
 
 
                 ImGui::EndPopup();

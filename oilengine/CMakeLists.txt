@@ -21,6 +21,7 @@ add_library(oilengine STATIC
                 src/oil/imGui/imGuiBuild.cpp
                 src/oil/imGui/imGuiLayer.cpp
                 src/Platform/Windows/WindowsWindow.cpp
+                src/Platform/Windows/WindowsPlatformUtils.cpp
                 src/Platform/Windows/WindowsInput.cpp
                 src/Platform/OpenGL/OpenGLContext.cpp
                 src/Platform/OpenGL/OpenGLBuffer.cpp
@@ -30,6 +31,7 @@ add_library(oilengine STATIC
                 src/Platform/OpenGL/OpenGLShader.cpp
                 src/Platform/OpenGL/OpenGLTexture.cpp
                 src/oil/Scene/Scene.cpp
+                src/oil/Scene/SceneSerializer.cpp
                 src/oil/Scene/SceneCamera.cpp
                 src/oil/Scene/Entity.cpp
                 src/oil/Renderer/Renderer.cpp
@@ -84,4 +86,4 @@ target_link_directories(${PROJECT_NAME}
                                 PUBLIC vendor/glfw/src
 ) 
 
-target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 glad imgui opengl32 stb_img)
+target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 glad imgui opengl32 stb_img yaml-cpp)

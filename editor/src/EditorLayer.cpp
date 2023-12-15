@@ -7,21 +7,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "oil/Scene/SceneSerializer.h"
+#include "oil/Utils/PlatformUtils.h"
 
 namespace oil{
-
-static const char* s_MapTiles =
-"wwwwwwwwwwwwwwwwwwwwwwww"
-"wwwwwwwwwwwwwwwwwwwwwwww"
-"wwwwwdddddddddddddwwwwww"
-"wwwwwdddddddddddddwwwwww"
-"wwwwwdddddddddddddwwwwww"
-"wwwwwdddddddddddddwwwwww"
-"wwwwwdddddddddddddwwwwww"
-"wwwwwwwwwwwwwwwwwdwwwwww"
-"wwwwwwwwwwwwwwwwwdwwwwww"
-"wwwwwwwwwwwwwwwwwwwwwwww"
-;
 
 
 
@@ -36,6 +25,13 @@ void EditorLayer::OnAttach()
     //Scene
     m_ActiveScene = CreateRef<Scene>();
 
+    //Framebuffer
+    FrameBufferSpecification fbSpec;
+    fbSpec.Width = 1280;
+    fbSpec.Height = 720;
+    m_FrameBuffer = FrameBuffer::Create(fbSpec);
+
+#if 0
 
     // Entity
     m_SquareEntity = m_ActiveScene->CreateEntity("Square");
@@ -56,14 +52,6 @@ void EditorLayer::OnAttach()
     s_TextureMap['w'] = SubTexture2D::CreateFromCoords(m_SpriteSheet, {11, 11}, {128.0f, 128.0f});
     s_TextureMap['d'] = SubTexture2D::CreateFromCoords(m_SpriteSheet, {6, 11}, {128.0f, 128.0f});
 
-    m_MapWidth = 24;
-    m_MapHeight = strlen(s_MapTiles)/m_MapWidth;
-
-    //Framebuffer
-    FrameBufferSpecification fbSpec;
-    fbSpec.Width = 1280;
-    fbSpec.Height = 720;
-    m_FrameBuffer = FrameBuffer::Create(fbSpec);
 
 
     //Camera
@@ -90,8 +78,10 @@ void EditorLayer::OnAttach()
     };
     m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<TestScript>();
 
+#endif
 
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
+
 }
 
 void EditorLayer::OnDetach()
@@ -199,6 +189,19 @@ void EditorLayer::OnImGuiRender()
         {
             // Disabling fullscreen would allow the window to be moved to the front of other windows,
             // which we can't undo at the moment without finer window depth/z control.
+
+            if(ImGui::MenuItem("New", "Ctrl+N")){
+                NewScene();
+            }
+
+            if(ImGui::MenuItem("Open...", "Ctrl+O")){
+                    OpenScene();
+            }
+
+            if(ImGui::MenuItem("Save As...", "Ctrl+Shift+S")){
+                SaveSceneAs();
+            }
+
             if(ImGui::MenuItem("Exit")) Application::Get().CloseApplication();
             ImGui::EndMenu();
         }
@@ -260,6 +263,69 @@ void EditorLayer::OnImGuiRender()
 void EditorLayer::OnEvent(Event &event)
 {
     m_CameraController.OnEvent(event);
+
+    EventDispatcher dispatcher(event);
+    dispatcher.Dispatch<KeyPressedEvent>(OIL_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
 }
 
+bool EditorLayer::OnKeyPressed(KeyPressedEvent &e)
+{
+    //Shortcuts
+    if (e.GetRepeatCount() > 0)
+        return false;
+
+    bool controlPressed = Input::IsKeyPressed(OIL_KEY_LEFT_CONTROL) || Input::IsKeyPressed(OIL_KEY_RIGHT_CONTROL);
+    bool shiftPressed = Input::IsKeyPressed(OIL_KEY_LEFT_SHIFT) || Input::IsKeyPressed(OIL_KEY_RIGHT_SHIFT);
+
+    switch (e.GetKeyCode()){
+        case OIL_KEY_S:{
+            if (controlPressed && shiftPressed)
+                SaveSceneAs();
+            break;
+        }
+        
+        case OIL_KEY_N:{
+            if (controlPressed)
+                NewScene();
+            break;
+        }
+        
+        case OIL_KEY_O:{
+            if (controlPressed)
+                OpenScene();
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+void EditorLayer::NewScene()
+{
+    m_ActiveScene = CreateRef<Scene>();
+    m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+    m_SceneHierarchyPanel.SetContext(m_ActiveScene);
+}
+void EditorLayer::OpenScene()
+{
+    std::string filepath = FileDialogs::OpenFile("Oil Scene (*.oil)\0*.oil\0");
+
+        if(!filepath.empty()){
+            m_ActiveScene = CreateRef<Scene>();
+            m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+            m_SceneHierarchyPanel.SetContext(m_ActiveScene);
+        }
+
+    SceneSerializer serializer(m_ActiveScene);
+    serializer.Deserialize(filepath);
+}
+void EditorLayer::SaveSceneAs()
+{
+    std::string filepath = FileDialogs::SaveFile("Oil Scene (*.oil)\0*.oil\0");
+                
+        if(!filepath.empty()){
+            SceneSerializer serializer(m_ActiveScene);
+            serializer.Serialize(filepath);
+        }
+}
 }
