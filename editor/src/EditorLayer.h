@@ -58,5 +58,8 @@ namespace oil{
         //Panels
         SceneHierarchyPanel m_SceneHierarchyPanel;
 
+        //Controls
+        int m_GizmoType = -1;
+
     };
 }

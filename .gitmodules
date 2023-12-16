@@ -13,3 +13,6 @@
 [submodule "oilengine/vendor/yaml-cpp"]
 	path = oilengine/vendor/yaml-cpp
 	url = https://github.com/Wardronthewarden/yaml-cpp
+[submodule "oilengine/vendor/ImGuizmo"]
+	path = oilengine/vendor/ImGuizmo
+	url = https://github.com/Wardronthewarden/ImGuizmo

@@ -46,6 +46,8 @@ add_library(oilengine STATIC
                 src/oil/Renderer/RenderCommand.cpp
                 src/oil/Renderer/OrthographicCamera.cpp
                 src/oil/Renderer/OrthographicCameraController.cpp
+                src/oil/Math/Math.cpp
+                vendor/ImGuizmo/ImGuizmo.cpp
 
 )
 
@@ -79,6 +81,7 @@ target_include_directories(oilengine PUBLIC
         vendor/glm
         vendor/EnTT/include
         vendor/yaml-cpp/include
+        vendor/ImGuizmo
 )
 
 target_link_directories(${PROJECT_NAME} 

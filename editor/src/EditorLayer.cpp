@@ -9,6 +9,9 @@
 
 #include "oil/Scene/SceneSerializer.h"
 #include "oil/Utils/PlatformUtils.h"
+#include "oil/Math/Math.h"
+
+#include "ImGuizmo.h"
 
 namespace oil{
 
@@ -79,6 +82,7 @@ void EditorLayer::OnAttach()
     m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<TestScript>();
 
 #endif
+    m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
 
@@ -240,10 +244,10 @@ void EditorLayer::OnImGuiRender()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0,0});
     ImGui::Begin("Viewport");
 
-    m_ViewportFocused = ImGui::IsWindowFocused() && ImGui::IsWindowHovered();
+    m_ViewportFocused = !ImGui::IsWindowFocused() && !ImGui::IsWindowHovered();
     
     
-    Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused);
+    Application::Get().GetImGuiLayer()->SetBlockEvents(m_ViewportFocused);
 
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y};
@@ -251,6 +255,51 @@ void EditorLayer::OnImGuiRender()
 
     uint32_t textureID = m_FrameBuffer->GetColorAttachmentRendererID();
     ImGui::Image((void*)textureID, ImVec2{m_ViewportSize.x, m_ViewportSize.y}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+    //Gizmos
+    Entity selectedEntity = m_SceneHierarchyPanel.GetSelectedEntity();
+    if (selectedEntity && m_GizmoType != -1){
+        ImGuizmo::SetOrthographic(false);
+        ImGuizmo::SetDrawlist();
+
+        float windowWidth = (float)ImGui::GetWindowWidth();
+        float windowHeight = (float)ImGui::GetWindowHeight();
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+
+        // Get camera; TEMPORARY
+        auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
+        const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
+
+        const glm::mat4& cameraProjection = camera.GetProjection();
+        glm::mat4 cameraView = glm::inverse(cameraEntity.GetComponent<TransformComponent>().GetTransform());
+
+        // Entity transform
+        auto& tc = selectedEntity.GetComponent<TransformComponent>();
+        glm::mat4 transform = tc.GetTransform();
+
+        // Snapping
+        bool snap = Input::IsKeyPressed(OIL_KEY_LEFT_CONTROL);
+        float snapValue = 0.5f;
+        if(m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+            snapValue = 5.0f;
+
+        float snapValues[3] = {snapValue, snapValue, snapValue};
+
+
+        ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+        if(ImGuizmo::IsUsing()){
+            glm::vec3 translation, rotation, scale;
+            Math::DecomposeTransform(transform, translation, rotation, scale);
+
+            glm::vec3 deltaRotation = rotation - tc.Rotation;
+            tc.Translation = translation;
+            tc.Rotation += deltaRotation;
+            tc.Scale = scale;
+
+        }
+    }
+
     ImGui::End();
     ImGui::PopStyleVar();
 
@@ -293,6 +342,23 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent &e)
         case OIL_KEY_O:{
             if (controlPressed)
                 OpenScene();
+            break;
+        }
+
+        case OIL_KEY_Q:{
+            m_GizmoType = -1;
+            break;
+        }
+        case OIL_KEY_W:{
+            m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+            break;
+        }
+        case OIL_KEY_E:{
+            m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+            break;
+        }
+        case OIL_KEY_R:{
+            m_GizmoType = ImGuizmo::OPERATION::SCALE;
             break;
         }
 
