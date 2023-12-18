@@ -23,6 +23,10 @@ namespace oil{
         bool IsVSync() const override;
 
         inline virtual void* GetNativeWindow() const { return m_Window; }
+
+        virtual void SetCursorMode(CursorMode mode) override;
+        virtual void SetCursorPosition(double x, double y) override;
+
     private:
         virtual void Init(const WindowProps& props);
         virtual void Shutdown();

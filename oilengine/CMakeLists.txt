@@ -45,6 +45,7 @@ add_library(oilengine STATIC
                 src/oil/Renderer/RenderAPI.cpp
                 src/oil/Renderer/RenderCommand.cpp
                 src/oil/Renderer/OrthographicCamera.cpp
+                src/oil/Renderer/EditorCamera.cpp
                 src/oil/Renderer/OrthographicCameraController.cpp
                 src/oil/Math/Math.cpp
                 vendor/ImGuizmo/ImGuizmo.cpp

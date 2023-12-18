@@ -28,8 +28,14 @@ void EditorLayer::OnAttach()
     //Scene
     m_ActiveScene = CreateRef<Scene>();
 
+    m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+    m_SceneHierarchyPanel.SetContext(m_ActiveScene);
+    SceneSerializer serializer(m_ActiveScene);
+    serializer.Deserialize("Assets/Scenes/greenCube.oil");
+
     //Framebuffer
     FrameBufferSpecification fbSpec;
+    fbSpec.Attachments = { FrameBufferTextureFormat::RGBA8, FrameBufferTextureFormat::R_INT, FrameBufferTextureFormat::Depth };
     fbSpec.Width = 1280;
     fbSpec.Height = 720;
     m_FrameBuffer = FrameBuffer::Create(fbSpec);
@@ -63,6 +69,9 @@ void EditorLayer::OnAttach()
     m_CameraEntity = m_ActiveScene->CreateEntity("Camera");
     m_CameraEntity.AddComponent<CameraComponent>();
 
+
+    
+
     class TestScript : public ScriptableEntity{
     public:
 
@@ -85,6 +94,8 @@ void EditorLayer::OnAttach()
     m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
+    m_EditorCamera = EditorCamera(30.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+
 
 }
 
@@ -99,15 +110,19 @@ void EditorLayer::OnUpdate(Timestep dt)
         (spec.Width != m_ViewportSize.x || spec.Height != m_ViewportSize.y)){
             m_FrameBuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
             m_CameraController.OnResize(m_ViewportSize.x, m_ViewportSize.y);
+            m_EditorCamera.SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
 
             m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
         }
 
 
     //Update 
-    if(m_ViewportFocused)
+    if(m_ViewportFocused){
         m_CameraController.OnUpdate(dt);
+        m_EditorCamera.OnUpdate(dt);
+    }
     fps = 1.0f/dt.GetSeconds();
+
 
     //Update scene
 
@@ -119,8 +134,25 @@ void EditorLayer::OnUpdate(Timestep dt)
     RenderCommand::SetClearColor({0.1f, 0.1f, 0.1f, 1});
     RenderCommand::Clear();
 
-    m_ActiveScene->OnUpdate(dt);
+    // Clear entity ID attachment
+    m_FrameBuffer->ClearAttachment(1, -1);
 
+    //m_ActiveScene->OnUpdate(dt);
+    m_ActiveScene->OnUpdateEditor(dt, m_EditorCamera);
+
+    auto [mx, my] = ImGui::GetMousePos();
+    mx -= m_ViewportBounds[0].x;
+    my -= m_ViewportBounds[0].y;
+    glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+    my = viewportSize.y -my;
+
+    int mouseX = (int)mx;
+    int mouseY = (int)my;
+
+    if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y){
+        int pixelData = m_FrameBuffer->ReadPixel(1, mouseX, mouseY);
+        m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.get());
+    }
 
     m_FrameBuffer->Unbind();
 }
@@ -199,7 +231,7 @@ void EditorLayer::OnImGuiRender()
             }
 
             if(ImGui::MenuItem("Open...", "Ctrl+O")){
-                    OpenScene();
+                OpenScene();
             }
 
             if(ImGui::MenuItem("Save As...", "Ctrl+Shift+S")){
@@ -214,6 +246,11 @@ void EditorLayer::OnImGuiRender()
     }
     ImGui::Begin("Stats");
 
+    std::string name = "None";
+    if(m_HoveredEntity){
+        name = m_HoveredEntity.GetComponent<TagComponent>().Tag;
+    }
+    ImGui::Text("Hovered entity: %s", name.c_str());
 
     auto stats = Renderer2D::GetStats();
 
@@ -244,17 +281,24 @@ void EditorLayer::OnImGuiRender()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0,0});
     ImGui::Begin("Viewport");
 
-    m_ViewportFocused = !ImGui::IsWindowFocused() && !ImGui::IsWindowHovered();
+    // Calculate viewport bounds
+    auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+    auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+    auto viewportOffset = ImGui::GetWindowPos();
+    m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+    m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+
+    m_ViewportFocused = ImGui::IsWindowFocused() || ImGui::IsWindowHovered();    
     
-    
-    Application::Get().GetImGuiLayer()->SetBlockEvents(m_ViewportFocused);
+    Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused);
 
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y};
 
 
-    uint32_t textureID = m_FrameBuffer->GetColorAttachmentRendererID();
+    uint32_t textureID = m_FrameBuffer->GetColorAttachmentRendererID(0);
     ImGui::Image((void*)textureID, ImVec2{m_ViewportSize.x, m_ViewportSize.y}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
 
     //Gizmos
     Entity selectedEntity = m_SceneHierarchyPanel.GetSelectedEntity();
@@ -266,12 +310,15 @@ void EditorLayer::OnImGuiRender()
         float windowHeight = (float)ImGui::GetWindowHeight();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
 
-        // Get camera; TEMPORARY
-        auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
-        const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
+        // Runtime camera
+        //auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
+        //const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
+        //const glm::mat4& cameraProjection = camera.GetProjection();
+        //glm::mat4 cameraView = glm::inverse(cameraEntity.GetComponent<TransformComponent>().GetTransform());
 
-        const glm::mat4& cameraProjection = camera.GetProjection();
-        glm::mat4 cameraView = glm::inverse(cameraEntity.GetComponent<TransformComponent>().GetTransform());
+        // Editor camera
+        const glm::mat4& cameraProjection = m_EditorCamera.GetProjection();
+        glm::mat4 cameraView = m_EditorCamera.GetViewMatrix();
 
         // Entity transform
         auto& tc = selectedEntity.GetComponent<TransformComponent>();
@@ -312,9 +359,13 @@ void EditorLayer::OnImGuiRender()
 void EditorLayer::OnEvent(Event &event)
 {
     m_CameraController.OnEvent(event);
+    m_EditorCamera.OnEvent(event);
 
     EventDispatcher dispatcher(event);
     dispatcher.Dispatch<KeyPressedEvent>(OIL_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
+    dispatcher.Dispatch<KeyReleasedEvent>(OIL_BIND_EVENT_FN(EditorLayer::OnKeyReleased));
+    dispatcher.Dispatch<MouseButtonPressedEvent>(OIL_BIND_EVENT_FN(EditorLayer::OnMousePressed));
+    dispatcher.Dispatch<MouseButtonReleasedEvent>(OIL_BIND_EVENT_FN(EditorLayer::OnMouseReleased));
 }
 
 bool EditorLayer::OnKeyPressed(KeyPressedEvent &e)
@@ -323,48 +374,126 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent &e)
     if (e.GetRepeatCount() > 0)
         return false;
 
-    bool controlPressed = Input::IsKeyPressed(OIL_KEY_LEFT_CONTROL) || Input::IsKeyPressed(OIL_KEY_RIGHT_CONTROL);
-    bool shiftPressed = Input::IsKeyPressed(OIL_KEY_LEFT_SHIFT) || Input::IsKeyPressed(OIL_KEY_RIGHT_SHIFT);
+    m_ControlPressed = Input::IsKeyPressed(OIL_KEY_LEFT_CONTROL) || Input::IsKeyPressed(OIL_KEY_RIGHT_CONTROL);
+    m_ShiftPressed = Input::IsKeyPressed(OIL_KEY_LEFT_SHIFT) || Input::IsKeyPressed(OIL_KEY_RIGHT_SHIFT);
+    m_AltPressed = Input::IsKeyPressed(OIL_KEY_LEFT_ALT);
 
     switch (e.GetKeyCode()){
         case OIL_KEY_S:{
-            if (controlPressed && shiftPressed)
+            if (m_ControlPressed && m_ShiftPressed)
                 SaveSceneAs();
             break;
         }
         
         case OIL_KEY_N:{
-            if (controlPressed)
+            if (m_ControlPressed)
                 NewScene();
             break;
         }
         
         case OIL_KEY_O:{
-            if (controlPressed)
+            if (m_ControlPressed)
                 OpenScene();
             break;
         }
 
         case OIL_KEY_Q:{
-            m_GizmoType = -1;
+            if (!Input::IsMouseButtonPressed(OIL_MOUSE_BUTTON_RIGHT))
+                m_GizmoType = -1;
             break;
         }
         case OIL_KEY_W:{
-            m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+            if (!Input::IsMouseButtonPressed(OIL_MOUSE_BUTTON_RIGHT))
+                m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
             break;
         }
         case OIL_KEY_E:{
-            m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+            if (!Input::IsMouseButtonPressed(OIL_MOUSE_BUTTON_RIGHT))
+                m_GizmoType = ImGuizmo::OPERATION::ROTATE;
             break;
         }
         case OIL_KEY_R:{
-            m_GizmoType = ImGuizmo::OPERATION::SCALE;
+            if (!Input::IsMouseButtonPressed(OIL_MOUSE_BUTTON_RIGHT))
+                m_GizmoType = ImGuizmo::OPERATION::SCALE;
+            break;
+        }
+
+        case OIL_KEY_F:{
+            Entity selectedEntity = m_SceneHierarchyPanel.GetSelectedEntity();
+            if (selectedEntity) {
+                if (selectedEntity.HasComponent<TransformComponent>()){
+                    m_EditorCamera.SetFocalPoint(selectedEntity.GetComponent<TransformComponent>().Translation);
+                    m_EditorCamera.OrbitAroundFocalPoint();
+                }
+            }
             break;
         }
 
         default:
             break;
     }
+    return false;
+}
+bool EditorLayer::OnKeyReleased(KeyReleasedEvent &e)
+{
+    m_ControlPressed = Input::IsKeyPressed(OIL_KEY_LEFT_CONTROL) || Input::IsKeyPressed(OIL_KEY_RIGHT_CONTROL);
+    m_ShiftPressed = Input::IsKeyPressed(OIL_KEY_LEFT_SHIFT) || Input::IsKeyPressed(OIL_KEY_RIGHT_SHIFT);
+    m_AltPressed = Input::IsKeyPressed(OIL_KEY_LEFT_ALT);
+    return false;
+}
+bool EditorLayer::OnMousePressed(MouseButtonPressedEvent &e)
+{
+    if (m_ViewportFocused){
+        switch (e.GetMouseButton()){
+            case OIL_MOUSE_BUTTON_RIGHT:{
+                m_EditorCamera.SetInitialMousePosition({Input::GetMouseX(), Input::GetMouseY()});
+                Application::Get().GetWindow().SetCursorMode(CursorMode::CursorDisabled);
+                break;
+            }
+            case OIL_MOUSE_BUTTON_LEFT:{
+                if (m_AltPressed){
+                    m_EditorCamera.SetInitialMousePosition({Input::GetMouseX(), Input::GetMouseY()});
+                    Application::Get().GetWindow().SetCursorMode(CursorMode::CursorDisabled);
+                } else {
+                    if (!ImGuizmo::IsOver())
+                        m_SceneHierarchyPanel.SetSelectedEntity(m_HoveredEntity);
+                }
+                break;
+            }
+            case OIL_MOUSE_BUTTON_MIDDLE:{
+                if (m_AltPressed){
+                    m_EditorCamera.SetInitialMousePosition({Input::GetMouseX(), Input::GetMouseY()});
+                    Application::Get().GetWindow().SetCursorMode(CursorMode::CursorDisabled);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+
+    }
+    return true;
+}
+bool EditorLayer::OnMouseReleased(MouseButtonReleasedEvent &e)
+{
+    switch (e.GetMouseButton()){
+        case OIL_MOUSE_BUTTON_RIGHT:{
+            Application::Get().GetWindow().SetCursorMode(CursorMode::CursorNormal);
+            break;
+        }
+        case OIL_MOUSE_BUTTON_LEFT:{
+            Application::Get().GetWindow().SetCursorMode(CursorMode::CursorNormal);
+            break;
+        }
+        case OIL_MOUSE_BUTTON_MIDDLE:{
+            Application::Get().GetWindow().SetCursorMode(CursorMode::CursorNormal);
+            break;
+        }
+        default:
+            break;
+
+    }
+    return true;
 }
 void EditorLayer::NewScene()
 {

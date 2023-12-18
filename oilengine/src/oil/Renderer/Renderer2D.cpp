@@ -16,6 +16,9 @@ namespace oil{
         glm::vec4 Color;
         glm::vec2 TexCoord;
         float TexIndex;
+
+        // Editor
+        int EntityID = 0;
     };
 
     struct Renderer2DData{
@@ -61,7 +64,8 @@ namespace oil{
             {ShaderDataType::Float3, "a_Position"},
             {ShaderDataType::Float4, "a_Color"},
             {ShaderDataType::Float2, "a_Texcoord"},
-            {ShaderDataType::Float, "a_TexIndex"}
+            {ShaderDataType::Float, "a_TexIndex"},
+            {ShaderDataType::Int, "a_EntityID"}
 });
     s_RenderData.QuadVertexArray->AddVertexBuffer(s_RenderData.QuadVertexBuffer);
 
@@ -118,7 +122,16 @@ namespace oil{
 
         StartNewBatch();
     }
-    void Renderer2D::BeginScene(const Camera &camera, const glm::mat4& transform)
+    void Renderer2D::BeginScene(const EditorCamera &camera)
+    {
+        glm::mat4 VPmat = camera.GetVPMatrix();
+
+        s_RenderData.TextureShader->Bind();
+        s_RenderData.TextureShader->SetMat4("u_VPMat", VPmat);
+
+        StartNewBatch();
+    }
+    void Renderer2D::BeginScene(const Camera &camera, const glm::mat4 &transform)
     {
         glm::mat4 VPmat = camera.GetProjection() * glm::inverse(transform);
 
@@ -155,7 +168,7 @@ namespace oil{
         s_RenderData.TextureSlotIndex = 1;
     }
 
-    void Renderer2D::DrawQuad(const glm::mat4 &transform, const glm::vec4 &color)
+    void Renderer2D::DrawQuad(const glm::mat4 &transform, const glm::vec4 &color, int entityID)
     {
         if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
             EndScene();
@@ -169,6 +182,7 @@ namespace oil{
             s_RenderData.QuadVertexBufferPtr->Color = color;
             s_RenderData.QuadVertexBufferPtr->TexCoord = defaultTexCoords[i];
             s_RenderData.QuadVertexBufferPtr->TexIndex = texIndex;
+            s_RenderData.QuadVertexBufferPtr->EntityID = entityID;
             ++s_RenderData.QuadVertexBufferPtr;
         }
 
@@ -178,7 +192,7 @@ namespace oil{
         s_RenderData.stats.QuadCount++;
     }
 
-    void Renderer2D::DrawQuad(const glm::mat4 &transform, const Ref<Texture2D> &texture, const glm::vec2 &tilingFactor, const Ref<SubTexture2D> &subTexture, const glm::vec4 &color)
+    void Renderer2D::DrawQuad(const glm::mat4 &transform, const Ref<Texture2D> &texture, const glm::vec2 &tilingFactor, const Ref<SubTexture2D> &subTexture, const glm::vec4 &color, int entityID)
     {
         const glm::vec2 *texCoords;
         if (subTexture)
@@ -211,6 +225,7 @@ namespace oil{
             s_RenderData.QuadVertexBufferPtr->Color = color;
             s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[i];
             s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
+            s_RenderData.QuadVertexBufferPtr->EntityID = entityID;
             ++s_RenderData.QuadVertexBufferPtr;
         }
 
@@ -256,6 +271,10 @@ namespace oil{
         }
 
         DrawQuad(transform, texture, tilingFactor, subTexture, color);
+    }
+    void Renderer2D::DrawSprite(const glm::mat4 &transform, SpriteRendererComponent &src, int entityID)
+    {
+        DrawQuad(transform, src.Color, entityID);
     }
     void Renderer2D::ResetStats()
     {

@@ -29,7 +29,33 @@ namespace oil{
         Shutdown();
     }
 
-    void WindowsWindow::Init(const WindowProps& props){
+    void WindowsWindow::SetCursorMode(CursorMode mode)
+    {
+        switch (mode){
+            case CursorMode::CursorNormal:{
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                break;
+            }
+            case CursorMode::CursorHidden:{
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                break;
+            }
+            case CursorMode::CursorDisabled:{
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    void WindowsWindow::SetCursorPosition(double x, double y)
+    {
+        glfwSetCursorPos(m_Window, x, y);
+    }
+
+    void WindowsWindow::Init(const WindowProps &props)
+    {
         m_Data.Title = props.Title;
         m_Data.Width = props.Width;
         m_Data.Height = props.Height;
@@ -129,7 +155,6 @@ namespace oil{
             MouseMovedEvent event((float)xPos, (float)yPos);
             data.EventCallback(event);
         });
-
     }
 
     void WindowsWindow::Shutdown(){

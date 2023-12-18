@@ -2,6 +2,7 @@
 
 #include <oil.h>
 #include "Panels/SceneHierarchyPanel.h"
+#include "oil/Renderer/EditorCamera.h"
 
 namespace oil{
     class EditorLayer : public Layer{
@@ -17,6 +18,9 @@ namespace oil{
         virtual void OnEvent(Event& event) override;
     private:
         bool OnKeyPressed(KeyPressedEvent& e);
+        bool OnKeyReleased(KeyReleasedEvent& e);
+        bool OnMousePressed(MouseButtonPressedEvent& e);
+        bool OnMouseReleased(MouseButtonReleasedEvent& e);
 
         void NewScene();
         void OpenScene();
@@ -52,14 +56,18 @@ namespace oil{
 
         //Viewport
         glm::vec2 m_ViewportSize;
+        EditorCamera m_EditorCamera;
+        glm::vec2 m_ViewportBounds[2];
 
         bool m_ViewportFocused = false;
+        Entity m_HoveredEntity;
 
         //Panels
         SceneHierarchyPanel m_SceneHierarchyPanel;
 
         //Controls
         int m_GizmoType = -1;
+        bool m_AltPressed = false, m_ControlPressed = false, m_ShiftPressed = false;
 
     };
 }

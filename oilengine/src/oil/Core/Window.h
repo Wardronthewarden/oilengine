@@ -19,6 +19,9 @@ namespace oil{
 
     };
 
+    enum class CursorMode{
+        CursorNormal = 0, CursorHidden, CursorDisabled
+    };
 
     // desktop window system interface
     class OIL_API Window{
@@ -40,6 +43,10 @@ namespace oil{
         virtual void* GetNativeWindow() const = 0;
 
         static Window* Create(const WindowProps& props = WindowProps());
+
+        // Window conrtols
+        virtual void SetCursorMode(CursorMode mode) = 0;
+        virtual void SetCursorPosition(double x, double y) = 0;
         
 
     };
