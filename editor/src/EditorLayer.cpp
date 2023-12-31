@@ -15,6 +15,7 @@
 
 namespace oil{
 
+    extern const std::filesystem::path g_AssetPath;
 
 
 
@@ -30,8 +31,7 @@ void EditorLayer::OnAttach()
 
     m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
-    SceneSerializer serializer(m_ActiveScene);
-    serializer.Deserialize("Assets/Scenes/greenCube.oil");
+    OpenScene("Assets/Scenes/greenCube.oil");
 
     //Framebuffer
     FrameBufferSpecification fbSpec;
@@ -296,9 +296,21 @@ void EditorLayer::OnImGuiRender()
     m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y};
 
 
+    // VIEWPORT IMAGE RENDERING -----------------------------
     uint32_t textureID = m_FrameBuffer->GetColorAttachmentRendererID(0);
     ImGui::Image((void*)textureID, ImVec2{m_ViewportSize.x, m_ViewportSize.y}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
+    if (ImGui::BeginDragDropTarget()){
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
+
+            const wchar_t* path = (const wchar_t*)payload->Data;
+
+            OpenScene(std::filesystem::path(g_AssetPath) / path);
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+    // ------------------------------------------------------
 
     //Gizmos
     Entity selectedEntity = m_SceneHierarchyPanel.GetSelectedEntity();
@@ -353,6 +365,7 @@ void EditorLayer::OnImGuiRender()
 
     ImGui::End();
     m_SceneHierarchyPanel.OnImGuiRender();
+    m_ContentBrowserPanel.OnImGuiRender();
     }
 }
 
@@ -506,13 +519,18 @@ void EditorLayer::OpenScene()
     std::string filepath = FileDialogs::OpenFile("Oil Scene (*.oil)\0*.oil\0");
 
         if(!filepath.empty()){
-            m_ActiveScene = CreateRef<Scene>();
-            m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
-            m_SceneHierarchyPanel.SetContext(m_ActiveScene);
+            OpenScene(filepath);
         }
+}
+void EditorLayer::OpenScene(const std::filesystem::path &path)
+{
+     m_ActiveScene = CreateRef<Scene>();
+    m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+    m_SceneHierarchyPanel.SetContext(m_ActiveScene);
+        
 
     SceneSerializer serializer(m_ActiveScene);
-    serializer.Deserialize(filepath);
+    serializer.Deserialize(path.string());
 }
 void EditorLayer::SaveSceneAs()
 {

@@ -2,6 +2,7 @@
 
 #include <oil.h>
 #include "Panels/SceneHierarchyPanel.h"
+#include "Panels/ContentBrowserPanel.h"
 #include "oil/Renderer/EditorCamera.h"
 
 namespace oil{
@@ -24,6 +25,7 @@ namespace oil{
 
         void NewScene();
         void OpenScene();
+        void OpenScene(const std::filesystem::path& path);
         void SaveSceneAs();
     private:
         OrthographicCameraController m_CameraController;
@@ -64,6 +66,7 @@ namespace oil{
 
         //Panels
         SceneHierarchyPanel m_SceneHierarchyPanel;
+        ContentBrowserPanel m_ContentBrowserPanel;
 
         //Controls
         int m_GizmoType = -1;

@@ -12,6 +12,7 @@ namespace oil{
     }
     Scene::~Scene()
     {
+        m_Registry.clear();
     }
 
     Entity Scene::CreateEntity(const std::string &name)
@@ -29,6 +30,7 @@ namespace oil{
     {
         m_Registry.destroy(entity);
     }
+
 
     void Scene::OnUpdate(Timestep dt)
     {
