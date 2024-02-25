@@ -6,6 +6,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 namespace oil{
+
+    extern const std::filesystem::path g_AssetPath;
+
     SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene> &scene)
     {
         SetContext(scene);
@@ -234,6 +237,10 @@ namespace oil{
                 m_SelectionContext.AddComponent<SpriteRendererComponent>();
                 ImGui::CloseCurrentPopup();
             }
+           if (ImGui::MenuItem("Mesh")){
+                m_SelectionContext.AddComponent<MeshComponent>();
+                ImGui::CloseCurrentPopup();
+            }
                 
             ImGui::EndPopup();
         }
@@ -303,8 +310,62 @@ namespace oil{
                 }
         });
 
-        DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](auto& component){
+        DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [this](auto& component){
                 ImGui::ColorEdit4("Color", glm::value_ptr(component.Color));
+                
+                ImGui::Button("Texture", ImVec2(100.0f, 0.0f));
+                if (ImGui::BeginDragDropTarget()){
+                    if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
+
+                        DragDropInfo info = m_AssetManagerRef->GetDragDropInfo();
+                        if (info.contentType == ContentType::Texture){
+                            std::filesystem::path texturePath = std::filesystem::path(g_AssetPath) / info.itemPath;
+                            component.Texture = Texture2D::Create(texturePath.string());
+                        }
+                    }
+
+                    ImGui::EndDragDropTarget();
+                }
+
+                ImGui::DragFloat("Tiling Factor", &component.TilingFactor, 0.1f, 0.0f, 10.0f);
+        });
+
+        DrawComponent<MeshComponent>("Mesh", entity, [this](auto& component){
+                
+        if(ImGui::Button("Mesh", ImVec2(100.0f, 0.0f)))
+            ImGui::OpenPopup("SetMesh");
+
+        if(ImGui::BeginPopup("SetMesh")){
+           if (ImGui::MenuItem("Plane")){
+                component.mesh.SetMesh(Mesh::CreatePlane());
+                ImGui::CloseCurrentPopup();
+            }
+            if (ImGui::MenuItem("Cube")){
+                component.mesh.SetMesh(Mesh::CreateCube());
+                ImGui::CloseCurrentPopup();
+            }
+           if (ImGui::MenuItem("Sphere")){
+                component.mesh.SetMesh(Mesh::CreateSphere());
+                ImGui::CloseCurrentPopup();
+            }
+                
+            ImGui::EndPopup();
+        }
+
+                //TODO: drag mesh asset here
+                /* if (ImGui::BeginDragDropTarget()){
+                    if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
+
+                        DragDropInfo info = m_AssetManagerRef->GetDragDropInfo();
+                        if (info.contentType == ContentType::Texture){
+                            std::filesystem::path texturePath = std::filesystem::path(g_AssetPath) / info.itemPath;
+                            component.Texture = Texture2D::Create(texturePath.string());
+                        }
+                    }
+
+                    ImGui::EndDragDropTarget();
+                } */
+
         });
         
     }

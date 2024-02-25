@@ -25,6 +25,7 @@ namespace oil{
         inline virtual void* GetNativeWindow() const { return m_Window; }
 
         virtual void SetCursorMode(CursorMode mode) override;
+        virtual CursorMode GetCursorMode() const override;
         virtual void SetCursorPosition(double x, double y) override;
 
     private:
@@ -38,6 +39,8 @@ namespace oil{
             std::string Title;
             unsigned int Width, Height;
             bool VSync;
+
+            CursorMode cursorMode = CursorMode::CursorNormal;
 
             EventCallbackFn EventCallback;
         };

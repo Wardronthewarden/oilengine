@@ -105,6 +105,7 @@ void OpenGLVertexArray::AddVertexBuffer(const oil::Ref<VertexBuffer> &VertexBuff
             }
         }
     m_VertexBuffers.push_back(VertexBuffer);
+    VertexBuffer->Unbind();
     }
 
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "oil/core/UUID.h"
+#include "Component.h"
 #include "Scene.h"
 #include "entt.hpp"
 
@@ -41,6 +43,8 @@ namespace oil
             return m_EntityHandle != entt::null; }
         operator uint32_t() const {return (uint32_t)m_EntityHandle; }
         operator entt::entity() const { return m_EntityHandle; }
+
+        UUID GetUUID() { return GetComponent<IDComponent>().ID; }
 
 
         bool operator==(const Entity& other) const { return m_EntityHandle == other.m_EntityHandle && m_Scene == other.m_Scene; }

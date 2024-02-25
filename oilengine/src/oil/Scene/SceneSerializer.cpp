@@ -2,7 +2,7 @@
 #include "SceneSerializer.h"
 
 #include "Component.h"
-
+#include "Entity.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 
@@ -49,6 +49,7 @@ namespace YAML {
             rhs.w = node[3].as<float>();
         }
     };
+
 }
 
 namespace oil{
@@ -72,9 +73,11 @@ namespace oil{
 
     static void SerializeEntity(YAML::Emitter& out, Entity& entity)
     {
+        OIL_ASSERT(entity.HasComponent<IDComponent>(), "Entity does not have a UUID");
+
         out << YAML::BeginMap; // Entity
         out << YAML::Key << "Entity";
-        out << YAML::Value << "114123234123"; //TODO
+        out << YAML::Value << entity.GetUUID(); 
 
         if (entity.HasComponent<TagComponent>()){
             out << YAML::Key << "TagComponent";
@@ -130,6 +133,16 @@ namespace oil{
             out << YAML::Key << "Color" << YAML::Value << spriteRendererComponent.Color;
 
             out << YAML::EndMap; // SpriteRendererComponent
+        }
+
+        if (entity.HasComponent<MeshComponent>()){
+            out << YAML::Key << "MeshComponent";
+            out << YAML::BeginMap; // MeshComponent
+
+            auto& meshComponent = entity.GetComponent<MeshComponent>();
+            out << YAML::Key << "Path" << YAML::Value << "Mesh/path";
+
+            out << YAML::EndMap;
         }
 
         out << YAML::EndMap; // Entity
@@ -189,7 +202,7 @@ namespace oil{
 
                 OIL_CORE_TRACE("Deserialized entity with ID [{0}], name [{1}]", uuid, name);
 
-                Entity deserializedEntity = m_Scene->CreateEntity(name);
+                Entity deserializedEntity = m_Scene->CreateEntityWithID(uuid, name);
 
                 auto transformComponent = entity["TransformComponent"];
                 if (transformComponent){
@@ -227,6 +240,8 @@ namespace oil{
                 if(spriteRendererComponent){
                     auto& src = deserializedEntity.AddComponent<SpriteRendererComponent>();
                     src.Color = spriteRendererComponent["Color"].as<glm::vec4>();
+                    /* auto& src2 = deserializedEntity.AddComponent<MeshComponent>();
+                    src2.mesh = Mesh(Mesh::CreatePlane()); */
                 }
             }
         }

@@ -31,6 +31,7 @@ namespace oil{
 
     void WindowsWindow::SetCursorMode(CursorMode mode)
     {
+        m_Data.cursorMode = mode;
         switch (mode){
             case CursorMode::CursorNormal:{
                 glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -45,8 +46,15 @@ namespace oil{
                 break;
             }
             default:
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                m_Data.cursorMode = CursorMode::CursorNormal;
                 break;
         }
+    }
+
+    CursorMode WindowsWindow::GetCursorMode() const
+    {
+        return m_Data.cursorMode;
     }
 
     void WindowsWindow::SetCursorPosition(double x, double y)

@@ -21,14 +21,19 @@
 
 #include "oil/imGui/imGuiLayer.h"
 
+// Scene and assets
+#include "oil/core/AssetManager.h"
 #include "oil/Scene/Scene.h"
 #include "oil/Scene/Entity.h"
 #include "oil/Scene/ScriptableEntity.h"
 #include "oil/Scene/Component.h"
+
+
 // ------Rendering-------------
 
 #include "oil/Renderer/Renderer.h"
 #include "oil/Renderer/Renderer2D.h"
+#include "oil/Renderer/Renderer3D.h"
 #include "oil/Renderer/RenderCommand.h"
 
 #include "oil/Renderer/Buffer.h"

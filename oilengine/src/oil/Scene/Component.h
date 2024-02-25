@@ -1,14 +1,24 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include "SceneCamera.h"
+#include "oil/core/UUID.h"
+#include "oil/Renderer/Texture.h"
+#include "oil/Renderer/Mesh.h"
+
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-#include "SceneCamera.h"
-#include "ScriptableEntity.h"
-
 namespace oil{
+
+    struct IDComponent{
+        UUID ID;
+
+        IDComponent() = default;
+        IDComponent(const IDComponent&) = default;
+        IDComponent(const UUID& id)
+            : ID(id){};
+    };
 
     struct TagComponent{
         std::string Tag;
@@ -39,6 +49,8 @@ namespace oil{
 
     struct SpriteRendererComponent{
         glm::vec4 Color{1.0f, 1.0f, 1.0f, 1.0f};
+        Ref<Texture2D> Texture;
+        float TilingFactor = 1.0f;
 
         SpriteRendererComponent() = default;
         SpriteRendererComponent(const SpriteRendererComponent&) = default;
@@ -57,6 +69,15 @@ namespace oil{
         CameraComponent() = default;
         CameraComponent(const CameraComponent&) = default;
     };
+
+    struct MeshComponent{
+        Mesh mesh;
+
+        MeshComponent() = default;
+        MeshComponent(const MeshComponent&) = default;
+    };
+
+    class ScriptableEntity;
 
     struct NativeScriptComponent{
         ScriptableEntity* Instance = nullptr;

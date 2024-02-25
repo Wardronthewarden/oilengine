@@ -3,7 +3,9 @@
 
 #include "Component.h"
 #include "oil/Renderer/Renderer2D.h"
+#include "oil/Renderer/Renderer3D.h"
 #include "Entity.h"
+#include "ScriptableEntity.h"
 
 namespace oil{
     Scene::Scene()
@@ -17,8 +19,14 @@ namespace oil{
 
     Entity Scene::CreateEntity(const std::string &name)
     {
-        entt::entity temp = m_Registry.create();
-        Entity entity = {temp, this};
+        return CreateEntityWithID(UUID(), name);
+    }
+
+    Entity Scene::CreateEntityWithID(UUID uuid, const std::string &name)
+    {
+        //entt::entity temp = m_Registry.create();
+        Entity entity = {m_Registry.create(), this};
+        entity.AddComponent<IDComponent>(uuid);
         entity.AddComponent<TransformComponent>();
         auto& tag = entity.AddComponent<TagComponent>();
         tag.Tag = name.empty() ? "Entity" : name;
@@ -66,31 +74,71 @@ namespace oil{
 
         if (mainCamera){
 
-            Renderer2D::BeginScene(mainCamera->GetProjection(), cameraTransform);
+            if (m_Is2DScene){
 
-            auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-            for (auto entity : group){
-                auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+                // 2D rendering
+                Renderer2D::BeginScene(mainCamera->GetProjection(), cameraTransform);
 
-                Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color);
+                auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+                for (auto entity : group){
+                    auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+
+                    Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color);
+                }
+
+                Renderer2D::EndScene(); 
+
+            //-------------------------------------------------------------
+            } else {
+
+                // 3D Rendering
+
+                Renderer3D::BeginScene(mainCamera->GetProjection(), cameraTransform);
+
+                auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent>);
+                for (auto entity : group){
+                    auto [transform, mesh] = group.get<TransformComponent, MeshComponent>(entity);
+
+                    Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
+                }
+
+                Renderer3D::EndScene();
+
             }
-
-            Renderer2D::EndScene();
+            
         }
     }
     void Scene::OnUpdateEditor(Timestep dt, EditorCamera &camera)
     {
-        Renderer2D::BeginScene(camera);
+        if (m_Is2DScene){
 
-            auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
-            for (auto entity : group){
-                auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+            // 2D scene rendering
+            Renderer2D::BeginScene(camera);
 
-                Renderer2D::DrawSprite(transform.GetTransform(), sprite, (int)entity);
-                //OIL_CORE_WARN("entityID = {0}", (int)entity);
-            }
+                auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+                for (auto entity : group){
+                    auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
-            Renderer2D::EndScene();
+                    Renderer2D::DrawSprite(transform.GetTransform(), sprite, (int)entity);
+                }
+
+            Renderer2D::EndScene(); 
+
+        //---------------------------------------------------------------------
+        } else {
+
+            //3D Rendering
+            Renderer3D::BeginScene(camera);
+
+                auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent>);
+                for (auto entity : group){
+                    auto [transform, mesh] = group.get<TransformComponent, MeshComponent>(entity);
+
+                    Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
+                }
+
+            Renderer3D::EndScene();
+        }
     }
     void Scene::OnViewportResize(uint32_t width, uint32_t height)
     {
@@ -124,6 +172,11 @@ namespace oil{
     }
 
     template<>
+    void Scene::OnComponentAdded<IDComponent>(Entity entity, IDComponent& component){
+        
+    }
+
+    template<>
     void Scene::OnComponentAdded<TransformComponent>(Entity entity, TransformComponent& component){
         
     }
@@ -141,6 +194,11 @@ namespace oil{
     
     template<>
     void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component){
+
+    }
+    
+    template<>
+    void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component){
 
     }
     

@@ -46,6 +46,7 @@ namespace oil{
 
         // Window conrtols
         virtual void SetCursorMode(CursorMode mode) = 0;
+        virtual CursorMode GetCursorMode() const = 0;
         virtual void SetCursorPosition(double x, double y) = 0;
         
 

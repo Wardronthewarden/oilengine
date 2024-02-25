@@ -15,6 +15,8 @@ include_directories(${PROJECT_BINARY_DIR})
 
 add_library(oilengine STATIC 
                 src/oil/core/Application.cpp
+                src/oil/core/AssetManager.cpp
+                src/oil/core/UUID.cpp
                 src/oil/core/Log.cpp
                 src/oil/core/Layer.cpp
                 src/oil/core/LayerStack.cpp
@@ -36,6 +38,8 @@ add_library(oilengine STATIC
                 src/oil/Scene/Entity.cpp
                 src/oil/Renderer/Renderer.cpp
                 src/oil/Renderer/Renderer2D.cpp
+                src/oil/Renderer/Renderer3D.cpp
+                src/oil/Renderer/Mesh.cpp
                 src/oil/Renderer/Buffer.cpp
                 src/oil/Renderer/FrameBuffer.cpp
                 src/oil/Renderer/Shader.cpp

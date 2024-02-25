@@ -44,7 +44,7 @@ namespace oil{
         Renderer2D::Stats stats;
     };
 
-    static Renderer2DData s_RenderData;
+    static Renderer2DData s_2DRenderData;
     static size_t quadVertexCount = 4;
     static glm::vec2 defaultTexCoords[4] = {
         {0.0f, 0.0f},
@@ -55,27 +55,27 @@ namespace oil{
 
     void Renderer2D::Init(){
 
-        s_RenderData.QuadVertexArray = VertexArray::Create();
+        s_2DRenderData.QuadVertexArray = VertexArray::Create();
     
     OIL_INFO("Current working directory is: {0}", std::filesystem::current_path());
 
-    s_RenderData.QuadVertexBuffer = VertexBuffer::Create(s_RenderData.MaxVertices * sizeof(QuadVertex));
-    s_RenderData.QuadVertexBuffer->SetLayout({
+    s_2DRenderData.QuadVertexBuffer = VertexBuffer::Create(s_2DRenderData.MaxVertices * sizeof(QuadVertex));
+    s_2DRenderData.QuadVertexBuffer->SetLayout({
             {ShaderDataType::Float3, "a_Position"},
             {ShaderDataType::Float4, "a_Color"},
             {ShaderDataType::Float2, "a_Texcoord"},
             {ShaderDataType::Float, "a_TexIndex"},
             {ShaderDataType::Int, "a_EntityID"}
 });
-    s_RenderData.QuadVertexArray->AddVertexBuffer(s_RenderData.QuadVertexBuffer);
+    s_2DRenderData.QuadVertexArray->AddVertexBuffer(s_2DRenderData.QuadVertexBuffer);
 
-    s_RenderData.QuadVertexBufferBase = new QuadVertex[s_RenderData.MaxVertices];
+    s_2DRenderData.QuadVertexBufferBase = new QuadVertex[s_2DRenderData.MaxVertices];
 
 
-    uint32_t* quadIndices = new uint32_t[s_RenderData.MaxIndices];
+    uint32_t* quadIndices = new uint32_t[s_2DRenderData.MaxIndices];
 
     uint32_t offset = 0;
-    for (uint32_t i = 0; i< s_RenderData.MaxIndices;){
+    for (uint32_t i = 0; i< s_2DRenderData.MaxIndices;){
         quadIndices[i++] = offset + 0; 
         quadIndices[i++] = offset + 1; 
         quadIndices[i++] = offset + 2;
@@ -87,38 +87,38 @@ namespace oil{
         offset +=4;
     }
 
-    Ref<IndexBuffer> quadIB = IndexBuffer::Create(quadIndices, s_RenderData.MaxIndices);
-    s_RenderData.QuadVertexArray->SetIndexBuffer(quadIB);
+    Ref<IndexBuffer> quadIB = IndexBuffer::Create(quadIndices, s_2DRenderData.MaxIndices);
+    s_2DRenderData.QuadVertexArray->SetIndexBuffer(quadIB);
 
     delete[] quadIndices;
 
-    s_RenderData.WhiteTexture = Texture2D::Create(1,1);
+    s_2DRenderData.WhiteTexture = Texture2D::Create(1,1);
     uint32_t whiteTextureData = 0xffffffff;
-    s_RenderData.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
+    s_2DRenderData.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
 
-    int32_t samplers[s_RenderData.MaxTextureSlots];
-    for (uint32_t i = 0; i<s_RenderData.MaxTextureSlots; ++i)
+    int32_t samplers[s_2DRenderData.MaxTextureSlots];
+    for (uint32_t i = 0; i<s_2DRenderData.MaxTextureSlots; ++i)
         samplers[i] = i;
 
-    s_RenderData.TextureShader = Shader::Create("Assets/Shaders/Texture.glsl"); 
-    s_RenderData.TextureShader->Bind();
-    s_RenderData.TextureShader->SetIntArray("u_Textures", samplers, s_RenderData.MaxTextureSlots);
+    s_2DRenderData.TextureShader = Shader::Create("Assets/Shaders/Texture.glsl"); 
+    s_2DRenderData.TextureShader->Bind();
+    s_2DRenderData.TextureShader->SetIntArray("u_Textures", samplers, s_2DRenderData.MaxTextureSlots);
 
     //initialize all tex slots to 0
-    s_RenderData.TextureSlots[0] = s_RenderData.WhiteTexture;
+    s_2DRenderData.TextureSlots[0] = s_2DRenderData.WhiteTexture;
 
-    s_RenderData.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
-    s_RenderData.QuadVertexPositions[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
-    s_RenderData.QuadVertexPositions[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
-    s_RenderData.QuadVertexPositions[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
+    s_2DRenderData.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
+    s_2DRenderData.QuadVertexPositions[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
+    s_2DRenderData.QuadVertexPositions[2] = {  0.5f,  0.5f, 0.0f, 1.0f };
+    s_2DRenderData.QuadVertexPositions[3] = { -0.5f,  0.5f, 0.0f, 1.0f };
     }
     void Renderer2D::ShutDown(){
 
     }
 
     void Renderer2D::BeginScene(const OrthographicCamera& camera){
-        s_RenderData.TextureShader->Bind();
-        s_RenderData.TextureShader->SetMat4("u_VPMat", camera.GetVPMatrix());
+        s_2DRenderData.TextureShader->Bind();
+        s_2DRenderData.TextureShader->SetMat4("u_VPMat", camera.GetVPMatrix());
 
         StartNewBatch();
     }
@@ -126,8 +126,8 @@ namespace oil{
     {
         glm::mat4 VPmat = camera.GetVPMatrix();
 
-        s_RenderData.TextureShader->Bind();
-        s_RenderData.TextureShader->SetMat4("u_VPMat", VPmat);
+        s_2DRenderData.TextureShader->Bind();
+        s_2DRenderData.TextureShader->SetMat4("u_VPMat", VPmat);
 
         StartNewBatch();
     }
@@ -135,42 +135,44 @@ namespace oil{
     {
         glm::mat4 VPmat = camera.GetProjection() * glm::inverse(transform);
 
-        s_RenderData.TextureShader->Bind();
-        s_RenderData.TextureShader->SetMat4("u_VPMat", VPmat);
+        s_2DRenderData.TextureShader->Bind();
+        s_2DRenderData.TextureShader->SetMat4("u_VPMat", VPmat);
 
         StartNewBatch();
     }
     void Renderer2D::EndScene()
     {
-        uint32_t dataSize = (uint8_t *)s_RenderData.QuadVertexBufferPtr - (uint8_t *)s_RenderData.QuadVertexBufferBase;
-        s_RenderData.QuadVertexBuffer->SetData(s_RenderData.QuadVertexBufferBase, dataSize);
+        uint32_t dataSize = (uint8_t *)s_2DRenderData.QuadVertexBufferPtr - (uint8_t *)s_2DRenderData.QuadVertexBufferBase;
+        s_2DRenderData.QuadVertexBuffer->SetData(s_2DRenderData.QuadVertexBufferBase, dataSize);
 
         Flush();
     }
 
     void Renderer2D::Flush()
     {
-        for (uint32_t i = 0; i< s_RenderData.TextureSlotIndex; ++i){
-            s_RenderData.TextureSlots[i]->Bind(i);
+        for (uint32_t i = 0; i< s_2DRenderData.TextureSlotIndex; ++i){
+            s_2DRenderData.TextureSlots[i]->Bind(i);
         }
 
-        RenderCommand::DrawIndexed(s_RenderData.QuadVertexArray, s_RenderData.QuadIndexCount);
+        RenderCommand::DrawIndexed(s_2DRenderData.QuadVertexArray, s_2DRenderData.QuadIndexCount);
         
         //statistics
-        s_RenderData.stats.DrawCalls++;
+        s_2DRenderData.stats.DrawCalls++;
     }
 
     void Renderer2D::StartNewBatch(){
-        //Reset batch information
-        s_RenderData.QuadIndexCount = 0;
-        s_RenderData.QuadVertexBufferPtr = s_RenderData.QuadVertexBufferBase;
+        //Reset batch information 
+        s_2DRenderData.QuadIndexCount = 0;
+        s_2DRenderData.QuadVertexBufferPtr = s_2DRenderData.QuadVertexBufferBase;
 
-        s_RenderData.TextureSlotIndex = 1;
+        s_2DRenderData.TextureSlotIndex = 1;
+
+        s_2DRenderData.QuadVertexArray->Bind();
     }
 
     void Renderer2D::DrawQuad(const glm::mat4 &transform, const glm::vec4 &color, int entityID)
     {
-        if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
+        if (s_2DRenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
             EndScene();
             StartNewBatch();
         }
@@ -178,18 +180,18 @@ namespace oil{
         const float texIndex  = 0.0f;
 
         for(size_t i = 0; i < quadVertexCount; ++i){
-            s_RenderData.QuadVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
-            s_RenderData.QuadVertexBufferPtr->Color = color;
-            s_RenderData.QuadVertexBufferPtr->TexCoord = defaultTexCoords[i];
-            s_RenderData.QuadVertexBufferPtr->TexIndex = texIndex;
-            s_RenderData.QuadVertexBufferPtr->EntityID = entityID;
-            ++s_RenderData.QuadVertexBufferPtr;
+            s_2DRenderData.QuadVertexBufferPtr->Position = transform * s_2DRenderData.QuadVertexPositions[i];
+            s_2DRenderData.QuadVertexBufferPtr->Color = color;
+            s_2DRenderData.QuadVertexBufferPtr->TexCoord = defaultTexCoords[i];
+            s_2DRenderData.QuadVertexBufferPtr->TexIndex = texIndex;
+            s_2DRenderData.QuadVertexBufferPtr->EntityID = entityID;
+            ++s_2DRenderData.QuadVertexBufferPtr;
         }
 
-        s_RenderData.QuadIndexCount +=6;
+        s_2DRenderData.QuadIndexCount +=6;
 
         //statistics
-        s_RenderData.stats.QuadCount++;
+        s_2DRenderData.stats.QuadCount++;
     }
 
     void Renderer2D::DrawQuad(const glm::mat4 &transform, const Ref<Texture2D> &texture, const glm::vec2 &tilingFactor, const Ref<SubTexture2D> &subTexture, const glm::vec4 &color, int entityID)
@@ -200,39 +202,39 @@ namespace oil{
         else
             texCoords = defaultTexCoords;
         
-        if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
+        if (s_2DRenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
             EndScene();
             StartNewBatch();
         }
         
         float textureIndex = 0.0f;
 
-        for (uint32_t i = 1; i< s_RenderData.TextureSlotIndex; ++i){
-            if (*s_RenderData.TextureSlots[i].get() == *texture.get()){
+        for (uint32_t i = 1; i< s_2DRenderData.TextureSlotIndex; ++i){
+            if (*s_2DRenderData.TextureSlots[i].get() == *texture.get()){
                 textureIndex = (float)i;
                 break;
             };
         }
         
         if (textureIndex == 0.0f){
-            textureIndex = (float)s_RenderData.TextureSlotIndex;
-            s_RenderData.TextureSlots[s_RenderData.TextureSlotIndex] = texture;
-            ++s_RenderData.TextureSlotIndex;
+            textureIndex = (float)s_2DRenderData.TextureSlotIndex;
+            s_2DRenderData.TextureSlots[s_2DRenderData.TextureSlotIndex] = texture;
+            ++s_2DRenderData.TextureSlotIndex;
         }
 
         for(size_t i = 0; i < quadVertexCount; ++i){
-            s_RenderData.QuadVertexBufferPtr->Position = transform * s_RenderData.QuadVertexPositions[i];
-            s_RenderData.QuadVertexBufferPtr->Color = color;
-            s_RenderData.QuadVertexBufferPtr->TexCoord = texCoords[i];
-            s_RenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
-            s_RenderData.QuadVertexBufferPtr->EntityID = entityID;
-            ++s_RenderData.QuadVertexBufferPtr;
+            s_2DRenderData.QuadVertexBufferPtr->Position = transform * s_2DRenderData.QuadVertexPositions[i];
+            s_2DRenderData.QuadVertexBufferPtr->Color = color;
+            s_2DRenderData.QuadVertexBufferPtr->TexCoord = texCoords[i];
+            s_2DRenderData.QuadVertexBufferPtr->TexIndex = textureIndex;
+            s_2DRenderData.QuadVertexBufferPtr->EntityID = entityID;
+            ++s_2DRenderData.QuadVertexBufferPtr;
         }
 
-        s_RenderData.QuadIndexCount +=6;
+        s_2DRenderData.QuadIndexCount +=6;
 
         //statistics
-        s_RenderData.stats.QuadCount++;
+        s_2DRenderData.stats.QuadCount++;
     }
 
     void Renderer2D::DrawQuad(const glm::vec2 &position, const glm::vec2 &size, const glm::vec4 &color, float rotation)
@@ -241,7 +243,7 @@ namespace oil{
     }
     void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, float rotation){
 
-        if (s_RenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
+        if (s_2DRenderData.QuadIndexCount >= Renderer2DData::MaxIndices){
             EndScene();
             StartNewBatch();
         }
@@ -274,14 +276,17 @@ namespace oil{
     }
     void Renderer2D::DrawSprite(const glm::mat4 &transform, SpriteRendererComponent &src, int entityID)
     {
-        DrawQuad(transform, src.Color, entityID);
+        if (src.Texture)
+            DrawQuad(transform, src.Texture, {src.TilingFactor, src.TilingFactor}, nullptr, src.Color, entityID);
+        else
+            DrawQuad(transform, src.Color, entityID);
     }
     void Renderer2D::ResetStats()
     {
-        memset(&s_RenderData.stats, 0, sizeof(Stats));
+        memset(&s_2DRenderData.stats, 0, sizeof(Stats));
     }
     Renderer2D::Stats Renderer2D::GetStats()
     {
-        return s_RenderData.stats;
+        return s_2DRenderData.stats;
     }
 }

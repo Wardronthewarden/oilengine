@@ -1,9 +1,10 @@
 #pragma once
 
-#include "entt.hpp"
-
+#include "oil/core/UUID.h"
 #include "oil/Renderer/EditorCamera.h"
 #include "oil/core/Timestep.h"
+#include "entt.hpp"
+
 
 namespace oil {
 
@@ -15,6 +16,7 @@ namespace oil {
         ~Scene();
 
         Entity CreateEntity(const std::string& name = std::string());
+        Entity CreateEntityWithID(UUID uuid, const std::string& name = std::string());
         void DestroyEntity(Entity entity);
 
         void OnUpdate(Timestep dt);
@@ -30,10 +32,12 @@ namespace oil {
         entt::registry m_Registry;
 
         uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
+        bool m_Is2DScene = false;
 
         friend class Entity;
         friend class SceneSerializer;
         friend class SceneHierarchyPanel;
+
     };
 
 }
