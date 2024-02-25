@@ -40,6 +40,7 @@ add_library(oilengine STATIC
                 src/oil/Renderer/Renderer2D.cpp
                 src/oil/Renderer/Renderer3D.cpp
                 src/oil/Renderer/Mesh.cpp
+                src/oil/Renderer/Light.cpp
                 src/oil/Renderer/Buffer.cpp
                 src/oil/Renderer/FrameBuffer.cpp
                 src/oil/Renderer/Shader.cpp

@@ -4,6 +4,7 @@
 #include "oil/core/UUID.h"
 #include "oil/Renderer/Texture.h"
 #include "oil/Renderer/Mesh.h"
+#include "oil/Renderer/Light.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -75,6 +76,27 @@ namespace oil{
 
         MeshComponent() = default;
         MeshComponent(const MeshComponent&) = default;
+    };
+
+    struct PointLightComponent{
+        PointLight light;
+        
+        PointLightComponent() = default;
+        PointLightComponent(const PointLightComponent&) = default;
+    };
+
+    struct SpotLightComponent{
+        SpotLight light;
+        
+        SpotLightComponent() = default;
+        SpotLightComponent(const SpotLightComponent&) = default;
+    };
+
+    struct DirecLightComponent{
+        DirectionalLight light;
+        
+        DirecLightComponent() = default;
+        DirecLightComponent(const DirecLightComponent&) = default;
     };
 
     class ScriptableEntity;

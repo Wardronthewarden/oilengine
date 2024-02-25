@@ -83,9 +83,6 @@ namespace oil{
     private:
         std::vector<BaseVertex> m_Vertices;
         std::vector<uint32_t> m_Indices;
-
-    
-    private:
         
     };
 
