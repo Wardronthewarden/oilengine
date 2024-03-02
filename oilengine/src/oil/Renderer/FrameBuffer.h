@@ -9,6 +9,7 @@ namespace oil{
 
         //Color
         RGBA8,
+        RGBA16F,
         R_INT,
 
         //Depth/stencil
@@ -52,6 +53,9 @@ namespace oil{
         virtual int ReadPixel(uint32_t attachmentIndex, int x, int y) = 0;
 
         virtual void ClearAttachment(uint32_t attachmentIndex, int value) = 0;
+
+        virtual void BindColorAttachments() = 0;
+        virtual void UnbindColorAttachments() = 0;
 
         virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const = 0;
 

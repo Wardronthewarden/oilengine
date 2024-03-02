@@ -103,6 +103,25 @@ namespace oil{
         static Ref<VertexBuffer> Create(float* vertices, uint32_t size);
     };
 
+    class UniformBuffer{
+    public:
+        virtual ~UniformBuffer(){}
+
+        virtual void Bind() const = 0;
+        virtual void Unbind() const = 0;
+
+        virtual void SetLayout(const BufferLayout& layout) = 0;
+        virtual const BufferLayout& GetLayout() const = 0;
+
+        virtual void SetData(const void* data, uint32_t size) = 0;
+
+        virtual void SetBinding(uint32_t binding) = 0;
+        virtual const uint32_t GetBinding() = 0;
+
+        static Ref<UniformBuffer> Create(uint32_t size);
+        static Ref<UniformBuffer> Create(float* vertices, uint32_t size);
+    };
+
     // currently only 32-bit index buffers
     class IndexBuffer{
     public:

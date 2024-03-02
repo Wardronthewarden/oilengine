@@ -19,8 +19,12 @@ namespace oil{
 
         virtual void ClearAttachment(uint32_t attachmentIndex, int value) override;
 
+        virtual void BindColorAttachments();
+        virtual void UnbindColorAttachments();
+
+
         virtual const FrameBufferSpecification& GetSpecification() const override { return m_Specification; }
-        virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const override { OIL_CORE_ASSERT(index < m_ColorAttachments.size(), "The maximum color attachments possible are 4"); return m_ColorAttachments[index]; }
+        virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const override { OIL_CORE_ASSERT(index < m_ColorAttachments.size(), "The maximum color attachments possible are 6"); return m_ColorAttachments[index]; }
 
     private:
         uint32_t m_RendererID = 0;

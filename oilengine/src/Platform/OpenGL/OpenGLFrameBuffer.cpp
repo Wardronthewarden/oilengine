@@ -27,12 +27,12 @@ namespace oil{
             return false;
         }
 
-        static void AttachColorTexture(uint32_t id, int samples, GLenum internalFormat, GLenum format, uint32_t width, uint32_t height, int index){
+        static void AttachColorTexture(uint32_t id, int samples, GLenum internalFormat, GLenum format, GLenum dataType, uint32_t width, uint32_t height, int index){
             bool multisampled = samples > 1;
             if (multisampled){
                 glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, internalFormat, width, height, GL_FALSE);
             } else {
-                glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, nullptr);
+                glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, dataType, nullptr);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -65,6 +65,8 @@ namespace oil{
             switch (format){
                 case FrameBufferTextureFormat::RGBA8:
                     return GL_RGBA8;
+                case FrameBufferTextureFormat::RGBA16F:
+                    return GL_RGBA16F;
                 case FrameBufferTextureFormat::R_INT:
                     return GL_RED_INTEGER;
             }
@@ -118,10 +120,13 @@ namespace oil{
                 utils::BindTexture(multisample, m_ColorAttachments[i]);
                 switch (m_ColorAttachmentSpecs[i].TextureFormat){
                     case FrameBufferTextureFormat::RGBA8:
-                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGBA8, GL_RGBA, m_Specification.Width, m_Specification.Height, i);
+                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, m_Specification.Width, m_Specification.Height, i);
+                        break;
+                    case FrameBufferTextureFormat::RGBA16F:
+                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGBA16F, GL_RGBA, GL_FLOAT, m_Specification.Width, m_Specification.Height, i);
                         break;
                     case FrameBufferTextureFormat::R_INT:
-                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_R32I, GL_RED_INTEGER, m_Specification.Width, m_Specification.Height, i);
+                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_R32I, GL_RED_INTEGER, GL_UNSIGNED_BYTE, m_Specification.Width, m_Specification.Height, i);
                         break;
                 }
             }   
@@ -138,8 +143,8 @@ namespace oil{
         }
 
         if (m_ColorAttachments.size() > 1){
-            OIL_CORE_ASSERT(m_ColorAttachments.size() <= 4, "The maximum color attachments possible are 4");
-            GLenum buffers[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+            OIL_CORE_ASSERT(m_ColorAttachments.size() <= 6, "The maximum color attachments possible are 6");
+            GLenum buffers[6] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5 };
             glDrawBuffers(m_ColorAttachments.size(), buffers);
 
         }else if(m_ColorAttachments.empty()){
@@ -155,7 +160,7 @@ namespace oil{
     {
         glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
         glViewport(0, 0, m_Specification.Width, m_Specification.Height);
-
+        
 
     }
     void OpenGLFrameBuffer::Unbind()
@@ -176,7 +181,7 @@ namespace oil{
     }
     int OpenGLFrameBuffer::ReadPixel(uint32_t attachmentIndex, int x, int y)
     {   
-        OIL_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Max attachment index is 4");
+        OIL_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Max attachment index is 6");
 
         glReadBuffer(GL_COLOR_ATTACHMENT0 + attachmentIndex);
         int pixelData;
@@ -186,10 +191,25 @@ namespace oil{
     }
     void OpenGLFrameBuffer::ClearAttachment(uint32_t attachmentIndex, int value)
     {
-        OIL_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Max attachment index is 4");
+        OIL_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Max attachment index is 6");
 
         auto& spec = m_ColorAttachmentSpecs[attachmentIndex];
 
         glClearTexImage(m_ColorAttachments[attachmentIndex], 0, utils::OiltextureFormatToGL(spec.TextureFormat), GL_INT, &value);
+    }
+    void OpenGLFrameBuffer::BindColorAttachments()
+    {
+        int num = m_ColorAttachments.size();
+        for(int i = 0; i < num; ++i){
+            glBindTextureUnit(i, m_ColorAttachments[i]);
+        }
+    }
+    void OpenGLFrameBuffer::UnbindColorAttachments()
+    {
+        int num = m_ColorAttachments.size();
+        for(int i = 0; i < num; ++i){
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
     }
 }

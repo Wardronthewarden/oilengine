@@ -12,7 +12,7 @@ namespace oil{
     void Renderer::Init()
     {
         RenderCommand::Init();
-        Renderer2D::Init();
+        //Renderer2D::Init();
         Renderer3D::Init();
     }
 

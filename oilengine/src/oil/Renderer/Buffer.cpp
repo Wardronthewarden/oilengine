@@ -26,6 +26,26 @@ namespace oil{
         return nullptr;
     }
 
+    Ref<UniformBuffer> UniformBuffer::Create(uint32_t size)
+    {
+        switch (Renderer::GetAPI()){
+            case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RendererAPI::None currently not supported!");
+            case RenderAPI::API::OpenGL: return CreateRef<OpenGLUniformBuffer>(size);
+        }
+        OIL_CORE_ASSERT(false, "Unknown RendererAPI!")
+        return nullptr;
+    }
+
+    Ref<UniformBuffer> UniformBuffer::Create(float *vertices, uint32_t size)
+    {
+        switch (Renderer::GetAPI()){
+            case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RendererAPI::None currently not supported!");
+            case RenderAPI::API::OpenGL: return CreateRef<OpenGLUniformBuffer>(vertices, size);
+        }
+        OIL_CORE_ASSERT(false, "Unknown RendererAPI!")
+        return nullptr;
+    }
+
     Ref<IndexBuffer> IndexBuffer::Create(uint32_t count)
     {
         switch (Renderer::GetAPI()){

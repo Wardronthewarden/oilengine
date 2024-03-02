@@ -36,11 +36,8 @@ void EditorLayer::OnAttach()
     OpenScene(m_ActiveSceneFilepath);
 
     //Framebuffer
-    FrameBufferSpecification fbSpec;
-    fbSpec.Attachments = { FrameBufferTextureFormat::RGBA8, FrameBufferTextureFormat::R_INT, FrameBufferTextureFormat::Depth };
-    fbSpec.Width = 1280;
-    fbSpec.Height = 720;
-    m_FrameBuffer = FrameBuffer::Create(fbSpec);
+    m_FrameBuffer = Renderer3D::GetFrameBuffer();
+
 
     //Textures
     m_DefaultTexture = Texture2D::Create("Internal/Assets/Textures/Checkerboard.png");
@@ -138,12 +135,9 @@ void EditorLayer::OnUpdate(Timestep dt)
     //Update scene
 
     //stats
-    Renderer2D::ResetStats();
-    PROFILE_SCOPE("EditorLayer::Render", m_ProfileResults);
+    //Renderer3D::ResetStats();
+    //PROFILE_SCOPE("EditorLayer::Render", m_ProfileResults);
     m_FrameBuffer->Bind();
-
-    RenderCommand::SetClearColor({0.1f, 0.1f, 0.1f, 1});
-    RenderCommand::Clear();
 
     // Clear entity ID attachment
     m_FrameBuffer->ClearAttachment(1, -1);
@@ -512,6 +506,7 @@ void EditorLayer::RenderViewport()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0,0});
     ImGui::Begin("Viewport");
     
+
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
     // Calculate viewport bounds
     auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
