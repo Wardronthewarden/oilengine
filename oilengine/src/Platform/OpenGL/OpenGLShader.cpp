@@ -14,6 +14,8 @@ static GLenum ShaderTypeFromString(const std::string& type){
 		return GL_VERTEX_SHADER;
 	if (type == "fragment" || type == "pixel")
 		return GL_FRAGMENT_SHADER;
+	if (type == "geometry")
+		return GL_GEOMETRY_SHADER;
 
 	OIL_CORE_ASSERT(false, "Unknown shader type!")
 	return 0;
@@ -136,8 +138,9 @@ void OpenGLShader::UploadUniformFloat4(const std::string &name, const glm::vec4 
 void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSources)
 {
 	GLuint program = glCreateProgram();
-	OIL_CORE_ASSERT(shaderSources.size() <= 2, "We only support 2 shaders!");
-	std::array<GLenum, 2> glShaderIDs;
+	const size_t shaderNum = shaderSources.size();
+	OIL_CORE_ASSERT(shaderNum <= 3, "We only support 3 shaders!");
+	std::array<GLenum, 3> glShaderIDs;
 	int glShaderIDIndex = 0;
 	for (auto& kv : shaderSources){
 		GLenum shaderType = kv.first;

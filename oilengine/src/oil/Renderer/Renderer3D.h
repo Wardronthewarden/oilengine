@@ -77,7 +77,7 @@ namespace oil{
         void Init(){
             //Initialize GBuffer
             FrameBufferSpecification fbSpec;
-            fbSpec.Attachments = { FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::R_INT, FrameBufferTextureFormat::Depth  };
+            fbSpec.Attachments = { FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::R_INT, FrameBufferTextureFormat::Depth  };
             fbSpec.Width = 1280;
             fbSpec.Height = 720;
             GBuffer = FrameBuffer::Create(fbSpec);

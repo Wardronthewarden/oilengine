@@ -61,6 +61,9 @@ namespace oil{
         uint32_t VertexCount = 0;
         uint32_t PointLightCount = 0;
 
+        //Scene info
+        glm::vec3 CamPosition;
+
         //Statistics
         Renderer3D::Stats stats;
     };
@@ -166,8 +169,9 @@ namespace oil{
     }
     void Renderer3D::BeginScene(const EditorCamera &camera)
     {
-        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 1});
+        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 0.0f});
         glm::mat4 VPmat = camera.GetVPMatrix();
+        s_3DRenderData.CamPosition = camera.GetPosition();
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass");
 
 
@@ -189,7 +193,7 @@ namespace oil{
 
         
         RBuffers.FBuffer->Bind();
-        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 1});
+        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 0.0f});
         RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
@@ -326,6 +330,7 @@ namespace oil{
 
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("Light pass");
         s_3DRenderData.ActiveShader->Bind();
+        s_3DRenderData.ActiveShader->SetFloat3("u_CamPos", s_3DRenderData.CamPosition);
         RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
 
         RBuffers.GBuffer->UnbindColorAttachments();
