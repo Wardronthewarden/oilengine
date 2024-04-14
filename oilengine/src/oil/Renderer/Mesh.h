@@ -62,17 +62,25 @@ namespace oil{
                 4, 6, 7, 4, 7, 5  // Back
             };
 
+    
     class Mesh{
     public:
         Mesh() = default; //TODO: empty mesh object
+        Mesh(const unsigned char* vertexBegin, uint32_t vertexByteSize, const unsigned char* indexBegin, uint32_t indexByteSize, BufferLayout layout);
         Mesh(std::vector<BaseVertex> vertices, std::vector<uint32_t> indices)
             :m_Vertices(vertices), m_Indices(indices) {};
+
+        ~Mesh() = default;
 
         void SetMesh(Mesh mesh);
         void SetMesh(std::vector<BaseVertex> vertices, std::vector<uint32_t> indices);
 
+        void SetLayout(BufferLayout layout) { m_Layout = layout; }
+
         std::vector<BaseVertex> GetVertices() const { return m_Vertices; }
         std::vector<uint32_t> GetIndices() const { return m_Indices; }
+
+        uint32_t GetBufferSize() const { return (sizeof(BaseVertex) * m_Vertices.size()) + (sizeof(uint32_t) * m_Indices.size()); }
 
 
     public:
@@ -81,8 +89,10 @@ namespace oil{
         static Mesh CreateSphere();
 
     private:
+        //Use binary memory block to store vertex data, its size, and store layout directly
         std::vector<BaseVertex> m_Vertices;
         std::vector<uint32_t> m_Indices;
+        BufferLayout m_Layout;
         
     };
 

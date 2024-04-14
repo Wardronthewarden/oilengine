@@ -243,6 +243,12 @@ namespace oil{
                     /* auto& src2 = deserializedEntity.AddComponent<MeshComponent>();
                     src2.mesh = Mesh(Mesh::CreatePlane()); */
                 }
+
+                auto meshComponent = entity["MeshComponent"];
+                if(meshComponent){
+                    auto& mrc = deserializedEntity.AddComponent<MeshComponent>();
+                    mrc.mesh.SetMesh(Mesh::CreateCube());
+                }
             }
         }
         

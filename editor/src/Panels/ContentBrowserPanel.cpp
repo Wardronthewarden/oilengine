@@ -5,27 +5,55 @@
 
 
 namespace oil{
-    // Change this when we can
-    extern const std::filesystem::path g_AssetPath = "Assets";
 
     ContentBrowserPanel::ContentBrowserPanel()
-        : m_CurrentDirectory(g_AssetPath)
     {
         m_DirectoryIcon = Texture2D::Create("Internal/Assets/Textures/DirectoryIcon.png");
         m_FileIcon = Texture2D::Create("Internal/Assets/Textures/FileIcon.png");
     }
 
-    ContentType ContentBrowserPanel::GetContentTypeFromFileExtension(std::string extension)
+    void ContentBrowserPanel::Init()
     {
-        if(extension == ".oil") return ContentType::Scene;
-        if(extension == ".jpg") return ContentType::Texture;
-        if(extension == ".png") return ContentType::Texture;
-        if(extension == ".glsl") return ContentType::Shader;
+        GetFolderContents();
+    }
 
-        OIL_CORE_ERROR("ContentType == {0}", extension);
+    Ref<Texture2D> ContentBrowserPanel::RenderDirectoryEntry(FolderContentInfo &directoryEntry)
+    {
+        Ref<Texture2D> tex;
+        switch (directoryEntry.type){
+            case ContentType::Directory:
+                tex = m_DirectoryIcon;
+                break;
+            default:
+                tex = m_FileIcon;
+        }
+        return tex;
+    }
 
-        OIL_CORE_ASSERT(false, "Invalid content type deduced!");
-        return ContentType::None;
+    void ContentBrowserPanel::GetFolderContents()
+    {
+        m_CurrentFolderContents.clear();
+        for (auto& directoryEntry : std::filesystem::directory_iterator(m_AssetManagerRef->GetCurrentDirectory())){
+                FolderContentInfo fi;
+                fi.path = directoryEntry.path();
+                auto relativePath = std::filesystem::relative(fi.path, m_AssetManagerRef->GetRootDirectory());
+                
+                fi.name = relativePath.filename().stem().string();
+
+                if(directoryEntry.is_directory()){
+                    fi.type = ContentType::Directory;
+                    fi.ID = 0;
+                    m_CurrentFolderContents.push_back(fi);
+                    continue;
+                }
+                    
+                if(!(relativePath.filename().extension() == ".oil"))
+                    continue;
+                        
+                fi.ID = m_AssetManagerRef->GetIDFromPath(directoryEntry, fi.type);
+                m_CurrentFolderContents.push_back(fi);
+        }
+
     }
 
     void ContentBrowserPanel::OnImGuiRender()
@@ -33,11 +61,13 @@ namespace oil{
 
         ImGui::Begin("Content Browser panel");
 
-        if (m_CurrentDirectory != g_AssetPath){
+        if (!m_AssetManagerRef->IsCurrentRootDirectory()){
             if (ImGui::Button("<=")){
-                m_CurrentDirectory = m_CurrentDirectory.parent_path();
+                m_AssetManagerRef->StepOutOfDirectory();
+                GetFolderContents();
             }
         }
+
 
         static float padding = 16.0f;
         static float thumbnailSize = 96.0f;
@@ -50,41 +80,31 @@ namespace oil{
         ImGui::Columns(columnCount, 0, false);
 
 
-        for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory)){
+        for (FolderContentInfo& directoryEntry : m_CurrentFolderContents){
 
+            Ref<Texture2D> icon = RenderDirectoryEntry(directoryEntry);
+            ImGui::PushID(directoryEntry.name.c_str());
 
-            const auto& path = directoryEntry.path();
-            auto relativePath = std::filesystem::relative(path, g_AssetPath);
-            std::string filenameString = relativePath.filename().string();
-            ImGui::PushID(filenameString.c_str());
-
-
-            Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
             ImGui::ImageButton((ImTextureID)icon->GetRendererID(), {thumbnailSize, thumbnailSize}, {0, 1}, {1, 0});
 
 
             if (ImGui::BeginDragDropSource()){
-                ContentType type;
-                if (directoryEntry.is_directory())
-                    type = ContentType::Directory;
-                else{
-                    type = GetContentTypeFromFileExtension(relativePath.extension().string());
-                }
 
-                m_AssetManagerRef->OnDragAsset({type, relativePath.c_str()});
+                Ref<DragDropInfo> idref = m_AssetManagerRef->OnDragAsset({directoryEntry.type, directoryEntry.path.c_str(), directoryEntry.ID});
 
-                ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &m_AssetManagerRef, sizeof(AssetManager), ImGuiCond_Once);
+                ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &idref, sizeof(UUID), ImGuiCond_Once);
                 ImGui::EndDragDropSource();
             }
 
 
             ImGui::PopStyleColor();
             if(ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)){
-                if(directoryEntry.is_directory())
-                    m_CurrentDirectory /= path.filename();
+                if(std::filesystem::is_directory(directoryEntry.path))
+                    m_AssetManagerRef->StepIntoDirectory(directoryEntry.path.filename());
+                    GetFolderContents();
             }
-            ImGui::TextWrapped(filenameString.c_str());
+            ImGui::TextWrapped(directoryEntry.name.c_str());
 
             ImGui::NextColumn();
 

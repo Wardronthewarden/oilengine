@@ -30,6 +30,9 @@ namespace oil{
         void SaveSceneAs();
         void SaveScene();
 
+        void Import();
+        void Reimport();
+
         void OnScenePlay();
         void OnSceneStop();
 
@@ -47,8 +50,9 @@ namespace oil{
         // Data
         std::string m_ActiveSceneFilepath;
 
-        // Editor resources
+        //Assets
         Ref<AssetManager> m_AssetManager;
+        Ref<AssetImporter> m_AssetImporter;
 
         Ref<Texture2D> m_DefaultTexture;
         Ref<Texture2D> m_IconPlay;
@@ -69,6 +73,8 @@ namespace oil{
         //Panels
         SceneHierarchyPanel m_SceneHierarchyPanel;
         ContentBrowserPanel m_ContentBrowserPanel;
+
+        Asset<Model> m_ModelAssetTest;
 
 
         //Controls

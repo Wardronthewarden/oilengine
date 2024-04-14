@@ -9,12 +9,14 @@ add_subdirectory(vendor/GLAD)
 add_subdirectory(vendor/imgui)
 add_subdirectory(vendor/stb_image)
 add_subdirectory(vendor/yaml-cpp)
+add_subdirectory(vendor/assimp)
 
 
 include_directories(${PROJECT_BINARY_DIR})
 
 add_library(oilengine STATIC 
                 src/oil/core/Application.cpp
+                src/oil/core/Asset.cpp
                 src/oil/core/AssetManager.cpp
                 src/oil/core/UUID.cpp
                 src/oil/core/Log.cpp
@@ -33,12 +35,12 @@ add_library(oilengine STATIC
                 src/Platform/OpenGL/OpenGLShader.cpp
                 src/Platform/OpenGL/OpenGLTexture.cpp
                 src/oil/Scene/Scene.cpp
-                src/oil/Scene/SceneSerializer.cpp
                 src/oil/Scene/SceneCamera.cpp
                 src/oil/Scene/Entity.cpp
                 src/oil/Renderer/Renderer.cpp
                 src/oil/Renderer/Renderer2D.cpp
                 src/oil/Renderer/Renderer3D.cpp
+                src/oil/Renderer/Model.cpp
                 src/oil/Renderer/Mesh.cpp
                 src/oil/Renderer/Light.cpp
                 src/oil/Renderer/Buffer.cpp
@@ -88,6 +90,7 @@ target_include_directories(oilengine PUBLIC
         vendor/EnTT/include
         vendor/yaml-cpp/include
         vendor/ImGuizmo
+        vendor/assimp
 )
 
 target_link_directories(${PROJECT_NAME} 
@@ -95,4 +98,4 @@ target_link_directories(${PROJECT_NAME}
                                 PUBLIC vendor/glfw/src
 ) 
 
-target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 glad imgui opengl32 stb_img yaml-cpp)
+target_link_libraries(${PROJECT_NAME} PUBLIC glfw3 glad imgui opengl32 stb_img yaml-cpp assimp)

@@ -66,7 +66,14 @@ namespace oil{
             }
 
         inline uint32_t GetStride() const { return m_Stride; }
+        void SetStride(const uint32_t stride) { m_Stride = stride; }
         inline const std::vector<BufferElement>& GetElements() const { return m_Elements; }
+
+        void AddElement(const BufferElement& elem) { m_Elements.push_back(elem); }
+
+        //TODO: add support to dynamically add and remove elements
+        //This is to help with loading and saving from and to files
+        //Offset and stride will be loaded from "Accessors" and "Buffer Views"
 
         std::vector<BufferElement>::iterator begin() { return m_Elements.begin(); }
         std::vector<BufferElement>::iterator end() { return m_Elements.end(); }

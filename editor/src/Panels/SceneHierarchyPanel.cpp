@@ -7,7 +7,7 @@
 
 namespace oil{
 
-    extern const std::filesystem::path g_AssetPath;
+    extern const std::filesystem::path g_AssetPath = "Assets";
 
     SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene> &scene)
     {
@@ -79,6 +79,14 @@ namespace oil{
                         }
                         if (ImGui::MenuItem("Sprite Renderer")){
                             m_SelectionContext.AddComponent<SpriteRendererComponent>();
+                            ImGui::ClosePopupsExceptModals();
+                        }
+                        if (ImGui::MenuItem("Mesh")){
+                            m_SelectionContext.AddComponent<MeshComponent>();
+                            ImGui::ClosePopupsExceptModals();
+                        }
+                        if (ImGui::MenuItem("Model")){
+                            m_SelectionContext.AddComponent<ModelComponent>();
                             ImGui::ClosePopupsExceptModals();
                         }
                         ImGui::EndPopup();
@@ -241,6 +249,10 @@ namespace oil{
                 m_SelectionContext.AddComponent<MeshComponent>();
                 ImGui::CloseCurrentPopup();
             }
+           if (ImGui::MenuItem("Model")){
+                m_SelectionContext.AddComponent<ModelComponent>();
+                ImGui::CloseCurrentPopup();
+            }
                 
             ImGui::EndPopup();
         }
@@ -317,9 +329,10 @@ namespace oil{
                 if (ImGui::BeginDragDropTarget()){
                     if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
 
-                        DragDropInfo info = m_AssetManagerRef->GetDragDropInfo();
-                        if (info.contentType == ContentType::Texture){
-                            std::filesystem::path texturePath = std::filesystem::path(g_AssetPath) / info.itemPath;
+                        Ref<DragDropInfo> info = m_AssetManagerRef->GetDragDropInfo();
+                        if (info->contentType == ContentType::Texture){
+                            //TODO: move away from this
+                            std::filesystem::path texturePath = std::filesystem::path(g_AssetPath) / info->itemPath;
                             component.Texture = Texture2D::Create(texturePath.string());
                         }
                     }
@@ -330,10 +343,24 @@ namespace oil{
                 ImGui::DragFloat("Tiling Factor", &component.TilingFactor, 0.1f, 0.0f, 10.0f);
         });
 
+
+        //Mesh component is deprecated
         DrawComponent<MeshComponent>("Mesh", entity, [this](auto& component){
                 
         if(ImGui::Button("Mesh", ImVec2(100.0f, 0.0f)))
             ImGui::OpenPopup("SetMesh");
+
+       /*  if (ImGui::BeginDragDropTarget()){
+                    if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
+
+                        DragDropInfo info = m_AssetManagerRef->GetDragDropInfo();
+                        if (info.contentType == ContentType::Model){
+                            component.Mesh = m_AssetManagerRef->GetMesh(info.ID);
+                        }
+                    }
+
+                    ImGui::EndDragDropTarget();
+                } */
 
         if(ImGui::BeginPopup("SetMesh")){
            if (ImGui::MenuItem("Plane")){
@@ -352,20 +379,30 @@ namespace oil{
             ImGui::EndPopup();
         }
 
-                //TODO: drag mesh asset here
-                /* if (ImGui::BeginDragDropTarget()){
+        });
+
+        DrawComponent<ModelComponent>("Model", entity, [this](auto& component){
+
+        if(ImGui::Button("Model", ImVec2(100.0f, 0.0f)));
+
+        if (ImGui::BeginDragDropTarget()){
                     if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
 
-                        DragDropInfo info = m_AssetManagerRef->GetDragDropInfo();
-                        if (info.contentType == ContentType::Texture){
-                            std::filesystem::path texturePath = std::filesystem::path(g_AssetPath) / info.itemPath;
-                            component.Texture = Texture2D::Create(texturePath.string());
+                        Ref<DragDropInfo> info = m_AssetManagerRef->GetDragDropInfo();
+                        if (info->contentType == ContentType::Model){
+                            if (!m_AssetManagerRef->IDExists(info->ID))
+                                info->ID = m_AssetManagerRef->LoadAsset(info->itemPath);
+                            if (info->ID)
+                                component.model = m_AssetManagerRef->GetModel(info->ID);
+                            else
+                                OIL_CORE_ERROR("Failed to load asset: {0}", info->itemPath);
                         }
                     }
 
                     ImGui::EndDragDropTarget();
-                } */
+                }
 
+    
         });
         
     }

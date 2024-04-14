@@ -8,7 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "oil/Scene/SceneSerializer.h"
+//#include "oil/Scene/SceneSerializer.h"
 #include "oil/Utils/PlatformUtils.h"
 #include "oil/Math/Math.h"
 
@@ -33,6 +33,11 @@ void EditorLayer::OnAttach()
     m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
     m_ActiveSceneFilepath = "Assets/Scenes/cube.oil";
+
+    //Asset management setup
+    m_AssetManager = CreateRef<AssetManager>("Assets", "Internal"); //TODO: draw from init file
+    m_AssetManager->Init();
+    m_AssetImporter = CreateRef<AssetImporter>(m_AssetManager);
     OpenScene(m_ActiveSceneFilepath);
 
     //Framebuffer
@@ -97,14 +102,13 @@ void EditorLayer::OnAttach()
     m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
     // Editor utilities
-    m_AssetManager = CreateRef<AssetManager>();
-
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
     m_SceneHierarchyPanel.SetAssetManagerReference(m_AssetManager);
     m_ContentBrowserPanel.SetAssetManagerReference(m_AssetManager);
+    m_ContentBrowserPanel.Init();
     m_EditorCamera = EditorCamera(30.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
-
+    Ref<Model> mod = CreateRef<Model>();
 }
 
 void EditorLayer::OnDetach()
@@ -245,6 +249,10 @@ void EditorLayer::OnImGuiRender()
                 SaveSceneAs();
             }
 
+            if(ImGui::MenuItem("Import...", "Ctrl+I")){
+                Import();
+            }
+
             if(ImGui::MenuItem("Exit")) Application::Get().CloseApplication();
             ImGui::EndMenu();
         }
@@ -302,6 +310,12 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent &e)
         case OIL_KEY_O:{
             if (m_ControlPressed)
                 OpenScene();
+            break;
+        }
+
+        case OIL_KEY_I:{
+            if (m_ControlPressed)
+               Import();
             break;
         }
 
@@ -444,22 +458,30 @@ void EditorLayer::OpenScene(const std::filesystem::path &path)
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
         
 
-    SceneSerializer serializer(m_ActiveScene);
-    serializer.Deserialize(path.string());
+    Asset<Scene> serializer(m_ActiveScene, path);
+    serializer.Load();
 }
 void EditorLayer::SaveSceneAs()
 {
     m_ActiveSceneFilepath = FileDialogs::SaveFile("Oil Scene (*.oil)\0*.oil\0");
                 
         if(!m_ActiveSceneFilepath.empty()){
-            SceneSerializer serializer(m_ActiveScene);
-            serializer.Serialize(m_ActiveSceneFilepath);
+            Asset<Scene> serializer(m_ActiveScene);
+            serializer.SaveAs(m_ActiveSceneFilepath);
         }
 }
 void EditorLayer::SaveScene()
 {
-    SceneSerializer serializer(m_ActiveScene);
-    serializer.Serialize(m_ActiveSceneFilepath);
+    if(!m_ActiveSceneFilepath.empty()){
+        Asset<Scene> serializer(m_ActiveScene, m_ActiveSceneFilepath);
+        serializer.Save();
+    }
+}
+void EditorLayer::Import()
+{
+    std::string importSrc = FileDialogs::SaveFile("Import target\0*.obj;*.gltf;*.fbx\0\0");
+    if(!importSrc.empty())
+        m_AssetImporter->ImportModel(importSrc);
 }
 void EditorLayer::OnScenePlay()
 {
@@ -532,10 +554,10 @@ void EditorLayer::RenderViewport()
 
     if (ImGui::BeginDragDropTarget()){
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
-            DragDropInfo info = m_AssetManager->GetDragDropInfo();
+            Ref<DragDropInfo> info = m_AssetManager->GetDragDropInfo();
 
-            if (info.contentType == ContentType::Scene);
-                OpenScene(std::filesystem::path(g_AssetPath) / info.itemPath);
+            if (info->contentType == ContentType::Scene);
+                OpenScene(std::filesystem::path(g_AssetPath) / info->itemPath);
         }
 
         ImGui::EndDragDropTarget();

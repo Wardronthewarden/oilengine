@@ -129,12 +129,23 @@ namespace oil{
 
             //3D Rendering
             Renderer3D::BeginScene(camera);
+               /*  {
+                    auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent>);
+                    for (auto entity : group){
+                        auto [transform, mesh] = group.get<TransformComponent, MeshComponent>(entity);
 
-                auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent>);
-                for (auto entity : group){
-                    auto [transform, mesh] = group.get<TransformComponent, MeshComponent>(entity);
-
-                    Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
+                        Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
+                    }
+                } */
+                {
+                    auto group = m_Registry.group<TransformComponent>(entt::get<ModelComponent>);
+                    for (auto entity : group){
+                        auto [transform, model] = group.get<TransformComponent, ModelComponent>(entity);
+                        if(!model.model)
+                            continue;
+                        for(auto mesh : model.model->GetMeshes())
+                            Renderer3D::DrawMesh(transform.GetTransform(), *mesh.get(), (int)entity);
+                    }
                 }
 
             Renderer3D::EndScene();
@@ -210,6 +221,11 @@ namespace oil{
     
     template<>
     void Scene::OnComponentAdded<NativeScriptComponent>(Entity entity, NativeScriptComponent& component){
+
+    }
+
+    template<>
+    void Scene::OnComponentAdded<ModelComponent>(Entity entity, ModelComponent& component){
 
     }
     

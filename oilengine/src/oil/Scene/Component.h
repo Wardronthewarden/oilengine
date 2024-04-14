@@ -3,7 +3,7 @@
 #include "SceneCamera.h"
 #include "oil/core/UUID.h"
 #include "oil/Renderer/Texture.h"
-#include "oil/Renderer/Mesh.h"
+#include "oil/Renderer/Model.h"
 #include "oil/Renderer/Light.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -76,6 +76,13 @@ namespace oil{
 
         MeshComponent() = default;
         MeshComponent(const MeshComponent&) = default;
+    };
+
+    struct ModelComponent{
+        Ref<Model> model;
+
+        ModelComponent() = default;
+        ModelComponent(const ModelComponent&) = default;
     };
 
     struct PointLightComponent{
