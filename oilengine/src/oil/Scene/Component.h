@@ -72,7 +72,7 @@ namespace oil{
     };
 
     struct MeshComponent{
-        Mesh mesh;
+        Ref<Mesh> mesh;
 
         MeshComponent() = default;
         MeshComponent(const MeshComponent&) = default;

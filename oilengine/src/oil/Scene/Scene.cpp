@@ -129,12 +129,12 @@ namespace oil{
 
             //3D Rendering
             Renderer3D::BeginScene(camera);
-               /*  {
+                /* {
                     auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent>);
                     for (auto entity : group){
                         auto [transform, mesh] = group.get<TransformComponent, MeshComponent>(entity);
-
-                        Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
+                        if(mesh.mesh)
+                            Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
                     }
                 } */
                 {
@@ -144,7 +144,7 @@ namespace oil{
                         if(!model.model)
                             continue;
                         for(auto mesh : model.model->GetMeshes())
-                            Renderer3D::DrawMesh(transform.GetTransform(), *mesh.get(), (int)entity);
+                            Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
                     }
                 }
 

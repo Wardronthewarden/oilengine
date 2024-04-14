@@ -12,7 +12,7 @@ namespace oil{
         None = 0, Base = 1
     };
 
-     struct BaseVertex{
+    struct BaseVertex{
         glm::vec4 Position;
         glm::vec4 Color;
         glm::vec2 TexCoord;
@@ -65,35 +65,35 @@ namespace oil{
     
     class Mesh{
     public:
-        Mesh() = default; //TODO: empty mesh object
+        Mesh();
+        Mesh(const unsigned char* vertexBegin, uint32_t vertexByteSize, const unsigned char* indexBegin, uint32_t indexByteSize);
         Mesh(const unsigned char* vertexBegin, uint32_t vertexByteSize, const unsigned char* indexBegin, uint32_t indexByteSize, BufferLayout layout);
-        Mesh(std::vector<BaseVertex> vertices, std::vector<uint32_t> indices)
-            :m_Vertices(vertices), m_Indices(indices) {};
+        Mesh(Ref<CharBuffer> vertices, Ref<CharBuffer> indices)
+            :m_VertexBuffer(vertices), m_IndexBuffer(indices) {};
 
         ~Mesh() = default;
 
-        void SetMesh(Mesh mesh);
-        void SetMesh(std::vector<BaseVertex> vertices, std::vector<uint32_t> indices);
+        void SetMesh(Ref<CharBuffer> vertices, Ref<CharBuffer> indices);
 
-        void SetLayout(BufferLayout layout) { m_Layout = layout; }
+        void SetLayout(BufferLayout layout);
 
-        std::vector<BaseVertex> GetVertices() const { return m_Vertices; }
-        std::vector<uint32_t> GetIndices() const { return m_Indices; }
+        Ref<CharBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
+        Ref<CharBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
+        BufferLayout GetLayout() const { return m_Layout; }
 
-        uint32_t GetBufferSize() const { return (sizeof(BaseVertex) * m_Vertices.size()) + (sizeof(uint32_t) * m_Indices.size()); }
+        uint32_t GetBufferSize() const { return m_VertexBuffer->GetSize() +  m_IndexBuffer->GetSize(); }
 
 
     public:
-        static Mesh CreatePlane();
-        static Mesh CreateCube();
-        static Mesh CreateSphere();
+        static Ref<Mesh> CreatePlane();
+        static Ref<Mesh> CreateCube();
+        static Ref<Mesh> CreateSphere();
 
     private:
         //Use binary memory block to store vertex data, its size, and store layout directly
-        std::vector<BaseVertex> m_Vertices;
-        std::vector<uint32_t> m_Indices;
-        BufferLayout m_Layout;
-        
+        Ref<CharBuffer> m_VertexBuffer;
+        Ref<CharBuffer> m_IndexBuffer;
+        BufferLayout m_Layout;  
     };
 
 }

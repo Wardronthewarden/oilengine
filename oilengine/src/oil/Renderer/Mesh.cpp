@@ -2,38 +2,47 @@
 #include "Mesh.h"
 
 namespace oil{
+    Mesh::Mesh()
+    {
+        OIL_CORE_TRACE("Mesh constructor called");
+        m_VertexBuffer = CreateRef<CharBuffer>();
+        m_IndexBuffer = CreateRef<CharBuffer>();
+    }
+    Mesh::Mesh(const unsigned char *vertexBegin, uint32_t vertexByteSize, const unsigned char *indexBegin, uint32_t indexByteSize)
+    {
+        m_VertexBuffer = CreateRef<CharBuffer>(vertexBegin, vertexByteSize);
+        m_IndexBuffer = CreateRef<CharBuffer>(indexBegin, indexByteSize);
+    }
+
     Mesh::Mesh(const unsigned char *vertexBegin, uint32_t vertexByteSize, const unsigned char *indexBegin, uint32_t indexByteSize, BufferLayout layout)
+        : Mesh(vertexBegin, vertexByteSize, indexBegin, indexByteSize)
+    {
+        SetLayout(layout);
+    }
+
+    void Mesh::SetMesh(Ref<CharBuffer> vertices, Ref<CharBuffer> indices)
+    {
+        m_VertexBuffer = vertices;
+        m_IndexBuffer = indices;
+    }
+    void Mesh::SetLayout(BufferLayout layout)
     {
         m_Layout = layout;
-        m_Vertices.resize(vertexByteSize / m_Layout.GetStride());
-        m_Indices.resize(indexByteSize / m_Layout.GetStride());
-        memcpy(m_Vertices.data(), vertexBegin, vertexByteSize);
-        memcpy(m_Indices.data(), indexBegin, indexByteSize);
     }
-
-    void Mesh::SetMesh(Mesh mesh)
+    Ref<Mesh> Mesh::CreatePlane()
     {
-        m_Vertices = mesh.GetVertices();
-        m_Indices = mesh.GetIndices();
-        OIL_INFO("Assigned new data to mesh!");
-
+        OIL_INFO("Creating plane vertices!");
+        return CreateRef<Mesh>(
+            CreateRef<CharBuffer>((unsigned char*)&planeVertices[0], sizeof(planeVertices)),
+            CreateRef<CharBuffer>((unsigned char*)&planeIndices[0], sizeof(planeIndices))
+        );
     }
-    Mesh Mesh::CreatePlane()
+    Ref<Mesh> Mesh::CreateCube()
     {
-        std::vector<BaseVertex> v(planeVertices, planeVertices+sizeof(planeVertices) / sizeof(BaseVertex));
-        std::vector<uint32_t> i(planeIndices, planeIndices+sizeof(planeIndices) / sizeof(uint32_t));
-        OIL_INFO("Created plane vertices!");
-        return Mesh(v, i);
-    }
-    Mesh Mesh::CreateCube()
-    {
-        std::vector<BaseVertex> v(cubeVertices, cubeVertices+sizeof(cubeVertices) / sizeof(BaseVertex));
-        std::vector<uint32_t> i(cubeIndices, cubeIndices+sizeof(cubeIndices) / sizeof(uint32_t));
-        OIL_INFO("Created cube vertices!");
-        return Mesh(v, i);
-    }
-    Mesh Mesh::CreateSphere()
-    {
-        return Mesh();
+        OIL_INFO("Creating cube vertices!");
+        return CreateRef<Mesh>(
+            CreateRef<CharBuffer>((unsigned char*)&cubeVertices[0], sizeof(cubeVertices)),
+            CreateRef<CharBuffer>((unsigned char*)&cubeIndices[0], sizeof(cubeIndices))
+        );
     }
 }

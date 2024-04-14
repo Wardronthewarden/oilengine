@@ -32,7 +32,7 @@ namespace oil{
 
             //Meshes
 
-            static void DrawMesh(const glm::mat4& transform, Mesh& mesh, int entityID);
+            static void DrawMesh(const glm::mat4& transform, Ref<Mesh> mesh, int entityID);
             static void DrawMesh(const glm::mat4& transform, MeshComponent& meshComp, int entityID);
 
             //Lights

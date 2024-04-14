@@ -71,7 +71,7 @@ namespace oil{
 
         void AddElement(const BufferElement& elem) { m_Elements.push_back(elem); }
 
-        //TODO: add support to dynamically add and remove elements
+        //TODO: add support to dynamically remove elements
         //This is to help with loading and saving from and to files
         //Offset and stride will be loaded from "Accessors" and "Buffer Views"
 
@@ -143,5 +143,47 @@ namespace oil{
 
         static Ref<IndexBuffer> Create(uint32_t count);
         static Ref<IndexBuffer> Create(uint32_t* indices, uint32_t count);
+    };
+
+    class CharBuffer{
+    public:
+        CharBuffer() = default;
+        CharBuffer(const unsigned char * data, const uint32_t size)
+            :  m_Size(size){
+                m_Data = new unsigned char[size];
+                memcpy(m_Data, data, size);
+        }
+
+        ~CharBuffer(){
+            if(m_Data)
+                delete[] m_Data;
+        };
+
+        char operator[](uint32_t pos) const {
+            return pos >= m_Size ? m_Data[pos] : '\0'; 
+        };
+
+        const unsigned char* GetData() const { return m_Data; }
+        const uint32_t GetSize() const { return m_Size; }
+
+        void SetData(CharBuffer buffer){
+            SetData(buffer.GetData(), buffer.GetSize());
+        }
+        void SetData(const unsigned char * data, const uint32_t size){
+            delete[] m_Data;
+            m_Data = new unsigned char[size];
+            memcpy(m_Data, data, size);
+            m_Size = size;
+        }
+
+        operator bool() const{
+            if (m_Data)
+                return true;
+            return false;
+        }
+
+    private:
+        uint32_t m_Size = 0;
+        unsigned char * m_Data = nullptr;
     };
 }

@@ -364,15 +364,15 @@ namespace oil{
 
         if(ImGui::BeginPopup("SetMesh")){
            if (ImGui::MenuItem("Plane")){
-                component.mesh.SetMesh(Mesh::CreatePlane());
+                component.mesh = Mesh::CreatePlane();
                 ImGui::CloseCurrentPopup();
             }
             if (ImGui::MenuItem("Cube")){
-                component.mesh.SetMesh(Mesh::CreateCube());
+                component.mesh = Mesh::CreateCube();
                 ImGui::CloseCurrentPopup();
             }
            if (ImGui::MenuItem("Sphere")){
-                component.mesh.SetMesh(Mesh::CreateSphere());
+                component.mesh = Mesh::CreateCube();
                 ImGui::CloseCurrentPopup();
             }
                 

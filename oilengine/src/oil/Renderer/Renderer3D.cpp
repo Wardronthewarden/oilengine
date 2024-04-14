@@ -253,7 +253,7 @@ namespace oil{
     
 
     //Mesh drawing
-    void Renderer3D::DrawMesh(const glm::mat4& transform, Mesh &mesh, int entityID)
+    void Renderer3D::DrawMesh(const glm::mat4& transform, Ref<Mesh> mesh, int entityID)
     {
         if (s_3DRenderData.IndexCount >= Renderer3DData::MaxIndices){
             EndScene();
@@ -262,8 +262,8 @@ namespace oil{
         
         const float texIndex  = 0.0f;
 
-
-        std::vector<uint32_t> indices = mesh.GetIndices();
+        Ref<CharBuffer> indexBuffer = mesh->GetIndexBuffer();
+        std::vector<uint32_t> indices((uint32_t*)indexBuffer->GetData(), (uint32_t*)indexBuffer->GetData() + indexBuffer->GetSize() / sizeof(uint32_t));
 
         uint32_t count = s_3DRenderData.VertexCount;
 
@@ -273,7 +273,8 @@ namespace oil{
             ++s_3DRenderData.IndexCount;
         }
 
-        std::vector<BaseVertex> vertices = mesh.GetVertices();
+        Ref<CharBuffer> vertexBuffer = mesh->GetVertexBuffer();
+        std::vector<BaseVertex> vertices((BaseVertex*)vertexBuffer->GetData(), (BaseVertex*)vertexBuffer->GetData() + vertexBuffer->GetSize() / sizeof(BaseVertex));
 
         for (auto vert : vertices) {
             s_3DRenderData.VertexBufferPtr->Position = transform * vert.Position;
