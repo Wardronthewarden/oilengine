@@ -3,10 +3,6 @@
 
 namespace oil{
     Model::Model(){
-        Ref<Mesh> ms = Mesh::CreateCube();
-        m_BufferSize = 0;
-        
-        AddMesh(ms);
     }
     Model::~Model(){
     }

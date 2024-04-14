@@ -350,18 +350,6 @@ namespace oil{
         if(ImGui::Button("Mesh", ImVec2(100.0f, 0.0f)))
             ImGui::OpenPopup("SetMesh");
 
-       /*  if (ImGui::BeginDragDropTarget()){
-                    if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
-
-                        DragDropInfo info = m_AssetManagerRef->GetDragDropInfo();
-                        if (info.contentType == ContentType::Model){
-                            component.Mesh = m_AssetManagerRef->GetMesh(info.ID);
-                        }
-                    }
-
-                    ImGui::EndDragDropTarget();
-                } */
-
         if(ImGui::BeginPopup("SetMesh")){
            if (ImGui::MenuItem("Plane")){
                 component.mesh = Mesh::CreatePlane();
@@ -392,8 +380,10 @@ namespace oil{
                         if (info->contentType == ContentType::Model){
                             if (!m_AssetManagerRef->IDExists(info->ID))
                                 info->ID = m_AssetManagerRef->LoadAsset(info->itemPath);
-                            if (info->ID)
-                                component.model = m_AssetManagerRef->GetModel(info->ID);
+                            if (info->ID){
+                                component.ID = info->ID;
+                                component.model = m_AssetManagerRef->GetAsset<Model>(info->ID);
+                            }
                             else
                                 OIL_CORE_ERROR("Failed to load asset: {0}", info->itemPath);
                         }

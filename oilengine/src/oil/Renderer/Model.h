@@ -17,7 +17,7 @@ namespace oil{
         const std::vector<Ref<Mesh>> GetMeshes() { return m_Meshes; };
     private:
         std::vector<Ref<Mesh>> m_Meshes;
-        uint32_t m_BufferSize;
+        uint32_t m_BufferSize = 0;
 
     };
 

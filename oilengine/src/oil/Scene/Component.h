@@ -12,6 +12,7 @@
 
 namespace oil{
 
+    //Data components
     struct IDComponent{
         UUID ID;
 
@@ -30,6 +31,7 @@ namespace oil{
             : Tag(tag){};
     };
 
+    //Engine primitive components
     struct TransformComponent{
         glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
         glm::vec3 Rotation = { 0.0f, 0.0f, 0.0f };
@@ -71,6 +73,7 @@ namespace oil{
         CameraComponent(const CameraComponent&) = default;
     };
 
+
     struct MeshComponent{
         Ref<Mesh> mesh;
 
@@ -78,12 +81,6 @@ namespace oil{
         MeshComponent(const MeshComponent&) = default;
     };
 
-    struct ModelComponent{
-        Ref<Model> model;
-
-        ModelComponent() = default;
-        ModelComponent(const ModelComponent&) = default;
-    };
 
     struct PointLightComponent{
         PointLight light;
@@ -106,6 +103,17 @@ namespace oil{
         DirecLightComponent(const DirecLightComponent&) = default;
     };
 
+    //Asset components
+    struct ModelComponent{
+        UUID ID;
+        Ref<Model> model;
+
+        ModelComponent() = default;
+        ModelComponent(const ModelComponent&) = default;
+    };
+
+
+    //Native scripting
     class ScriptableEntity;
 
     struct NativeScriptComponent{
