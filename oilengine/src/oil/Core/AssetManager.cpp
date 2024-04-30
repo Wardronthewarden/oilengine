@@ -1,7 +1,39 @@
 #include "pch/oilpch.h"
 #include "AssetManager.h"
 
+//Required for extraction
+#include "oil/Scene/Component.h"
+#include "oil/Scene/Entity.h"
+
+
 namespace oil{
+    template<typename T>
+    std::unordered_map<UUID, Ref<Asset<T>>> AssetManager::m_AssetLookup;
+
+    //Instantiate template for new asset types
+    template UUID AssetManager::CreateAsset<Model>(std::filesystem::path dir, Ref<Model> assetObject, std::string name);
+    template UUID AssetManager::CreateAsset<Scene>(std::filesystem::path dir, Ref<Scene> assetObject, std::string name);
+
+    template <>
+    void AssetManager::RefreshAsset<Scene>(UUID id)
+    {
+        Ref<Scene> sc = GetAsset<Scene>(id);
+        sc->m_Registry.each([&](auto entityID){
+            Entity entity = { entityID, sc.get() };
+            if(entity.HasComponent<ModelComponent>()){
+                auto& mc = entity.GetComponent<ModelComponent>();
+                if(mc.ID)
+                    mc.model = GetAsset<Model>(mc.ID);
+            }
+        });
+    }
+
+    template <>
+    void AssetManager::RefreshAsset<Model>(UUID id)
+    {
+        
+    }
+
     void AssetManager::Init()
     {
         m_CurrentAssetPath = m_RootAssetPath;
@@ -29,8 +61,12 @@ namespace oil{
         if(IsLoaded(id)){
             return id;
         }
-        if(IDExists(id))
-            check = LoadAsset(GetPath(id));
+        if(!IDExists(id)){
+            OIL_CORE_ERROR("Tried to load asset with ID {0}, but ID does not exist!", id);
+            return 0;
+        }
+        
+        check = LoadAsset(GetPath(id));
 
         if(check != id)
             OIL_CORE_WARN("Asset held a different id from the library. The new ID is {0}", check);
@@ -40,6 +76,8 @@ namespace oil{
         
     }
 
+
+    //Add new asset types here
     UUID AssetManager::LoadAsset(std::filesystem::path path)
     {
         if(path.extension().string() != ".oil"){
@@ -63,18 +101,14 @@ namespace oil{
         ContentType type = node["Header"]["Type"].as<ContentType>();
         switch(type){
             case oil::ContentType::Model:{
-                Ref<Model> mod = CreateRef<Model>();
-                Ref<Asset<Model>> asset = CreateRef<Asset<Model>>(mod, path);
-                asset->Load();
-                assetID = asset->GetID();
-                if(GetPath(assetID) != path)
-                    m_LoadedIDs.emplace(AddEntry(path, assetID));
-                else
-                    m_LoadedIDs.emplace(assetID);
-                m_LoadedModels[assetID] = asset;
-
+                assetID = LoadAssetInternal<Model>(node, path, ContentType::Model);
+                RefreshAsset<Model>(assetID);
                 break;
-                
+            }
+            case oil::ContentType::Scene:{
+                assetID = LoadAssetInternal<Scene>(node, path, ContentType::Scene);
+                RefreshAsset<Scene>(assetID);
+                break;             
             }
             default:
                 OIL_CORE_WARN("Asset type does not exist!");
@@ -83,15 +117,40 @@ namespace oil{
 
     }
 
-    Ref<Model> AssetManager::GetModel(UUID id)
+    template<typename T>
+    void AssetManager::LoadDependencies(UUID id)
     {
-        UUID asset = LoadAsset(id);
-        if (asset)
-            return m_LoadedModels[asset]->GetContent();
-        OIL_CORE_ERROR("Failed to get model asset!");
-        return nullptr;
-        
+        std::unordered_set<UUID> deps = m_AssetLookup<T>[id]->GetDependencies();
+        if (!deps.empty())
+            for(auto dep : deps)
+                LoadAsset(dep);
     }
+
+
+    template <typename T>
+    UUID AssetManager::AddToLookup(UUID id, Ref<Asset<T>> asset)
+    {
+        m_AssetLookup<T>[id] = asset;
+        m_LoadedIDs.emplace(id, asset->GetType());
+        return id;
+    }
+
+    template <typename T>
+    UUID AssetManager::LoadAssetInternal(YAML::Node &node, std::filesystem::path path, ContentType type)
+    {
+        Ref<T> ass = CreateRef<T>();
+        Ref<Asset<T>> asset = CreateRef<Asset<T>>(ass, path);
+        asset->Load(node);
+        UUID assetID = asset->GetID();
+        if(GetPath(assetID) != path)
+            m_LoadedIDs[AddEntry(path, assetID)] = type;
+        else
+            m_LoadedIDs[assetID] = type;
+        AddToLookup<T>(assetID, asset);
+        LoadDependencies<T>(assetID);
+        return assetID;
+    }
+
 
     bool AssetManager::StepIntoDirectory(std::filesystem::path path)
     {
@@ -174,11 +233,20 @@ namespace oil{
         return node["Header"]["UUID"].as<UUID>();
     }
 
+
+    ContentType AssetManager::GetAssetType(UUID id)
+    {
+        if(!IsLoaded(id))
+            return ContentType::None;
+        return m_LoadedIDs[id];
+    }
+
     bool AssetManager::IDExists(UUID id)
     {
 
         if(m_AssetLookupTable[id])
             return true;
+        OIL_CORE_WARN("Does not exist");
         return false;
     }
 
@@ -195,39 +263,56 @@ namespace oil{
     {
         if(m_AssetLookupTable[id] || !id)
             id = GenerateUUID(10);
-        if(id)
+        if(id){
             m_AssetLookupTable[id] = assetPath;
+            SaveAssetLookup();
+        }
         return id;
     }
 
-    template <typename T>
-    inline UUID AssetManager::CreateAsset()
+    template <>
+    inline UUID AssetManager::CreateAsset<Model>()
     {
-        Ref<T> assetObject = CreateRef<T>();
-        return CreateAsset<T>(m_CurrentAssetPath, "unnamed_asset", assetObject);
+        Ref<Model> assetObject = CreateRef<Model>();
+        return CreateAsset<Model>(m_CurrentAssetPath, assetObject);
+    }
+
+    template <>
+    inline UUID AssetManager::CreateAsset<Scene>()
+    {
+        Ref<Scene> assetObject = CreateRef<Scene>();
+        return CreateAsset<Scene>(m_CurrentAssetPath, assetObject);
     }
 
     template <typename T>
     UUID AssetManager::CreateAsset(Ref<T> assetObject)
     {
-        return CreateAsset<T>(m_CurrentAssetPath, "unnamed_asset", assetObject);
+        return CreateAsset<T>(m_CurrentAssetPath, assetObject);
     }
 
     template <typename T>
     UUID AssetManager::CreateAsset(std::filesystem::path dir, std::string name)
     {
         Ref<T> assetObject = CreateRef<T>();
-        return CreateAsset<T>(dir, name, assetObject);
+        return CreateAsset<T>(dir, assetObject, name);
     }
 
-    template <>
-    UUID AssetManager::CreateAsset<Model>(std::filesystem::path dir, std::string name, Ref<Model> assetObject)
+    template <typename T>
+    UUID AssetManager::CreateAsset(std::filesystem::path dir, Ref<T> assetObject, std::string name)
     {
+        if(dir.empty())
+            return 0;
         
-        Ref<Asset<Model>> asset = CreateRef<Asset<Model>>(assetObject);
+        Ref<Asset<T>> asset = CreateRef<Asset<T>>(assetObject);
 
         std::filesystem::path filepath;
-        filepath = dir / (name + ".oil");
+        if(dir.has_filename()){
+            filepath = dir;
+            filepath.replace_extension(".oil");
+            dir.remove_filename();
+        }else{
+            filepath = dir / (name + ".oil");
+        }
         std::string append = "";
         uint32_t i = 0;
         while (i<1000){
@@ -240,15 +325,16 @@ namespace oil{
         }
 
         UUID id = AddEntry(filepath);
-        asset->SetPath(filepath);
-        asset->SetID(id);
-        asset->Save();
         if(id == 0){
             OIL_CORE_ERROR("Failed to generate UUID for {0}", name);
             return 0;
         }
-        m_LoadedModels.emplace(id, asset);
-        m_LoadedIDs.emplace(id);
+
+        asset->SetPath(filepath);
+        asset->SetID(id);
+        asset->Save();
+
+        AddToLookup(id, asset);
         return id;
     }
 
@@ -267,7 +353,7 @@ namespace oil{
         std::string directory = src.parent_path().string(), name = src.filename().stem().string();
         ProcessNode(scene->mRootNode, scene, mod);
 
-        return m_AssetManager->CreateAsset<Model>(directory, name, mod);
+        return m_AssetManager->CreateAsset<Model>(directory, mod, name);
     }
     void AssetImporter::ProcessNode(aiNode *node, const aiScene *scene, Ref<Model> model)
     {
@@ -300,6 +386,9 @@ namespace oil{
                 indices.push_back(face.mIndices[j]);
         }
 
-        return CreateRef<Mesh>(vertices, indices);
+        return CreateRef<Mesh>(
+            CreateRef<CharBuffer>((unsigned char*)vertices.data(), (uint32_t)vertices.size() * sizeof(BaseVertex)), 
+            CreateRef<CharBuffer>((unsigned char*)indices.data(), (uint32_t)indices.size() * sizeof(uint32_t))
+        );
     }
 }

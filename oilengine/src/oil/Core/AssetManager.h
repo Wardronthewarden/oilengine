@@ -31,17 +31,22 @@ namespace oil{
         
     };
 
+
+    //Make this completely static
     class AssetManager{
         public:
             AssetManager() = default;
             AssetManager(std::string assetRootPath, std::filesystem::path internalPath) 
-             : m_RootAssetPath(assetRootPath), m_CurrentAssetPath(assetRootPath), m_AssetLookupTable(internalPath/"Scratch/assets.dat") {};
+             : m_RootAssetPath(assetRootPath), m_CurrentAssetPath(assetRootPath), m_AssetLookupTablePath(internalPath/"Scratch/assets.dat") {};
 
             void Init();
+            ~AssetManager(){SaveAssetLookup();}
 
+            //Drag drop functions
             Ref<DragDropInfo> OnDragAsset(const DragDropInfo& asset);
             Ref<DragDropInfo> GetDragDropInfo();
 
+            //New asset creation
             template<typename T>
             UUID CreateAsset();
 
@@ -52,18 +57,40 @@ namespace oil{
             UUID CreateAsset(std::filesystem::path dir, std::string name = "unnamed_asset");
 
             template<typename T>
-            UUID CreateAsset(std::filesystem::path dir, std::string name, Ref<T> assetObject);
+            UUID CreateAsset(std::filesystem::path dir, Ref<T> assetObject, std::string name = "unnamed_asset");
 
-
+            //Asset loading and unloadig
             UUID LoadAsset(UUID id);
             UUID LoadAsset(std::filesystem::path path);
+            template<typename T>
+            void LoadDependencies(UUID id);
 
             void UnloadAsset(UUID id);
 
-            Ref<Model> GetModel(UUID id);
+            template<typename T>
+            void SaveAsset(UUID id) {
+                m_AssetLookup<T>[id]->Save();
+            }
+
+            //Getting assets
+            template<typename T>
+            Ref<T> GetAsset(UUID id)
+            {
+                UUID asset = LoadAsset(id);
+                if (asset)
+                    return m_AssetLookup<T>[asset]->GetContent();
+                OIL_CORE_ERROR("Failed to get asset!");
+                return nullptr;
+                
+            }
+            ContentType GetAssetType(UUID id);
+
+            template<typename T>
+            void RefreshAsset(UUID id);
+
             bool IDExists(UUID id);
 
-
+            //Project directory queries and functions
             std::filesystem::path GetRootDirectory() const { return m_RootAssetPath; }
             std::filesystem::path GetCurrentDirectory() const { return m_CurrentAssetPath; }
             void SetCurrentDirectory(std::filesystem::path path) { m_CurrentAssetPath = path; }
@@ -71,17 +98,24 @@ namespace oil{
             bool StepOutOfDirectory();
             bool IsCurrentRootDirectory() const { return m_CurrentAssetPath == m_RootAssetPath; }
 
+            //Get ID of asset at path
             UUID GetIDFromPath(std::filesystem::path path); 
             UUID GetIDFromPath(std::filesystem::path path, ContentType& type); 
         private:
+            //Asset lookup table functions
             void LoadAssetLookup();
             void SaveAssetLookup();
+            template<typename T>
+            UUID AddToLookup(UUID id, Ref<Asset<T>> asset);
 
-
+            //Util functions
             UUID GenerateUUID(uint32_t maxTries); //TODO: this is kinda dumb   
             inline bool IsLoaded(UUID id) const { return m_LoadedIDs.contains(id); };
             std::filesystem::path GetPath(UUID id);
             UUID AddEntry(std::filesystem::path assetPath, UUID id = 0);
+            template<typename T>
+            UUID LoadAssetInternal(YAML::Node& node, std::filesystem::path path, ContentType type);
+
         private:
             Ref<DragDropInfo> m_DragDropInfo;
             std::filesystem::path m_CurrentAssetPath;
@@ -90,8 +124,10 @@ namespace oil{
 
             YAML::Node m_AssetLookupTable;
 
-            std::unordered_map<UUID, Ref<Asset<Model>>> m_LoadedModels;
-            std::unordered_set<UUID> m_LoadedIDs;
+            template<typename T>
+            static std::unordered_map<UUID, Ref<Asset<T>>> m_AssetLookup;
+
+            std::unordered_map<UUID, ContentType> m_LoadedIDs;
     };
 
     class AssetImporter{

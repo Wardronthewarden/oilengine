@@ -23,6 +23,7 @@ namespace oil{
         return out;
     }
 
+    //Scene
 
     template <>
     void Asset<Scene>::Save()
@@ -31,10 +32,21 @@ namespace oil{
     }
 
     template <>
-    void Asset<Scene>::Load()
+    void Asset<Scene>::Load(YAML::Node file)
     {
-        m_ID = Serializer::DeserializeScene(m_AssetReference, m_AssetPath);
+        auto [ID, Dependencies] = Serializer::DeserializeScene(m_AssetReference, file);
+        m_ID = ID;
+        m_Dependencies = Dependencies;
     }
+
+    template <>
+    ContentType Asset<Scene>::GetType()
+    {
+        return ContentType::Scene;
+    }
+    
+
+    //Model
 
     template <>
     void Asset<Model>::Save()
@@ -43,11 +55,22 @@ namespace oil{
     }
 
     template <>
-    void Asset<Model>::Load()
+    void Asset<Model>::Load(YAML::Node file)
     {
-        m_ID = Serializer::DeserializeModel(m_AssetReference, m_AssetPath);
+        auto [ID, Dependencies] = Serializer::DeserializeModel(m_AssetReference, file);
+        m_ID = ID;
+        m_Dependencies = Dependencies;
     }
+
+    template <>
+    ContentType Asset<Model>::GetType()
+    {
+        return ContentType::Model;
+    }
+
+    //------------------------------------------------------------------------------
     //Serializer functions
+
     void Serializer::SerializeScene(const Ref<Scene> scene, std::filesystem::path path, UUID id)
     {
         YAML::Emitter out;
@@ -89,18 +112,14 @@ namespace oil{
         fout << out.c_str();
     }
 
-    UUID Serializer::DeserializeScene(const Ref<Scene> scene, std::filesystem::path path)
+    std::pair<UUID, std::unordered_set<UUID>> Serializer::DeserializeScene(const Ref<Scene> scene, YAML::Node file)
     {
-        std::ifstream stream(path);
-        std::stringstream strStream;
-        strStream << stream.rdbuf();
-
-        YAML::Node file = YAML::Load(strStream.str());
         YAML::Node data;
         UUID id;
+        std::unordered_set<UUID> deps;
         if(!file["Body"]){
             if(!file["Scene"])
-                return false;
+                return {id, deps};
             data = file;
             id = 0; 
         }else{
@@ -125,6 +144,7 @@ namespace oil{
 
                 Entity deserializedEntity = scene->CreateEntityWithID(uuid, name);
 
+                //Primitive components
                 auto transformComponent = entity["TransformComponent"];
                 if (transformComponent){
                     //Entities currently initialize with transforms
@@ -166,13 +186,21 @@ namespace oil{
                 auto meshComponent = entity["MeshComponent"];
                 if(meshComponent){
                     auto& mrc = deserializedEntity.AddComponent<MeshComponent>();
-                    mrc.mesh.SetMesh(Mesh::CreateCube());
+                    mrc.mesh = Mesh::CreateCube();
+                }
+
+                //Asset components
+                auto modelComponent = entity["ModelComponent"];
+                if(modelComponent){
+                    auto& mc = deserializedEntity.AddComponent<ModelComponent>();
+                    mc.ID = entity["ModelComponent"]["ID"].as<UUID>();
+                    deps.emplace(mc.ID);
                 }
             }
         }
         
         OIL_CORE_INFO("Scene deserialized successfully!");
-        return id;
+        return {id, deps};
     }
 
     void Serializer::SerializeModel(const Ref<Model> model, std::filesystem::path path, UUID id)
@@ -219,9 +247,9 @@ namespace oil{
             mesh = meshes[i];
 
             //Copy mesh vertex data to output buffer
-            currentBufferSize = mesh->GetVertices().size() * sizeof(BaseVertex);
+            currentBufferSize = mesh->GetVertexBuffer()->GetSize();
             if(currentBufferSize > 0)
-                memcpy(&buffer[bufferOffset], &(mesh->GetVertices()[0]), currentBufferSize);
+                memcpy(&buffer[bufferOffset], mesh->GetVertexBuffer()->GetData(), currentBufferSize);
 
             //Build vertex buffer view
             YAML::Node vertex;
@@ -234,9 +262,9 @@ namespace oil{
             bufferOffset += currentBufferSize;
 
             //Copy mesh index data to output buffer
-            currentBufferSize = mesh->GetIndices().size() * sizeof(uint32_t);
+            currentBufferSize = mesh->GetIndexBuffer()->GetSize();
             if(currentBufferSize > 0)
-                memcpy(&buffer[bufferOffset], mesh->GetIndices().data(), currentBufferSize);
+                memcpy(&buffer[bufferOffset], mesh->GetIndexBuffer()->GetData(), currentBufferSize);
             
             //Build index bufer view
             YAML::Node index;
@@ -307,40 +335,37 @@ namespace oil{
 
     }
 
-    UUID Serializer::DeserializeModel(const Ref<Model> model, std::filesystem::path path)
+    std::pair<UUID, std::unordered_set<UUID>> Serializer::DeserializeModel(const Ref<Model> model, YAML::Node file)
     {
-        std::ifstream stream(path);
-        std::stringstream strStream;
-        strStream << stream.rdbuf();
-
-        YAML::Node data = YAML::Load(strStream.str());
-        if(!data["Header"] || !data["Body"] || !data["Buffers"] ){
-            OIL_CORE_ERROR("File {0} is not formatted properly!", path);
-            return 0;
+        std::unordered_set<UUID> deps;
+        if(!file["Header"] || !file["Body"] || !file["Buffers"] ){
+            OIL_CORE_ERROR("File is not formatted properly!");
+            return {0, deps};
         }
-        if(!(data["Header"]["Type"].as<uint32_t>() == (uint32_t)ContentType::Model)){
-            OIL_CORE_ERROR("File {0} is not a model!", path);
-            return 0;
+        if(!(file["Header"]["Type"].as<uint32_t>() == (uint32_t)ContentType::Model)){
+            OIL_CORE_ERROR("File is not a model!");
+            return {0, deps};
         }
 
-        UUID id = data["Header"]["UUID"].as<uint64_t>();
+        UUID id = file["Header"]["UUID"].as<uint64_t>();
 
-        YAML::Binary bin = data["Buffers"]["Data"].as<YAML::Binary>();
+        YAML::Binary bin = file["Buffers"]["Data"].as<YAML::Binary>();
 
-        const uint32_t bufferSize = data["Buffers"]["ByteLength"].as<uint32_t>();
-        const unsigned char* buffer = new unsigned char[bufferSize];
+        const uint32_t bufferSize = file["Buffers"]["ByteLength"].as<uint32_t>();
+        unsigned char* buffer = new unsigned char[bufferSize];
+        memcpy(&buffer[0], bin.data(), bufferSize);
 
-        auto nodes = data["Body"]["Nodes"];
+        auto nodes = file["Body"]["Nodes"];
         for(auto node : nodes){
             //TODO: add mesh name
-            auto meshInfo = data["Body"]["Meshes"][node["Mesh"].as<uint32_t>()];
+            auto meshInfo = file["Body"]["Meshes"][node["Mesh"].as<uint32_t>()];
 
             BufferLayout layout;
             BufferElement element;
             uint32_t stride = 0, bfview;
             for(auto attribute : meshInfo["Attributes"]){
                 element.Name = attribute.first.as<std::string>();
-                auto accessor = data["Body"]["Accessors"][attribute.second.as<uint32_t>()];
+                auto accessor = file["Body"]["Accessors"][attribute.second.as<uint32_t>()];
                 element.Type = accessor["ElementType"].as<ShaderDataType>();
                 element.Normalized = accessor["Normalized"].as<bool>();
                 element.Offset = accessor["Offset"].as<uint32_t>();
@@ -349,27 +374,27 @@ namespace oil{
                 layout.AddElement(element);
             }
 
-            auto indAccessor = data["Body"]["Accessors"][meshInfo["Indices"].as<uint32_t>()];
-            auto indView = data["Body"]["BufferViews"][indAccessor["BufferView"].as<uint32_t>()];
+            auto indAccessor = file["Body"]["Accessors"][meshInfo["Indices"].as<uint32_t>()];
+            auto indView = file["Body"]["BufferViews"][indAccessor["BufferView"].as<uint32_t>()];
 
             if (indView["Target"].as<uint32_t>() !=  34963){
                 OIL_CORE_ERROR("Incorrect index buffer target!");
-                return false;
+                return {0, deps};
             }
-            auto vertView = data["Body"]["BufferViews"][bfview];
+            auto vertView = file["Body"]["BufferViews"][bfview];
             if (vertView["Target"].as<uint32_t>() !=  34962){
                 OIL_CORE_ERROR("Incorrect vertex buffer target!");
-                return false;
+                return {0, deps};
             }
             layout.SetStride(vertView["Stride"].as<uint32_t>());
 
             Ref<Mesh> ms = CreateRef<Mesh>(&buffer[vertView["ByteOffset"].as<uint32_t>()], vertView["ByteLength"].as<uint32_t>(), 
                                 &buffer[indView["ByteOffset"].as<uint32_t>()], indView["ByteLength"].as<uint32_t>(), layout);
-            //model->AddMesh(ms); 
+            model->AddMesh(ms); 
         }
 
         delete[bufferSize] buffer;
-        return id;
+        return {id, deps};
        
     }
 
@@ -438,12 +463,14 @@ namespace oil{
             out << YAML::EndMap; // SpriteRendererComponent
         }
 
-        if (entity.HasComponent<MeshComponent>()){
-            out << YAML::Key << "MeshComponent";
+        //Asset components
+
+        if (entity.HasComponent<ModelComponent>()){
+            out << YAML::Key << "ModelComponent";
             out << YAML::BeginMap; // MeshComponent
 
-            auto& meshComponent = entity.GetComponent<MeshComponent>();
-            out << YAML::Key << "Path" << YAML::Value << "Mesh/path";
+            auto& modelComponent = entity.GetComponent<ModelComponent>();
+            out << YAML::Key << "ID" << YAML::Value << modelComponent.ID;
 
             out << YAML::EndMap;
         }

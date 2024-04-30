@@ -38,34 +38,47 @@ namespace oil{
         std::filesystem::path GetPath() { return m_AssetPath; }
         void SetID(UUID id) { m_ID = id; }
         UUID GetID() const { return m_ID; }
+        static ContentType GetType();
 
-        //Maybe unload asset
-        void Load();
+        inline void Load(){
+            std::ifstream stream(m_AssetPath);
+            std::stringstream strStream;
+            strStream << stream.rdbuf();
+
+            YAML::Node file = YAML::Load(strStream.str());
+
+            Load(file);
+        };
+
+
+        void Load(YAML::Node file);
         void Save();
         void SaveAs(std::filesystem::path path){
             SetPath(path);
             Save();
         };
         Ref<T> GetContent() {return m_AssetReference; };
+        
+        std::unordered_set<UUID> GetDependencies() { return m_Dependencies; }
 
     private:
         std::filesystem::path m_AssetPath;
         UUID m_ID;
+        std::unordered_set<UUID> m_Dependencies;
         Ref<T> m_AssetReference;
     };
     
-
     //Serialization
 
     class Serializer{
     public:
         //Scene
         static void SerializeScene(const Ref<Scene> scene, std::filesystem::path path, UUID id);
-        static UUID DeserializeScene(const Ref<Scene> scene, std::filesystem::path path);
+        static std::pair<UUID, std::unordered_set<UUID>> DeserializeScene(const Ref<Scene> scene, YAML::Node file);
 
         //Model
         static void SerializeModel(const Ref<Model> model, std::filesystem::path path, UUID id);
-        static UUID DeserializeModel(const Ref<Model> model, std::filesystem::path path);
+        static std::pair<UUID, std::unordered_set<UUID>> DeserializeModel(const Ref<Model> model, YAML::Node file);
 
     private:
         static void SerializeEntity(YAML::Emitter& out, Entity& entity);

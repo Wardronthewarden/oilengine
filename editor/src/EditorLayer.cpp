@@ -453,26 +453,21 @@ void EditorLayer::OpenScene()
 }
 void EditorLayer::OpenScene(const std::filesystem::path &path)
 {
-    m_ActiveScene = CreateRef<Scene>();
-    m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
-    m_SceneHierarchyPanel.SetContext(m_ActiveScene);
-        
-
-    Asset<Scene> serializer(m_ActiveScene, path);
-    serializer.Load();
+    UUID id = m_AssetManager->LoadAsset(path);
+    m_ActiveScene = m_AssetManager->GetAsset<Scene>(id);
 }
 void EditorLayer::SaveSceneAs()
 {
     m_ActiveSceneFilepath = FileDialogs::SaveFile("Oil Scene (*.oil)\0*.oil\0");
                 
         if(!m_ActiveSceneFilepath.empty()){
-            Asset<Scene> serializer(m_ActiveScene);
-            serializer.SaveAs(m_ActiveSceneFilepath);
+            m_AssetManager->CreateAsset<Scene>(m_ActiveSceneFilepath, m_ActiveScene, "unnamed_scene");
         }
 }
 void EditorLayer::SaveScene()
 {
     if(!m_ActiveSceneFilepath.empty()){
+        //m_AssetManager->SaveAsset()
         Asset<Scene> serializer(m_ActiveScene, m_ActiveSceneFilepath);
         serializer.Save();
     }
