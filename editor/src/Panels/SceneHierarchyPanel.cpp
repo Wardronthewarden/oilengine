@@ -382,7 +382,7 @@ namespace oil{
                                 info->ID = m_AssetManagerRef->LoadAsset(info->itemPath);
                             if (info->ID){
                                 component.ID = info->ID;
-                                component.model = m_AssetManagerRef->GetAsset<Model>(info->ID);
+                                component.model = m_AssetManagerRef->GetAsset<Model>(info->ID).GetContent();
                             }
                             else
                                 OIL_CORE_ERROR("Failed to load asset: {0}", info->itemPath);

@@ -45,7 +45,7 @@ namespace oil{
 
         Ref<FrameBuffer> m_FrameBuffer;
 
-        Ref<Scene> m_ActiveScene;
+        Asset<Scene> m_ActiveScene;
 
         // Data
         std::string m_ActiveSceneFilepath;
