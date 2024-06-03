@@ -29,11 +29,13 @@ uniform vec3 u_CamPos;
 uniform sampler2D u_Textures[32];
 
 
+
 void main(){
     vec3 Albedo = texture(u_Textures[0], v_TexCoord).rgb;
     vec3 FragPos =  texture(u_Textures[1], v_TexCoord).rgb;
     vec3 Normal = texture(u_Textures[2], v_TexCoord).rgb * 2.0 - 1.0;
     float Spec = texture(u_Textures[0], v_TexCoord).a;
+    int id = int(texture(u_Textures[4], v_TexCoord).r);
 
     vec3 lightColor = vec3(1.0, 1.0, 1.0);
     vec3 lightPos = vec3(10.0, 10.0, 5.0);
@@ -66,6 +68,7 @@ void main(){
     lighting += specular * attenuation;
     
 
+
     o_Color = vec4(lighting, 1.0);
-    o_EntityID = 1;
+    o_EntityID = id;
 }

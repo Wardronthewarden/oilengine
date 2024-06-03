@@ -2,19 +2,25 @@
 #include <filesystem>
 #include <yaml-cpp/yaml.h>
 
+#include "FileUtils.h"
+
 #include "oil/Scene/Scene.h"
 #include "oil/Renderer/Model.h"
+#include "oil/Renderer/Texture.h"
+#include "oil/Renderer/Shader.h"
+#include "oil/Renderer/Material.h"
 
 //This file contains wrappers around in engine constructs that specifies loading and saving them as assets
 //All types of assets will be included in this file going forward, and should be included from here
 namespace oil{
+
     enum class ContentType{
         None        = 0,
         Directory   = 0x00444952, //DIR
         Scene       = 0x53434e45, //SCNE
         Model       = 0x4d4f444c, //MODL
         Material    = 0x004d4154, //MAT
-        Texture     = 0x00544558, //TEX
+        Texture2D   = 0x00544558, //TEX2 //updatevalue
         VFX         = 0x00564658, //VFX
         Sound       = 0x00534658, //SFX
         Widget      = 0x57494447, //WIDG
@@ -22,49 +28,41 @@ namespace oil{
         Custom      = 0x43555354  //CUST
     };
 
+
     template<typename T>
     class Asset{
     public:
-        Asset(){};
+        Asset()
+            : m_ID(0){};
         Asset(const Ref<T> ref)
             : m_AssetReference(ref) {};
-        Asset(std::filesystem::path path)
-            : m_AssetPath(path) {};
-        Asset(const Ref<T> ref, std::filesystem::path path)
-            : m_AssetPath(path), m_AssetReference(ref) {};
-        ~Asset() {};
+        Asset(UUID id)
+            : m_ID(id) {};
+        Asset(UUID id, const Ref<T> ref)
+            : m_ID(id), m_AssetReference(ref) {};
+        ~Asset() = default;
 
-        void SetPath(std::filesystem::path path) { m_AssetPath = path; }
-        std::filesystem::path GetPath() { return m_AssetPath; }
         void SetID(UUID id) { m_ID = id; }
         UUID GetID() const { return m_ID; }
-        static ContentType GetType();
 
-        inline void Load(){
-            std::ifstream stream(m_AssetPath);
-            std::stringstream strStream;
-            strStream << stream.rdbuf();
+        inline static ContentType GetType();
 
-            YAML::Node file = YAML::Load(strStream.str());
-
-            Load(file);
-        };
-
-
-        void Load(YAML::Node file);
-        void Save();
-        void SaveAs(std::filesystem::path path){
-            SetPath(path);
-            Save();
-        };
         Ref<T> GetContent() {return m_AssetReference; };
-        
-        std::unordered_set<UUID> GetDependencies() { return m_Dependencies; }
+
+        T* operator->(){
+            return m_AssetReference.get();
+        }
+
+        operator Ref<T>() const{
+            return m_AssetReference;
+        }
+
+        operator UUID() const{
+            return m_ID;
+        }
 
     private:
-        std::filesystem::path m_AssetPath;
         UUID m_ID;
-        std::unordered_set<UUID> m_Dependencies;
         Ref<T> m_AssetReference;
     };
     
@@ -72,13 +70,12 @@ namespace oil{
 
     class Serializer{
     public:
-        //Scene
-        static void SerializeScene(const Ref<Scene> scene, std::filesystem::path path, UUID id);
-        static std::pair<UUID, std::unordered_set<UUID>> DeserializeScene(const Ref<Scene> scene, YAML::Node file);
 
-        //Model
-        static void SerializeModel(const Ref<Model> model, std::filesystem::path path, UUID id);
-        static std::pair<UUID, std::unordered_set<UUID>> DeserializeModel(const Ref<Model> model, YAML::Node file);
+        template<typename T>
+        static void Serialize(const Ref<T> asset , std::filesystem::path path, UUID id);
+
+        template<typename T>
+        static std::unordered_set<UUID> Deserialize(const Ref<T> asset , YAML::Node file);
 
     private:
         static void SerializeEntity(YAML::Emitter& out, Entity& entity);
@@ -157,6 +154,20 @@ namespace YAML {
 
         static bool decode(const Node& node, oil::ContentType& rhs){
             rhs = (oil::ContentType)node.as<uint32_t>();
+            return true;
+        }
+    };
+
+    template<>
+    struct convert<oil::TextureFormat>{
+        static Node encode(const oil::TextureFormat& rhs){
+            Node node;
+            node = (uint32_t)rhs;
+            return node;
+        }
+
+        static bool decode(const Node& node, oil::TextureFormat& rhs){
+            rhs = (oil::TextureFormat)node.as<uint32_t>();
             return true;
         }
     };

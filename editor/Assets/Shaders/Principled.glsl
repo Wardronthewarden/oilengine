@@ -68,7 +68,7 @@ layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_Position;
 layout(location = 2) out vec3 o_Normal;
 layout(location = 3) out vec4 o_TexCoord;
-layout(location = 4) out int o_EntityID;
+layout(location = 4) out float o_EntityID;
 
 in f_Data{
     vec4 Position;
@@ -78,14 +78,12 @@ in f_Data{
     flat int EntityID;
 }frag;
 
-uniform sampler2D u_Textures[32];
-
 
 void main(){
-    //Todo: TilingFactor
+
     o_Color = frag.Color;
     o_Position = frag.Position;
     o_Normal = frag.Normal;
-    o_TexCoord = vec4(0.0, 0.0, 1.0, 1.0);
-    o_EntityID = frag.EntityID;
+    o_TexCoord = vec4(frag.TexCoord, 1.0, 1.0);
+    o_EntityID = float(frag.EntityID);
 }

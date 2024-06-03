@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-
+#include <OilengineConfig.h>
 
 #ifdef _WIN32
     // Windows x64/x86

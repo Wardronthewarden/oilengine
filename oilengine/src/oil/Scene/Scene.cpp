@@ -95,16 +95,28 @@ namespace oil{
 
                 Renderer3D::BeginScene(mainCamera->GetProjection(), cameraTransform);
 
-                auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent>);
+                auto group = m_Registry.group<TransformComponent>(entt::get<ModelComponent>);
                 for (auto entity : group){
-                    auto [transform, mesh] = group.get<TransformComponent, MeshComponent>(entity);
-
-                    Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
+                    auto [transform, model] = group.get<TransformComponent, ModelComponent>(entity);
+                    if(!model.model)
+                        continue;
+                    for(auto mesh : model.model->GetMeshes()){
+                        Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
+                    }
                 }
 
                 Renderer3D::EndScene();
 
+                
+            
+                Renderer3D::InitLightingInfo();
+
+                //Submit Lights
+                Renderer3D::RenderLighting();
+
             }
+            
+        }else{
             
         }
     }
@@ -119,34 +131,28 @@ namespace oil{
                 for (auto entity : group){
                     auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
-                    Renderer2D::DrawSprite(transform.GetTransform(), sprite, (int)entity);
+                    Renderer2D::DrawSprite(transform.GetTransform(), sprite, (uint32_t)entity);
                 }
 
             Renderer2D::EndScene(); 
+
 
         //---------------------------------------------------------------------
         } else {
 
             //3D Rendering
             Renderer3D::BeginScene(camera);
-                /* {
-                    auto group = m_Registry.group<TransformComponent>(entt::get<MeshComponent>);
-                    for (auto entity : group){
-                        auto [transform, mesh] = group.get<TransformComponent, MeshComponent>(entity);
-                        if(mesh.mesh)
-                            Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
-                    }
-                } */
-                {
-                    auto group = m_Registry.group<TransformComponent>(entt::get<ModelComponent>);
-                    for (auto entity : group){
-                        auto [transform, model] = group.get<TransformComponent, ModelComponent>(entity);
-                        if(!model.model)
-                            continue;
-                        for(auto mesh : model.model->GetMeshes())
-                            Renderer3D::DrawMesh(transform.GetTransform(), mesh, (int)entity);
+               
+                auto group = m_Registry.group<TransformComponent>(entt::get<ModelComponent>);
+                for (auto entity : group){
+                    auto [transform, model] = group.get<TransformComponent, ModelComponent>(entity);
+                    if(!model.model)
+                        continue;
+                    for(auto mesh : model.model->GetMeshes()){
+                        Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
                     }
                 }
+                
 
             Renderer3D::EndScene();
 

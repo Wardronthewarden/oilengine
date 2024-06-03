@@ -47,9 +47,8 @@ namespace oil{
         Ref<Shader> ActiveShader;
 
         //Textures
-        Ref<Texture2D> WhiteTexture;
         std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
-        uint32_t TextureSlotIndex = 1;
+        uint32_t TextureSlotIndex = 0;
 
         //Screen quad
         Ref<VertexArray> QuadVertexArray;
@@ -105,11 +104,6 @@ namespace oil{
         s_3DRenderData.PointLightArray = UniformBuffer::Create(s_3DRenderData.MaxPointLights * sizeof(PointLightInfo));
 
 
-        //Setup White texture
-        s_3DRenderData.WhiteTexture = Texture2D::Create(1,1);
-        uint32_t whiteTextureData = 0xffffffff;
-        s_3DRenderData.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
-
         // Setup Buffers
         s_3DRenderData.VertexBufferBase = new BaseVertex[s_3DRenderData.MaxVertices];
         s_3DRenderData.IndexBufferBase = new uint32_t[s_3DRenderData.MaxIndices];
@@ -132,11 +126,9 @@ namespace oil{
         s_3DRenderData.ShaderLib->Load("Light pass","Assets/Shaders/Lighting.glsl");
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("Light pass"); 
         s_3DRenderData.ActiveShader->Bind();
+        //Find a better way
         s_3DRenderData.ActiveShader->SetIntArray("u_Textures", samplers, s_3DRenderData.MaxTextureSlots);
 
-
-        //initialize tex 0 to white
-        s_3DRenderData.TextureSlots[0] = s_3DRenderData.WhiteTexture;
         
 
         //Setup screen quad
@@ -169,7 +161,6 @@ namespace oil{
     }
     void Renderer3D::BeginScene(const EditorCamera &camera)
     {
-        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 0.0f});
         glm::mat4 VPmat = camera.GetVPMatrix();
         s_3DRenderData.CamPosition = camera.GetPosition();
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass");
@@ -178,9 +169,17 @@ namespace oil{
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetMat4("u_VPMat", VPmat);
 
+        
+        RBuffers.FBuffer->Bind();
+        RenderCommand::SetClearColor({1.0f, 0.0f, 1.0f, 1.0f});
+        RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
+        RBuffers.GBuffer->ClearAttachment(4, -1.0f);
+        RBuffers.FBuffer->ClearAttachment(1, -1);
+
         
+
         StartNewBatch();
     }
     void Renderer3D::BeginScene(const Camera &camera, const glm::mat4 &transform)
@@ -193,10 +192,12 @@ namespace oil{
 
         
         RBuffers.FBuffer->Bind();
-        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 0.0f});
+        RenderCommand::SetClearColor({1.0f, 0.0f, 1.0f, 1.0f});
         RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
+        RBuffers.GBuffer->ClearAttachment(4, -1);
+        RBuffers.FBuffer->ClearAttachment(1, -1);
 
         StartNewBatch();
     }
@@ -214,7 +215,7 @@ namespace oil{
         s_3DRenderData.VertexBufferPtr = s_3DRenderData.VertexBufferBase;
         s_3DRenderData.IndexBufferPtr = s_3DRenderData.IndexBufferBase;
 
-        s_3DRenderData.TextureSlotIndex = 1;
+        s_3DRenderData.TextureSlotIndex = 0;
 
         s_3DRenderData.MeshVertexArray->Bind();
     }
@@ -262,7 +263,7 @@ namespace oil{
         
         const float texIndex  = 0.0f;
 
-        Ref<CharBuffer> indexBuffer = mesh->GetIndexBuffer();
+        Ref<DataBuffer<unsigned char>> indexBuffer = mesh->GetIndexBuffer();
         std::vector<uint32_t> indices((uint32_t*)indexBuffer->GetData(), (uint32_t*)indexBuffer->GetData() + indexBuffer->GetSize() / sizeof(uint32_t));
 
         uint32_t count = s_3DRenderData.VertexCount;
@@ -273,7 +274,7 @@ namespace oil{
             ++s_3DRenderData.IndexCount;
         }
 
-        Ref<CharBuffer> vertexBuffer = mesh->GetVertexBuffer();
+        Ref<DataBuffer<unsigned char>> vertexBuffer = mesh->GetVertexBuffer();
         std::vector<BaseVertex> vertices((BaseVertex*)vertexBuffer->GetData(), (BaseVertex*)vertexBuffer->GetData() + vertexBuffer->GetSize() / sizeof(BaseVertex));
 
         for (auto vert : vertices) {
@@ -306,7 +307,7 @@ namespace oil{
         ++s_3DRenderData.PointLightCount;
     }
 
-        void Renderer3D::StartLightingPass(){
+    void Renderer3D::StartLightingPass(){
         
     }
 
@@ -324,6 +325,7 @@ namespace oil{
         s_3DRenderData.PointLightArray->SetData(s_3DRenderData.VertexBufferBase, dataSize);
 
         s_3DRenderData.QuadVertexArray->Bind();
+
 
         RBuffers.FBuffer->Bind();
         RenderCommand::Clear();

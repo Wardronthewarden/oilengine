@@ -5,13 +5,13 @@ namespace oil{
     Mesh::Mesh()
     {
         OIL_CORE_TRACE("Mesh constructor called");
-        m_VertexBuffer = CreateRef<CharBuffer>();
-        m_IndexBuffer = CreateRef<CharBuffer>();
+        m_VertexBuffer = CreateRef<DataBuffer<unsigned char>>();
+        m_IndexBuffer = CreateRef<DataBuffer<unsigned char>>();
     }
     Mesh::Mesh(const unsigned char *vertexBegin, uint32_t vertexByteSize, const unsigned char *indexBegin, uint32_t indexByteSize)
     {
-        m_VertexBuffer = CreateRef<CharBuffer>(vertexBegin, vertexByteSize);
-        m_IndexBuffer = CreateRef<CharBuffer>(indexBegin, indexByteSize);
+        m_VertexBuffer = CreateRef<DataBuffer<unsigned char>>(vertexBegin, vertexByteSize);
+        m_IndexBuffer = CreateRef<DataBuffer<unsigned char>>(indexBegin, indexByteSize);
     }
 
     Mesh::Mesh(const unsigned char *vertexBegin, uint32_t vertexByteSize, const unsigned char *indexBegin, uint32_t indexByteSize, BufferLayout layout)
@@ -20,7 +20,7 @@ namespace oil{
         SetLayout(layout);
     }
 
-    void Mesh::SetMesh(Ref<CharBuffer> vertices, Ref<CharBuffer> indices)
+    void Mesh::SetMesh(Ref<DataBuffer<unsigned char>> vertices, Ref<DataBuffer<unsigned char>> indices)
     {
         m_VertexBuffer = vertices;
         m_IndexBuffer = indices;
@@ -33,16 +33,16 @@ namespace oil{
     {
         OIL_INFO("Creating plane vertices!");
         return CreateRef<Mesh>(
-            CreateRef<CharBuffer>((unsigned char*)&planeVertices[0], sizeof(planeVertices)),
-            CreateRef<CharBuffer>((unsigned char*)&planeIndices[0], sizeof(planeIndices))
+            CreateRef<DataBuffer<unsigned char>>((unsigned char*)&planeVertices[0], sizeof(planeVertices)),
+            CreateRef<DataBuffer<unsigned char>>((unsigned char*)&planeIndices[0], sizeof(planeIndices))
         );
     }
     Ref<Mesh> Mesh::CreateCube()
     {
         OIL_INFO("Creating cube vertices!");
         return CreateRef<Mesh>(
-            CreateRef<CharBuffer>((unsigned char*)&cubeVertices[0], sizeof(cubeVertices)),
-            CreateRef<CharBuffer>((unsigned char*)&cubeIndices[0], sizeof(cubeIndices))
+            CreateRef<DataBuffer<unsigned char>>((unsigned char*)&cubeVertices[0], sizeof(cubeVertices)),
+            CreateRef<DataBuffer<unsigned char>>((unsigned char*)&cubeIndices[0], sizeof(cubeIndices))
         );
     }
 }

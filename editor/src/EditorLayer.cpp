@@ -35,9 +35,7 @@ void EditorLayer::OnAttach()
     m_ActiveSceneFilepath = "Assets/Scenes/cube.oil";
 
     //Asset management setup
-    m_AssetManager = CreateRef<AssetManager>("Assets", "Internal"); //TODO: draw from init file
-    m_AssetManager->Init();
-    m_AssetImporter = CreateRef<AssetImporter>(m_AssetManager);
+    //TODO: draw from init file
     OpenScene(m_ActiveSceneFilepath);
 
     //Framebuffer
@@ -103,12 +101,9 @@ void EditorLayer::OnAttach()
 
     // Editor utilities
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
-    m_SceneHierarchyPanel.SetAssetManagerReference(m_AssetManager);
-    m_ContentBrowserPanel.SetAssetManagerReference(m_AssetManager);
     m_ContentBrowserPanel.Init();
     m_EditorCamera = EditorCamera(30.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
-    Ref<Model> mod = CreateRef<Model>();
 }
 
 void EditorLayer::OnDetach()
@@ -169,8 +164,7 @@ void EditorLayer::OnUpdate(Timestep dt)
 
     if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y){
         int pixelData = m_FrameBuffer->ReadPixel(1, mouseX, mouseY);
-        m_HoveredEntity = pixelData == -1 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.GetContent().get());
-        
+        m_HoveredEntity = pixelData < 0 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.GetContent().get());
     }
 
     m_FrameBuffer->Unbind();
@@ -439,7 +433,7 @@ bool EditorLayer::OnMouseReleased(MouseButtonReleasedEvent &e)
 }
 void EditorLayer::NewScene()
 {
-    m_ActiveScene = m_AssetManager->CreateAsset<Scene>();
+    m_ActiveScene = AssetManager::CreateAsset<Scene>();
     m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
 }
@@ -453,28 +447,38 @@ void EditorLayer::OpenScene()
 }
 void EditorLayer::OpenScene(const std::filesystem::path &path)
 {
-    UUID id = m_AssetManager->LoadAsset(path);
-    m_ActiveScene = m_AssetManager->GetAsset<Scene>(id);
+    if(std::filesystem::exists(path)){
+        UUID id = AssetManager::LoadAsset(path);
+        m_ActiveScene = AssetManager::GetAsset<Scene>(id);
+        return;
+    }
+    OIL_CORE_WARN("Scene {0} does not exist. Opening default scene.", path);
+
 }
 void EditorLayer::SaveSceneAs()
 {
     m_ActiveSceneFilepath = FileDialogs::SaveFile("Oil Scene (*.oil)\0*.oil\0");
                 
         if(!m_ActiveSceneFilepath.empty()){
-            m_AssetManager->SaveAssetAs<Scene>(m_ActiveScene, m_ActiveSceneFilepath);
+            AssetManager::SaveAssetAs<Scene>(m_ActiveScene, m_ActiveSceneFilepath);
         }
 }
 void EditorLayer::SaveScene()
 {
     if(!m_ActiveSceneFilepath.empty()){
-        m_AssetManager->SaveAsset(m_ActiveScene);
+        AssetManager::SaveAsset(m_ActiveScene);
     }
 }
 void EditorLayer::Import()
 {
-    std::string importSrc = FileDialogs::SaveFile("Import target\0*.obj;*.gltf;*.fbx\0\0");
-    if(!importSrc.empty())
-        m_AssetImporter->ImportModel(importSrc);
+    std::filesystem::path importSrc = FileDialogs::OpenFile("Import target\0*.png;*.jpg;*.obj;*.gltf;*.fbx\0\0");
+    if(!importSrc.empty()){
+        std::string extension = importSrc.extension().string();
+        if(extension == ".png" || extension == ".jpg")
+            AssetImporter::ImportImage(importSrc);
+        else if(extension == ".obj" || extension == ".gltf" || extension == ".fbx")
+            AssetImporter::ImportModel(importSrc);
+    }
 }
 void EditorLayer::OnScenePlay()
 {
@@ -547,7 +551,7 @@ void EditorLayer::RenderViewport()
 
     if (ImGui::BeginDragDropTarget()){
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
-            Ref<DragDropInfo> info = m_AssetManager->GetDragDropInfo();
+            Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
 
             if (info->contentType == ContentType::Scene);
                 OpenScene(std::filesystem::path(g_AssetPath) / info->itemPath);

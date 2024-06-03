@@ -22,7 +22,7 @@
 #include "oil/imGui/imGuiLayer.h"
 
 // Scene and assets
-#include "oil/core/AssetManager.h"
+#include "oil/storage/AssetManager.h"
 #include "oil/Scene/Scene.h"
 #include "oil/Scene/Entity.h"
 #include "oil/Scene/ScriptableEntity.h"

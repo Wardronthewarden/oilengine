@@ -33,10 +33,10 @@ namespace oil{
     void ContentBrowserPanel::GetFolderContents()
     {
         m_CurrentFolderContents.clear();
-        for (auto& directoryEntry : std::filesystem::directory_iterator(m_AssetManagerRef->GetCurrentDirectory())){
+        for (auto& directoryEntry : std::filesystem::directory_iterator(AssetManager::GetCurrentDirectory())){
                 FolderContentInfo fi;
                 fi.path = directoryEntry.path();
-                auto relativePath = std::filesystem::relative(fi.path, m_AssetManagerRef->GetRootDirectory());
+                auto relativePath = std::filesystem::relative(fi.path, AssetManager::GetRootDirectory());
                 
                 fi.name = relativePath.filename().stem().string();
 
@@ -50,7 +50,7 @@ namespace oil{
                 if(!(relativePath.filename().extension() == ".oil"))
                     continue;
                         
-                fi.ID = m_AssetManagerRef->GetIDFromPath(directoryEntry, fi.type);
+                fi.ID = AssetManager::GetIDFromPath(directoryEntry, fi.type);
                 m_CurrentFolderContents.push_back(fi);
         }
 
@@ -61,9 +61,9 @@ namespace oil{
 
         ImGui::Begin("Content Browser panel");
 
-        if (!m_AssetManagerRef->IsCurrentRootDirectory()){
+        if (!AssetManager::IsCurrentRootDirectory()){
             if (ImGui::Button("<=")){
-                m_AssetManagerRef->StepOutOfDirectory();
+                AssetManager::StepOutOfDirectory();
                 GetFolderContents();
             }
         }
@@ -91,7 +91,7 @@ namespace oil{
 
             if (ImGui::BeginDragDropSource()){
 
-                Ref<DragDropInfo> idref = m_AssetManagerRef->OnDragAsset({directoryEntry.type, directoryEntry.path.c_str(), directoryEntry.ID});
+                Ref<DragDropInfo> idref = AssetManager::OnDragAsset({directoryEntry.type, directoryEntry.path.c_str(), directoryEntry.ID});
 
                 ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &idref, sizeof(UUID), ImGuiCond_Once);
                 ImGui::EndDragDropSource();
@@ -101,7 +101,7 @@ namespace oil{
             ImGui::PopStyleColor();
             if(ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)){
                 if(std::filesystem::is_directory(directoryEntry.path))
-                    m_AssetManagerRef->StepIntoDirectory(directoryEntry.path.filename());
+                    AssetManager::StepIntoDirectory(directoryEntry.path.filename());
                     GetFolderContents();
             }
             ImGui::TextWrapped(directoryEntry.name.c_str());

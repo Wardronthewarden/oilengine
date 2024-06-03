@@ -12,12 +12,11 @@ add_subdirectory(vendor/yaml-cpp)
 add_subdirectory(vendor/assimp)
 
 
-include_directories(${PROJECT_BINARY_DIR})
-
 add_library(oilengine STATIC 
                 src/oil/core/Application.cpp
-                src/oil/core/Asset.cpp
-                src/oil/core/AssetManager.cpp
+                src/oil/storage/FileUtils.cpp
+                src/oil/storage/Asset.cpp
+                src/oil/storage/AssetManager.cpp
                 src/oil/core/UUID.cpp
                 src/oil/core/Log.cpp
                 src/oil/core/Layer.cpp
@@ -80,6 +79,7 @@ target_compile_definitions(oilengine PRIVATE -DOIL_DEBUG -DGLFW_INCLUDE_NONE)
 target_precompile_headers(oilengine PUBLIC src/pch/oilpch.h)
 
 target_include_directories(oilengine PUBLIC
+        ${PROJECT_BINARY_DIR}
         src
         vendor/spdlog/include
         vendor/glfw/include

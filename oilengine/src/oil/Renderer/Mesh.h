@@ -68,17 +68,17 @@ namespace oil{
         Mesh();
         Mesh(const unsigned char* vertexBegin, uint32_t vertexByteSize, const unsigned char* indexBegin, uint32_t indexByteSize);
         Mesh(const unsigned char* vertexBegin, uint32_t vertexByteSize, const unsigned char* indexBegin, uint32_t indexByteSize, BufferLayout layout);
-        Mesh(Ref<CharBuffer> vertices, Ref<CharBuffer> indices)
+        Mesh(Ref<DataBuffer<unsigned char>> vertices, Ref<DataBuffer<unsigned char>> indices)
             :m_VertexBuffer(vertices), m_IndexBuffer(indices) {};
 
         ~Mesh() = default;
 
-        void SetMesh(Ref<CharBuffer> vertices, Ref<CharBuffer> indices);
+        void SetMesh(Ref<DataBuffer<unsigned char>> vertices, Ref<DataBuffer<unsigned char>> indices);
 
         void SetLayout(BufferLayout layout);
 
-        Ref<CharBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
-        Ref<CharBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
+        Ref<DataBuffer<unsigned char>> GetVertexBuffer() const { return m_VertexBuffer; }
+        Ref<DataBuffer<unsigned char>> GetIndexBuffer() const { return m_IndexBuffer; }
         BufferLayout GetLayout() const { return m_Layout; }
 
         uint32_t GetBufferSize() const { return m_VertexBuffer->GetSize() +  m_IndexBuffer->GetSize(); }
@@ -91,8 +91,8 @@ namespace oil{
 
     private:
         //Use binary memory block to store vertex data, its size, and store layout directly
-        Ref<CharBuffer> m_VertexBuffer;
-        Ref<CharBuffer> m_IndexBuffer;
+        Ref<DataBuffer<unsigned char>> m_VertexBuffer;
+        Ref<DataBuffer<unsigned char>> m_IndexBuffer;
         BufferLayout m_Layout;  
     };
 

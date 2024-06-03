@@ -51,7 +51,6 @@ namespace oil{
         std::string m_ActiveSceneFilepath;
 
         //Assets
-        Ref<AssetManager> m_AssetManager;
         Ref<AssetImporter> m_AssetImporter;
 
         Ref<Texture2D> m_DefaultTexture;

@@ -145,33 +145,51 @@ namespace oil{
         static Ref<IndexBuffer> Create(uint32_t* indices, uint32_t count);
     };
 
-    class CharBuffer{
+
+    template<typename T>
+    class DataBuffer{
     public:
-        CharBuffer() = default;
-        CharBuffer(const unsigned char * data, const uint32_t size)
+        DataBuffer() = default;
+        DataBuffer(const T* data, const size_t size)
             :  m_Size(size){
-                m_Data = new unsigned char[size];
+                m_Data = new T[size];
                 memcpy(m_Data, data, size);
         }
 
-        ~CharBuffer(){
+        DataBuffer(const size_t size)
+            :  m_Size(size){
+                m_Data = new T[size];
+        }
+        DataBuffer(const DataBuffer& buff){
+                SetData(buff.GetData(), buff.GetSize());
+        }
+
+        ~DataBuffer(){
             if(m_Data)
                 delete[] m_Data;
         };
 
-        char operator[](uint32_t pos) const {
+        char operator[](size_t pos) const {
             return pos >= m_Size ? m_Data[pos] : '\0'; 
         };
 
-        const unsigned char* GetData() const { return m_Data; }
-        const uint32_t GetSize() const { return m_Size; }
+        operator void*(){
+            return (void*)m_Data;
+        }
 
-        void SetData(CharBuffer buffer){
+        operator T*(){
+            return m_Data;
+        }
+
+        const T* GetData() const { return m_Data; }
+        const size_t GetSize() const { return m_Size; }
+
+        void SetData(DataBuffer buffer){
             SetData(buffer.GetData(), buffer.GetSize());
         }
-        void SetData(const unsigned char * data, const uint32_t size){
+        void SetData(const T* data, const size_t size){
             delete[] m_Data;
-            m_Data = new unsigned char[size];
+            m_Data = new T[size];
             memcpy(m_Data, data, size);
             m_Size = size;
         }
@@ -183,7 +201,7 @@ namespace oil{
         }
 
     private:
-        uint32_t m_Size = 0;
-        unsigned char * m_Data = nullptr;
+        size_t m_Size = 0;
+        T* m_Data = nullptr;
     };
 }

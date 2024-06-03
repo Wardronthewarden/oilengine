@@ -329,8 +329,8 @@ namespace oil{
                 if (ImGui::BeginDragDropTarget()){
                     if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
 
-                        Ref<DragDropInfo> info = m_AssetManagerRef->GetDragDropInfo();
-                        if (info->contentType == ContentType::Texture){
+                        Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
+                        if (info->contentType == ContentType::Texture2D){
                             //TODO: move away from this
                             std::filesystem::path texturePath = std::filesystem::path(g_AssetPath) / info->itemPath;
                             component.Texture = Texture2D::Create(texturePath.string());
@@ -376,13 +376,13 @@ namespace oil{
         if (ImGui::BeginDragDropTarget()){
                     if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
 
-                        Ref<DragDropInfo> info = m_AssetManagerRef->GetDragDropInfo();
+                        Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
                         if (info->contentType == ContentType::Model){
-                            if (!m_AssetManagerRef->IDExists(info->ID))
-                                info->ID = m_AssetManagerRef->LoadAsset(info->itemPath);
+                            if (!AssetManager::IDExists(info->ID))
+                                info->ID = AssetManager::LoadAsset(info->itemPath);
                             if (info->ID){
                                 component.ID = info->ID;
-                                component.model = m_AssetManagerRef->GetAsset<Model>(info->ID).GetContent();
+                                component.model = AssetManager::GetAsset<Model>(info->ID).GetContent();
                             }
                             else
                                 OIL_CORE_ERROR("Failed to load asset: {0}", info->itemPath);

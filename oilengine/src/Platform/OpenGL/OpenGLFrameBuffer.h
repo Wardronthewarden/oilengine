@@ -18,6 +18,7 @@ namespace oil{
         virtual int ReadPixel(uint32_t attachmentIndex, int x, int y) override;
 
         virtual void ClearAttachment(uint32_t attachmentIndex, int value) override;
+        virtual void ClearAttachment(uint32_t attachmentIndex, float value) override;
 
         virtual void BindColorAttachments();
         virtual void UnbindColorAttachments();

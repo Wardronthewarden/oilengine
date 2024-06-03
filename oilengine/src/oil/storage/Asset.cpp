@@ -23,44 +23,12 @@ namespace oil{
         return out;
     }
 
-    //Scene
-
-    template <>
-    void Asset<Scene>::Save()
-    {
-        Serializer::SerializeScene(m_AssetReference, m_AssetPath, m_ID);
-    }
-
-    template <>
-    void Asset<Scene>::Load(YAML::Node file)
-    {
-        auto [ID, Dependencies] = Serializer::DeserializeScene(m_AssetReference, file);
-        m_ID = ID;
-        m_Dependencies = Dependencies;
-    }
-
     template <>
     ContentType Asset<Scene>::GetType()
     {
         return ContentType::Scene;
     }
-    
 
-    //Model
-
-    template <>
-    void Asset<Model>::Save()
-    {
-        Serializer::SerializeModel(m_AssetReference, m_AssetPath, m_ID);
-    }
-
-    template <>
-    void Asset<Model>::Load(YAML::Node file)
-    {
-        auto [ID, Dependencies] = Serializer::DeserializeModel(m_AssetReference, file);
-        m_ID = ID;
-        m_Dependencies = Dependencies;
-    }
 
     template <>
     ContentType Asset<Model>::GetType()
@@ -68,26 +36,31 @@ namespace oil{
         return ContentType::Model;
     }
 
+    template <>
+    ContentType Asset<Texture2D>::GetType()
+    {
+        return ContentType::Texture2D;
+    }
+
+    template <>
+    ContentType Asset<Material>::GetType()
+    {
+        return ContentType::Material;
+    }
+
     //------------------------------------------------------------------------------
     //Serializer functions
 
-    void Serializer::SerializeScene(const Ref<Scene> scene, std::filesystem::path path, UUID id)
+    template<>
+    void Serializer::Serialize<Scene>(const Ref<Scene> scene, std::filesystem::path path, UUID id)
     {
         YAML::Emitter out;
+        std::ofstream fout(path);
 
          out << YAML::BeginMap;
         //Header
-        out << YAML::Key << "Header";
-        out << YAML::BeginMap;
-        out << YAML::Key << "Type";
-        out << YAML::Value << (uint32_t)ContentType::Scene;
-        out << YAML::Key << "FileVersion";
-        out << YAML::Value << 1.00f;
-        out << YAML::Key << "Length";
-        out << YAML::Value << 0;
-        out << YAML::Key << "UUID";
-        out << YAML::Value << id;
-        out << YAML::EndMap;
+        utils::AssetHeader header(id, ContentType::Scene, 0, OILENGINE_VERSION_MAJOR, OILENGINE_VERSION_MINOR);
+
 
         //Body
         out << YAML::Key << "Body";
@@ -107,24 +80,32 @@ namespace oil{
         out << YAML::EndMap;
         out << YAML::EndMap;
 
+        //WriteFile
+        if(out.good()){
+            OIL_CORE_INFO("Scene saved successfully!");
+            utils::WriteAssetBody(fout, out);
+        }else{
+            OIL_CORE_ERROR("Failed to build YAML representation for scene!");
+        }
+        header.fileSize = utils::GetFileSize(fout);
+        utils::WriteAssetHeader(fout, header);
 
-        std::ofstream fout(path);
-        fout << out.c_str();
+
+        //Cleanup
+        fout.close();
     }
 
-    std::pair<UUID, std::unordered_set<UUID>> Serializer::DeserializeScene(const Ref<Scene> scene, YAML::Node file)
+    template<>
+    std::unordered_set<UUID> Serializer::Deserialize<Scene>(const Ref<Scene> scene, YAML::Node file)
     {
         YAML::Node data;
-        UUID id;
         std::unordered_set<UUID> deps;
         if(!file["Body"]){
             if(!file["Scene"])
-                return {id, deps};
+                return deps;
             data = file;
-            id = 0; 
         }else{
             data = file["Body"];
-            id = file["Header"]["UUID"].as<uint64_t>();
         }
 
         std::string sceneName = data["Scene"].as<std::string>();
@@ -200,25 +181,22 @@ namespace oil{
         }
         
         OIL_CORE_INFO("Scene deserialized successfully!");
-        return {id, deps};
+        return deps;
     }
 
-    void Serializer::SerializeModel(const Ref<Model> model, std::filesystem::path path, UUID id)
+    template<>
+    void Serializer::Serialize<Model>(const Ref<Model> model, std::filesystem::path path, UUID id)
     {
+
+        std::ofstream fout(path);
+        //Header
+        utils::AssetHeader header(id, ContentType::Model, 0, OILENGINE_VERSION_MAJOR, OILENGINE_VERSION_MINOR);
+
+
+        //YAML
         YAML::Emitter out;
         out << YAML::BeginMap;
-        //Header
-        out << YAML::Key << "Header";
-        out << YAML::BeginMap;
-        out << YAML::Key << "Type";
-        out << YAML::Value << (uint32_t)ContentType::Model;
-        out << YAML::Key << "FileVersion";
-        out << YAML::Value << 1.00f;
-        out << YAML::Key << "Length";
-        out << YAML::Value << 0;
-        out << YAML::Key << "UUID";
-        out << YAML::Value << id;
-        out << YAML::EndMap;
+
 
         //Setup variables
         std::vector<Ref<Mesh>> meshes = model->GetMeshes();
@@ -324,30 +302,27 @@ namespace oil{
         //End        
         out << YAML::EndMap;
 
+        //WriteFile
         if(out.good()){
             OIL_CORE_INFO("Model saved successfully!");
-            std::ofstream fout(path);
-            fout << out.c_str();
+            utils::WriteAssetBody(fout, out);
         }else{
             OIL_CORE_ERROR("Failed to build YAML representation for model!");
         }
+        header.fileSize = utils::GetFileSize(fout);
+        utils::WriteAssetHeader(fout, header);
+
+
+        //Cleanup
+        fout.close();
         delete buffer;
 
     }
 
-    std::pair<UUID, std::unordered_set<UUID>> Serializer::DeserializeModel(const Ref<Model> model, YAML::Node file)
+    template<>
+    std::unordered_set<UUID> Serializer::Deserialize<Model>(const Ref<Model> model, YAML::Node file)
     {
         std::unordered_set<UUID> deps;
-        if(!file["Header"] || !file["Body"] || !file["Buffers"] ){
-            OIL_CORE_ERROR("File is not formatted properly!");
-            return {0, deps};
-        }
-        if(!(file["Header"]["Type"].as<uint32_t>() == (uint32_t)ContentType::Model)){
-            OIL_CORE_ERROR("File is not a model!");
-            return {0, deps};
-        }
-
-        UUID id = file["Header"]["UUID"].as<uint64_t>();
 
         YAML::Binary bin = file["Buffers"]["Data"].as<YAML::Binary>();
 
@@ -379,12 +354,12 @@ namespace oil{
 
             if (indView["Target"].as<uint32_t>() !=  34963){
                 OIL_CORE_ERROR("Incorrect index buffer target!");
-                return {0, deps};
+                return deps;
             }
             auto vertView = file["Body"]["BufferViews"][bfview];
             if (vertView["Target"].as<uint32_t>() !=  34962){
                 OIL_CORE_ERROR("Incorrect vertex buffer target!");
-                return {0, deps};
+                return deps;
             }
             layout.SetStride(vertView["Stride"].as<uint32_t>());
 
@@ -394,11 +369,96 @@ namespace oil{
         }
 
         delete[bufferSize] buffer;
-        return {id, deps};
+        return deps;
        
     }
 
+    template<>
+    void Serializer::Serialize<Texture2D>(const Ref<Texture2D> texture, std::filesystem::path path, UUID id)
+    {
+        std::ofstream fout(path);
+        
+        YAML::Emitter out;
+        out << YAML::BeginMap;
+        //Header
+        utils::AssetHeader header(id, ContentType::Texture2D, 0, OILENGINE_VERSION_MAJOR, OILENGINE_VERSION_MINOR);
+
+        //Setup variables
+
+        DataBuffer<unsigned char> buff = texture->GetData();
+        
+        YAML::Node chunk;
+        chunk["Width"] = texture->GetWidth();
+        chunk["Height"] = texture->GetHeight();
+        chunk["Format"] = texture->GetFormat();
+
+        //Chunk 1
+        out << YAML::Key << "Body";
+        out << YAML::Value << chunk;
+
+        //Chunk 2
+        out << YAML::Key << "Buffers";
+        out << YAML::BeginMap;
+        out << YAML::Key << "ByteLength";
+        out << YAML::Value << buff.GetSize();
+        out << YAML::Key << "Data";
+        out << YAML::Value << YAML::Binary(buff.GetData(), buff.GetSize());
+        out << YAML::EndMap;
+
+
+
+
+        //End
+        out << YAML::EndMap;
+
+        if(out.good()){
+            OIL_CORE_INFO("Texture saved successfully!");
+            utils::WriteAssetBody(fout, out);
+        }else{
+            OIL_CORE_ERROR("Failed to build YAML representation for model!");
+        }
+        header.fileSize = utils::GetFileSize(fout);
+        utils::WriteAssetHeader(fout, header);
+
+        //Cleanup
+        fout.close();
+
+    }
+
+    template<>
+    std::unordered_set<UUID> Serializer::Deserialize<Texture2D>(const Ref<Texture2D> texture, YAML::Node file)
+    {
+        std::unordered_set<UUID> deps;
+
+        //Image metadata chunk
+        uint32_t width, height;
+        TextureFormat format;
+        width = file["Body"]["Width"].as<uint32_t>();
+        height = file["Body"]["Height"].as<uint32_t>();
+        format = file["Body"]["Format"].as<TextureFormat>();
+
+        texture->ResetMetadata(width, height, format);
+
+        //Image data chunk
+
+        YAML::Binary bin = file["Buffers"]["Data"].as<YAML::Binary>();
+
+        const uint32_t bufferSize = file["Buffers"]["ByteLength"].as<uint32_t>();
+
+        DataBuffer<unsigned char> imgData(bin.data(), bufferSize);
+
+        texture->SetData(imgData);
+
+        return deps;
+       
+    }
+
+
+
+
     //Serializer internal
+    //--------------------------------------------------------------------------------------------------------------------------------------
+
     void Serializer::SerializeEntity(YAML::Emitter &out, Entity &entity)
     {
         OIL_ASSERT(entity.HasComponent<IDComponent>(), "Entity does not have a UUID");

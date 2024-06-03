@@ -63,12 +63,18 @@ namespace oil{
 
         static GLenum OiltextureFormatToGL(FrameBufferTextureFormat format){
             switch (format){
+                case FrameBufferTextureFormat::RGB8:
+                    return GL_RGB8;
                 case FrameBufferTextureFormat::RGBA8:
                     return GL_RGBA8;
+                case FrameBufferTextureFormat::RGB16F:
+                    return GL_RGB16F;
                 case FrameBufferTextureFormat::RGBA16F:
                     return GL_RGBA16F;
                 case FrameBufferTextureFormat::R_INT:
                     return GL_RED_INTEGER;
+                case FrameBufferTextureFormat::R_FLOAT:
+                    return GL_RED;
             }
 
             OIL_CORE_ASSERT(false, "Unknown FrameBufferTextureFormat");
@@ -119,14 +125,23 @@ namespace oil{
             for (int i = 0; i < m_ColorAttachmentSpecs.size(); ++i){
                 utils::BindTexture(multisample, m_ColorAttachments[i]);
                 switch (m_ColorAttachmentSpecs[i].TextureFormat){
+                    case FrameBufferTextureFormat::RGB8:
+                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, m_Specification.Width, m_Specification.Height, i);
+                        break;
                     case FrameBufferTextureFormat::RGBA8:
                         utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, m_Specification.Width, m_Specification.Height, i);
+                        break;
+                    case FrameBufferTextureFormat::RGB16F:
+                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGB16F, GL_RGB, GL_FLOAT, m_Specification.Width, m_Specification.Height, i);
                         break;
                     case FrameBufferTextureFormat::RGBA16F:
                         utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGBA16F, GL_RGBA, GL_FLOAT, m_Specification.Width, m_Specification.Height, i);
                         break;
                     case FrameBufferTextureFormat::R_INT:
-                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_R32I, GL_RED_INTEGER, GL_UNSIGNED_BYTE, m_Specification.Width, m_Specification.Height, i);
+                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_R32I, GL_RED_INTEGER, GL_INT, m_Specification.Width, m_Specification.Height, i);
+                        break;
+                    case FrameBufferTextureFormat::R_FLOAT:
+                        utils::AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_R32F, GL_RED, GL_FLOAT, m_Specification.Width, m_Specification.Height, i);
                         break;
                 }
             }   
@@ -196,6 +211,15 @@ namespace oil{
         auto& spec = m_ColorAttachmentSpecs[attachmentIndex];
 
         glClearTexImage(m_ColorAttachments[attachmentIndex], 0, utils::OiltextureFormatToGL(spec.TextureFormat), GL_INT, &value);
+    }
+    
+    void OpenGLFrameBuffer::ClearAttachment(uint32_t attachmentIndex, float value)
+    {
+        OIL_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Max attachment index is 6");
+
+        auto& spec = m_ColorAttachmentSpecs[attachmentIndex];
+
+        glClearTexImage(m_ColorAttachments[attachmentIndex], 0, utils::OiltextureFormatToGL(spec.TextureFormat), GL_FLOAT, &value);
     }
     void OpenGLFrameBuffer::BindColorAttachments()
     {
