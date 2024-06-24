@@ -70,6 +70,8 @@ namespace oil{
         Mesh(const unsigned char* vertexBegin, uint32_t vertexByteSize, const unsigned char* indexBegin, uint32_t indexByteSize, BufferLayout layout);
         Mesh(Ref<DataBuffer<unsigned char>> vertices, Ref<DataBuffer<unsigned char>> indices)
             :m_VertexBuffer(vertices), m_IndexBuffer(indices) {};
+        Mesh(Ref<DataBuffer<unsigned char>> vertices, Ref<DataBuffer<unsigned char>> indices, uint32_t materialIndex)
+            :m_VertexBuffer(vertices), m_IndexBuffer(indices), m_MaterialIndex(materialIndex) {};
 
         ~Mesh() = default;
 
@@ -83,7 +85,8 @@ namespace oil{
 
         uint32_t GetBufferSize() const { return m_VertexBuffer->GetSize() +  m_IndexBuffer->GetSize(); }
 
-
+        void SetMaterialIndex(uint32_t index) { m_MaterialIndex = index; }
+        uint32_t GetMaterialIndex() { return m_MaterialIndex; }
     public:
         static Ref<Mesh> CreatePlane();
         static Ref<Mesh> CreateCube();
@@ -93,7 +96,8 @@ namespace oil{
         //Use binary memory block to store vertex data, its size, and store layout directly
         Ref<DataBuffer<unsigned char>> m_VertexBuffer;
         Ref<DataBuffer<unsigned char>> m_IndexBuffer;
-        BufferLayout m_Layout;  
+        BufferLayout m_Layout;
+        uint32_t m_MaterialIndex;
     };
 
 }

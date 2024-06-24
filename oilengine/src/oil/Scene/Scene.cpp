@@ -6,8 +6,10 @@
 #include "oil/Renderer/Renderer3D.h"
 #include "Entity.h"
 #include "ScriptableEntity.h"
+#include "oil/storage/AssetManager.h"
 
 namespace oil{
+
     Scene::Scene()
     {
 
@@ -149,7 +151,8 @@ namespace oil{
                     if(!model.model)
                         continue;
                     for(auto mesh : model.model->GetMeshes()){
-                        Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
+                        //Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
+                        Renderer3D::SubmitMesh(transform.GetTransform(), mesh, model.model->GetMaterial(mesh->GetMaterialIndex()), (uint32_t)entity);
                     }
                 }
                 
@@ -233,6 +236,13 @@ namespace oil{
     template<>
     void Scene::OnComponentAdded<ModelComponent>(Entity entity, ModelComponent& component){
 
+    }
+
+
+    template <>
+    ContentType Asset<Scene>::GetType()
+    {
+        return ContentType::Scene;
     }
     
 }

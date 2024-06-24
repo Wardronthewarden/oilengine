@@ -34,4 +34,11 @@ Ref<Texture2D> Texture2D::Create(const std::string &path)
         OIL_CORE_ASSERT(false, "Unknown RenderAPI!")
         return nullptr;
 }
+
+    template <>
+    ContentType Asset<Texture2D>::GetType()
+    {
+        return ContentType::Texture2D;
+    }
+
 }

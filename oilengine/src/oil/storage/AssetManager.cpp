@@ -4,6 +4,8 @@
 //Required for extraction
 #include "oil/Scene/Component.h"
 #include "oil/Scene/Entity.h"
+#include "FileUtils.h"
+
 
 namespace oil{
 
@@ -11,14 +13,19 @@ namespace oil{
     //TODO: there has to be a better way of doing this
     template Asset<Model> AssetManager::CreateAsset<Model>();
     template Asset<Scene> AssetManager::CreateAsset<Scene>();
+    template Asset<Material> AssetManager::CreateAsset<Material>();
 
     template void AssetManager::SaveAsset<Model>(UUID id);
     template void AssetManager::SaveAsset<Scene>(UUID id);
     template void AssetManager::SaveAsset<Texture2D>(UUID id);
+    template void AssetManager::SaveAsset<Shader>(UUID id);
+    template void AssetManager::SaveAsset<Material>(UUID id);
 
     template void AssetManager::SaveAsset<Model>(Asset<Model> asset);
     template void AssetManager::SaveAsset<Scene>(Asset<Scene> asset);
     template void AssetManager::SaveAsset<Texture2D>(Asset<Texture2D> asset);
+    template void AssetManager::SaveAsset<Shader>(Asset<Shader> asset);
+    template void AssetManager::SaveAsset<Material>(Asset<Material> asset);
 
 
     //Static member definitions
@@ -28,11 +35,13 @@ namespace oil{
     std::filesystem::path AssetManager::s_CurrentAssetPath;
     std::filesystem::path AssetManager::s_RootAssetPath;
     std::filesystem::path AssetManager::s_AssetLookupTablePath;
-    YAML::Node AssetManager::s_AssetLookupTable;
+    std::unordered_map<UUID, std::filesystem::path> AssetManager::s_AssetLookupTable;
     std::unordered_map<UUID, ContentType> AssetManager::s_LoadedIDs;
 
     Assimp::Importer AssetImporter::s_Importer;
 
+
+    //Don't do this
     template <>
     void AssetManager::RefreshAsset<Scene>(UUID id)
     {
@@ -45,6 +54,12 @@ namespace oil{
                     mc.model = GetAsset<Model>(mc.ID).GetContent();
             }
         });
+    }
+
+    template <typename T>
+    void AssetManager::RefreshAsset(Asset<T>& asset)
+    {
+        asset->SetAsset(GetAsset<T>(asset->GetID()));
     }
 
     template <>
@@ -134,17 +149,23 @@ namespace oil{
         std::ifstream stream(path);
         utils::AssetHeader header = utils::ReadAssetHeader(stream);
 
-        YAML::Node node = utils::ReadAssetBody(stream);
+
+
+        if(GetPath(header.ID) != path) {
+            s_LoadedIDs[AddEntry(path, header.ID)] = header.type;
+        } else {
+            s_LoadedIDs[header.ID] = header.type;
+        }
 
     
         switch(header.type){
 
             case oil::ContentType::Model:{
-                LoadAssetInternal<Model>(node, path, header);
+                LoadAssetInternal<Model>(stream, header);
                 break;
             }
             case oil::ContentType::Scene:{
-                LoadAssetInternal<Scene>(node, path, header);
+                LoadAssetInternal<Scene>(stream, header);
                 break;             
             }
             default:
@@ -171,17 +192,10 @@ namespace oil{
     }
 
     template <typename T>
-    void AssetManager::LoadAssetInternal(YAML::Node &node, std::filesystem::path path, utils::AssetHeader header)
+    void AssetManager::LoadAssetInternal(std::ifstream& stream, utils::AssetHeader header)
     {
-        Ref<T> reference = CreateRef<T>();
-        auto depIDs = Serializer::Deserialize<T>(reference, node);
-        if(GetPath(header.ID) != path)
-            s_LoadedIDs[AddEntry(path, header.ID)] = header.type;
-        else
-            s_LoadedIDs[header.ID] = header.type;
+        Ref<T> reference = utils::LoadAssetObject<T>(stream);
         AddToLookup<T>(header.ID, reference);
-        LoadDependencies(depIDs);
-        RefreshAsset<T>(header.ID);
     }
 
 
@@ -204,19 +218,12 @@ namespace oil{
 
     void AssetManager::LoadAssetLookup()
     {
-        std::ifstream stream(s_AssetLookupTablePath);
-        std::stringstream strStream;
-        strStream << stream.rdbuf();
-
-        s_AssetLookupTable = YAML::Load(strStream.str());
+        s_AssetLookupTable = utils::LoadHashmap<UUID, std::filesystem::path>(s_AssetLookupTablePath);
     }
 
     void AssetManager::SaveAssetLookup()
     {
-        std::ofstream stream(s_AssetLookupTablePath);
-        YAML::Emitter out;
-        out << s_AssetLookupTable;
-        stream << out.c_str();
+        utils::SaveHashmap(s_AssetLookupTablePath, s_AssetLookupTable);
     }
 
     UUID AssetManager::GenerateUUID(uint32_t maxTries)
@@ -269,7 +276,7 @@ namespace oil{
     bool AssetManager::IDExists(UUID id)
     {
 
-        if(s_AssetLookupTable[id])
+        if(s_AssetLookupTable.find(id) != s_AssetLookupTable.end())
             return true;
         OIL_CORE_WARN("Does not exist");
         return false;
@@ -278,15 +285,15 @@ namespace oil{
     std::filesystem::path AssetManager::GetPath(UUID id)
     {
 
-        if(s_AssetLookupTable[id]){
-            return s_AssetLookupTable[id].as<std::filesystem::path>();
+        if(s_AssetLookupTable.find(id) != s_AssetLookupTable.end()){
+            return s_AssetLookupTable[id];
         }
         return "";
     }
 
     UUID AssetManager::AddEntry(std::filesystem::path assetPath, UUID id)
     {
-        if(s_AssetLookupTable[id] || !id)
+        if((s_AssetLookupTable.find(id) != s_AssetLookupTable.end())|| !id)
             id = GenerateUUID(10);
         if(id){
             s_AssetLookupTable[id] = assetPath;
@@ -296,6 +303,7 @@ namespace oil{
     }
 
     //Specialized asset creation
+    //Texture2D
     template <>
     inline Asset<Texture2D> AssetManager::CreateAsset()
     {
@@ -422,6 +430,15 @@ namespace oil{
     //Internal importer functions
     void AssetImporter::ProcessNode(aiNode *node, const aiScene *scene, Ref<Model> model)
     {
+        //materials (maybe this is bad for multi model scenes)
+        if(scene->HasMaterials())
+            model->SetMaterialCount(scene->mNumMaterials);
+        else
+            model->SetMaterialCount(1);
+
+        model->SetMaterialsToDefault();
+
+
         for(uint32_t i = 0; i < node->mNumMeshes; ++i){
             aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
             model->AddMesh(ProcessMesh(mesh, scene));
@@ -453,7 +470,8 @@ namespace oil{
 
         return CreateRef<Mesh>(
             CreateRef<DataBuffer<unsigned char>>((unsigned char*)vertices.data(), (uint32_t)vertices.size() * sizeof(BaseVertex)), 
-            CreateRef<DataBuffer<unsigned char>>((unsigned char*)indices.data(), (uint32_t)indices.size() * sizeof(uint32_t))
+            CreateRef<DataBuffer<unsigned char>>((unsigned char*)indices.data(), (uint32_t)indices.size() * sizeof(uint32_t)),
+            mesh->mMaterialIndex
         );
     }
 

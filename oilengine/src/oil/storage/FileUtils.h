@@ -18,8 +18,41 @@
 #include <assimp/postprocess.h>
 
 #include "stb_image.h"
+#include "Serializer.h"
 
+namespace YAML{
+    
+    //YAML overwrites
+    //CPP types
+    template<>
+    struct convert<std::filesystem::path>{
+        static Node encode(const std::filesystem::path& rhs){
+            Node node;
+            node = rhs.string();
+            return node;
+        }
 
+        static bool decode(const Node& node, std::filesystem::path& rhs){
+            rhs = node.as<std::string>();
+            return true;
+        }
+    };
+    
+    //Native types
+    template<>
+    struct convert<oil::UUID>{
+        static Node encode(const oil::UUID& rhs){
+            Node node;
+            node = (uint64_t)rhs;
+            return node;
+        }
+
+        static bool decode(const Node& node, oil::UUID& rhs){
+            rhs = node.as<uint64_t>();
+            return true;
+        }
+    };
+}
 
 namespace oil{
     enum class ContentType;
@@ -52,6 +85,44 @@ namespace oil{
 
         size_t GetFileSize(std::ifstream& file);
         size_t GetFileSize(std::ofstream& file);
+
+
+        //Templated functions
+        template <typename T>
+        Ref<T> LoadAssetObject(std::ifstream& stream)
+        {
+
+            YAML::Node node = utils::ReadAssetBody(stream);
+            return Serializer::Deserialize<T>(node);
+        }
+
+        template <typename T, typename U>
+        std::unordered_map<T,U> LoadHashmap(std::filesystem::path path){
+            std::ifstream stream(path);
+            std::stringstream strStream;
+            strStream << stream.rdbuf();
+            
+            std::unordered_map<T,U> ret;
+
+            const YAML::Node map = YAML::Load(strStream.str());
+            
+            for (auto it = map.begin(); it != map.end(); ++it){
+                ret[it->first.as<T>()] = it->second.as<U>();
+            }
+            return ret;
+        }
+
+        template <typename T, typename U>
+        void SaveHashmap(std::filesystem::path path, std::unordered_map<T,U> map){
+            std::ofstream stream(path);
+            YAML::Node node;
+            for(auto& item : map)
+                node[item.first] = item.second;
+
+            YAML::Emitter out;
+            out << node;
+            stream << out.c_str();
+        }
 
 
     }//utils

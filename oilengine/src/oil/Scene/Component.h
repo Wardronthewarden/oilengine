@@ -5,6 +5,7 @@
 #include "oil/Renderer/Texture.h"
 #include "oil/Renderer/Model.h"
 #include "oil/Renderer/Light.h"
+#include "oil/storage/AssetManager.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL

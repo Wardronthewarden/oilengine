@@ -22,6 +22,7 @@ static GLenum ShaderTypeFromString(const std::string& type){
 }
 
 OpenGLShader::OpenGLShader(const std::string &filepath)
+	: m_Path(filepath)
 {
 	std::string src = ReadFile(filepath);
 	auto shaderSources = PreProcess(src);
@@ -85,12 +86,19 @@ void OpenGLShader::SetFloat3(const std::string& name, const glm::vec3& value) {
 void OpenGLShader::SetFloat4(const std::string& name, const glm::vec4& value) {
 	UploadUniformFloat4(name, value);
 }
-void OpenGLShader::SetMat4(const std::string& name, const glm::mat4& value) {
-	UploadUniformMat4(name, value);
+void OpenGLShader::SetMat3(const std::string &name, const glm::mat3 &value)
+{
+	UploadUniformMat3(name, value);
+}
+void OpenGLShader::SetMat4(const std::string &name, const glm::mat4 &value)
+{
+    UploadUniformMat4(name, value);
 }
 
 void OpenGLShader::UploadUniformMat3(const std::string &name, const glm::mat3 &matrix)
-{
+{ 
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
 void OpenGLShader::UploadUniformMat4(const std::string &name, const glm::mat4 &matrix)
@@ -248,6 +256,7 @@ std::unordered_map<GLenum, std::string> OpenGLShader::PreProcess(const std::stri
 
 std::string OpenGLShader::ReadFile(const std::string &filepath)
 {
+	m_Path = filepath;
     std::string result;
 	std::ifstream in(filepath, std::ios::in | std::ios::binary);
 	if (in){

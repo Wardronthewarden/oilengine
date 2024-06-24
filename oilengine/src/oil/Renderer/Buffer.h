@@ -169,8 +169,8 @@ namespace oil{
                 delete[] m_Data;
         };
 
-        char operator[](size_t pos) const {
-            return pos >= m_Size ? m_Data[pos] : '\0'; 
+        T operator[](size_t pos) const {
+            return pos >= m_Size ? m_Data[pos] : T(); 
         };
 
         operator void*(){
@@ -183,6 +183,21 @@ namespace oil{
 
         const T* GetData() const { return m_Data; }
         const size_t GetSize() const { return m_Size; }
+
+        void Resize(size_t size){
+            if ((size > m_Size) && m_Data ){
+                T* ptr = new T[size];
+                memcpy(ptr, m_Data, m_Size);
+                delete[] m_Data;
+                m_Data = ptr;
+            }
+
+            m_Size = size;
+            
+        }
+
+        T* Begin() { return m_Data; }
+        T* End() { return m_Data + (m_Size / sizeof(T)); }
 
         void SetData(DataBuffer buffer){
             SetData(buffer.GetData(), buffer.GetSize());

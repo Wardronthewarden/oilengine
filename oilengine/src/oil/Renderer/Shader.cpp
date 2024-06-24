@@ -55,4 +55,11 @@ namespace oil{
         OIL_CORE_ASSERT(Exists(name), "Shader not found!");
         return m_Shaders[name];
     }
+
+    template <>
+    ContentType Asset<Shader>::GetType()
+    {
+        return ContentType::Shader;
+    }
+    
 }

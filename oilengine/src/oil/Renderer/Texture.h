@@ -3,6 +3,7 @@
 #include <string>
 #include "oil/core/core.h"
 #include "Buffer.h"
+#include <oil/storage/Asset.h>
 namespace oil {
 
     enum class TextureFormat{
@@ -45,4 +46,5 @@ namespace oil {
 
 
     };
+
 }

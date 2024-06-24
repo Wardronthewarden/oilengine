@@ -4,6 +4,7 @@
 #include "oil/Renderer/EditorCamera.h"
 #include "oil/core/Timestep.h"
 #include "entt.hpp"
+#include "oil/storage/Asset.h"
 
 
 namespace oil {

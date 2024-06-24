@@ -2,6 +2,7 @@
 #include "Renderer3D.h"
 
 #include "Shader.h"
+#include "Material.h"
 #include "VertexArray.h"
 
 #include "RenderCommand.h"
@@ -9,13 +10,84 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 
+#define MAX_TRIANGLES 10000
+
+
 namespace oil{
 
+    struct Render3DBatch{
+        Render3DBatch()
+            : VertexCount(0), IndexCount(0)
+        {
+            VBuffer = CreateRef<DataBuffer<unsigned char>>(MAX_TRIANGLES * 3 * sizeof(BaseVertex));
+            IBuffer = CreateRef<DataBuffer<uint32_t>>(MAX_TRIANGLES * 3);
+            vptr = VBuffer->Begin();
+            iptr = IBuffer->Begin();
+        }
+
+
+        int AppendIndices(const Ref<DataBuffer<unsigned char>> indexBuffer){
+            
+            uint32_t ic = indexBuffer->GetSize() / sizeof(uint32_t);
+            if (ic + IndexCount > (MAX_TRIANGLES *3)){
+                return -1;
+            }
+            std::vector<uint32_t> indices((uint32_t*)indexBuffer->GetData(), (uint32_t*)indexBuffer->GetData() + ic);
+            for (uint32_t index : indices) {
+                *iptr = index + VertexCount;
+                ++iptr;
+                ++IndexCount;
+            }
+
+            return IndexCount;
+        }
+
+
+        void ResetData(){
+            vptr = VBuffer->Begin();
+            iptr = IBuffer->Begin();
+
+            VertexCount = 0;
+            IndexCount = 0;
+        }
+
+        
+
+        uint32_t VertexCount = 0, IndexCount = 0;
+
+        Ref<DataBuffer<unsigned char>> VBuffer;
+        Ref<DataBuffer<uint32_t>> IBuffer;
+
+        Render3DBatch& operator++(){
+            ++VertexCount;
+            return *this;
+        }
+
+        Render3DBatch operator++(int){ 
+            VertexCount++;
+            return *this;
+        }
+
+        template<typename T>
+        friend Render3DBatch& operator<<(Render3DBatch& lhs, const T& rhs);
+
+    private:
+        unsigned char* vptr;
+        uint32_t* iptr;
+    };
+
+    template<typename T>
+    Render3DBatch& operator<<(Render3DBatch& lhs, const T& rhs){
+
+        memcpy(lhs.vptr, &rhs, sizeof(T));
+        lhs.vptr += sizeof(T);
+        return lhs;
+    }
 
     struct Renderer3DData{
         
         // Setup maximums
-        static const uint32_t MaxTris = 10000;
+        static const uint32_t MaxTris = MAX_TRIANGLES;
         static const uint32_t MaxVertices = MaxTris * 3;
         static const uint32_t MaxIndices = MaxTris * 3;
         static const uint32_t MaxPointLights = 1000;
@@ -26,14 +98,16 @@ namespace oil{
         Ref<VertexBuffer> MeshVertexBuffer;
         Ref<IndexBuffer> MeshIndexBuffer;
 
-        //Array location pointers
-        BaseVertex* VertexBufferBase = nullptr;
-        BaseVertex* VertexBufferPtr;
+        //temp mesh batch
+        Render3DBatch* meshBatch;
+
+        //default materials
+        Ref<Material> DefaultMaterial;
         
-        uint32_t* IndexBufferBase = nullptr;
-        uint32_t* IndexBufferPtr;
+        //Material batches
+        std::unordered_map<Ref<Material>, Ref<Render3DBatch>> LitMeshes; 
         
-        
+
         //Light Vertex arrays
         Ref<UniformBuffer> PointLightArray;
         
@@ -105,9 +179,8 @@ namespace oil{
 
 
         // Setup Buffers
-        s_3DRenderData.VertexBufferBase = new BaseVertex[s_3DRenderData.MaxVertices];
-        s_3DRenderData.IndexBufferBase = new uint32_t[s_3DRenderData.MaxIndices];
-        s_3DRenderData.PointLightBufferBase = new PointLightInfo[s_3DRenderData.MaxPointLights];
+        s_3DRenderData.meshBatch = new Render3DBatch();
+
         
         // Setup texture slots
         int32_t samplers[s_3DRenderData.MaxTextureSlots];
@@ -121,6 +194,8 @@ namespace oil{
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass"); 
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetIntArray("u_Textures", samplers, s_3DRenderData.MaxTextureSlots);
+        s_3DRenderData.DefaultMaterial = CreateRef<Material>(s_3DRenderData.ActiveShader);
+        //s_3DRenderData.DefaultMaterial->SetUniform<int*>("u_Textures", samplers);
 
         
         s_3DRenderData.ShaderLib->Load("Light pass","Assets/Shaders/Lighting.glsl");
@@ -152,10 +227,7 @@ namespace oil{
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetMat4("u_VPMat", camera.GetVPMatrix());
 
-        RBuffers.GBuffer->Bind();
-        
-        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 1});
-        RenderCommand::Clear();
+        ClearBuffers();
 
         StartNewBatch();
     }
@@ -170,13 +242,7 @@ namespace oil{
         s_3DRenderData.ActiveShader->SetMat4("u_VPMat", VPmat);
 
         
-        RBuffers.FBuffer->Bind();
-        RenderCommand::SetClearColor({1.0f, 0.0f, 1.0f, 1.0f});
-        RenderCommand::Clear();
-        RBuffers.GBuffer->Bind();
-        RenderCommand::Clear();
-        RBuffers.GBuffer->ClearAttachment(4, -1.0f);
-        RBuffers.FBuffer->ClearAttachment(1, -1);
+        ClearBuffers();
 
         
 
@@ -191,15 +257,21 @@ namespace oil{
         s_3DRenderData.ActiveShader->SetMat4("u_VPMat", VPmat);
 
         
+        ClearBuffers();
+
+        StartNewBatch();
+    }
+
+    
+    void Renderer3D::ClearBuffers()
+    {
         RBuffers.FBuffer->Bind();
         RenderCommand::SetClearColor({1.0f, 0.0f, 1.0f, 1.0f});
         RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
-        RBuffers.GBuffer->ClearAttachment(4, -1);
+        RBuffers.GBuffer->ClearAttachment(4, -1.0f);
         RBuffers.FBuffer->ClearAttachment(1, -1);
-
-        StartNewBatch();
     }
 
     Ref<FrameBuffer> Renderer3D::GetFrameBuffer()
@@ -210,12 +282,8 @@ namespace oil{
     void Renderer3D::StartNewBatch()
     {
         //Reset batch information
-        s_3DRenderData.IndexCount = 0;
-        s_3DRenderData.VertexCount = 0;
-        s_3DRenderData.VertexBufferPtr = s_3DRenderData.VertexBufferBase;
-        s_3DRenderData.IndexBufferPtr = s_3DRenderData.IndexBufferBase;
-
         s_3DRenderData.TextureSlotIndex = 0;
+        s_3DRenderData.meshBatch->ResetData();
 
         s_3DRenderData.MeshVertexArray->Bind();
     }
@@ -224,77 +292,95 @@ namespace oil{
 
     void Renderer3D::EndScene()
     {
-        uint32_t dataSize = (uint8_t *)s_3DRenderData.VertexBufferPtr - (uint8_t *)s_3DRenderData.VertexBufferBase;
-        s_3DRenderData.MeshVertexBuffer->SetData(s_3DRenderData.VertexBufferBase, dataSize);
-        s_3DRenderData.MeshIndexBuffer->SetData(s_3DRenderData.IndexBufferBase, s_3DRenderData.IndexCount);
+       //Render flow
+        RenderLitMeshes(); 
 
-        Flush();
     }
 
-    void Renderer3D::Flush()
+    // Mesh drawing
+
+    //DEPRECATED
+    void Renderer3D::DrawMesh(const glm::mat4& transform, Ref<Mesh> mesh, int entityID)
     {
+        SubmitMesh(transform, mesh, s_3DRenderData.DefaultMaterial, entityID);
+    }
+    //DEPRECATED
+    void Renderer3D::DrawMesh(const glm::mat4& transform, MeshComponent &meshComp, int entityID)
+    {
+        SubmitMesh(transform, meshComp.mesh, s_3DRenderData.DefaultMaterial, entityID);
+    }
+
+    void Renderer3D::SubmitMesh(const glm::mat4 &transform, Ref<Mesh> mesh, Ref<Material> material, int entityID)
+    {
+        if(!material) material = s_3DRenderData.DefaultMaterial;
         
+        if ((s_3DRenderData.LitMeshes.find(material) == s_3DRenderData.LitMeshes.end())){
+            s_3DRenderData.LitMeshes[material] = CreateRef<Render3DBatch>();
+        }
+
+        //Indices
+        if (s_3DRenderData.LitMeshes[material]->AppendIndices(mesh->GetIndexBuffer()) == -1){
+            //Reset if buffer overflows
+            RenderBatch(material, s_3DRenderData.LitMeshes[material]);
+            s_3DRenderData.LitMeshes[material]->ResetData();
+            SubmitMesh(transform, mesh, material, entityID);
+        }
+
+        //vertices
+        Ref<DataBuffer<unsigned char>> vertexBuffer = mesh->GetVertexBuffer();
+        std::vector<BaseVertex> vertices((BaseVertex*)vertexBuffer->GetData(), (BaseVertex*)vertexBuffer->GetData() + vertexBuffer->GetSize() / sizeof(BaseVertex));
+        
+        Render3DBatch& ref = *s_3DRenderData.LitMeshes[material];
+        for (auto vert : vertices) {
+            ref << transform * vert.Position;
+            ref << vert.Color;
+            ref << vert.TexCoord;
+            ref << entityID;
+            ref++;   
+        }
+        
+    }
+
+
+
+
+    void Renderer3D::RenderLitMeshes()
+    {
+        for(auto& it : s_3DRenderData.LitMeshes){
+            RenderBatch(it.first, it.second);
+            it.second->ResetData();
+        }
+    }
+
+    void Renderer3D::RenderBatch(const Ref<Material> material, const Ref<Render3DBatch> batch)
+    {
+        //set up Vertex and Index buffers on renderer
+        s_3DRenderData.MeshVertexBuffer->SetData(*(batch->VBuffer), batch->VertexCount * sizeof(BaseVertex));
+        s_3DRenderData.MeshIndexBuffer->SetData(*(batch->IBuffer), batch->IndexCount);
+
+
+        //Bind all textures
         for (uint32_t i = 0; i< s_3DRenderData.TextureSlotIndex; ++i){
             s_3DRenderData.TextureSlots[i]->Bind(i);            
         }
 
+        //Bind render buffer and shader
         RBuffers.GBuffer->Bind();
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass");
+        s_3DRenderData.ActiveShader = material->GetShader();
         s_3DRenderData.ActiveShader->Bind();
-        //s_3DRenderData.QuadVertexArray->Bind();
-        //RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
 
 
+        //Send uniforms to shader
+        material->UpdateUniforms();
 
-        RenderCommand::DrawIndexed(s_3DRenderData.MeshVertexArray, s_3DRenderData.IndexCount);
+        //Command draw
+        RenderCommand::DrawIndexed(s_3DRenderData.MeshVertexArray, batch->IndexCount);
         
         //statistics
         s_3DRenderData.stats.DrawCalls++;
     }
+
     
-
-    //Mesh drawing
-    void Renderer3D::DrawMesh(const glm::mat4& transform, Ref<Mesh> mesh, int entityID)
-    {
-        if (s_3DRenderData.IndexCount >= Renderer3DData::MaxIndices){
-            EndScene();
-            StartNewBatch();
-        }
-        
-        const float texIndex  = 0.0f;
-
-        Ref<DataBuffer<unsigned char>> indexBuffer = mesh->GetIndexBuffer();
-        std::vector<uint32_t> indices((uint32_t*)indexBuffer->GetData(), (uint32_t*)indexBuffer->GetData() + indexBuffer->GetSize() / sizeof(uint32_t));
-
-        uint32_t count = s_3DRenderData.VertexCount;
-
-        for (uint32_t index : indices) {
-            *s_3DRenderData.IndexBufferPtr = index + count;
-            ++s_3DRenderData.IndexBufferPtr;
-            ++s_3DRenderData.IndexCount;
-        }
-
-        Ref<DataBuffer<unsigned char>> vertexBuffer = mesh->GetVertexBuffer();
-        std::vector<BaseVertex> vertices((BaseVertex*)vertexBuffer->GetData(), (BaseVertex*)vertexBuffer->GetData() + vertexBuffer->GetSize() / sizeof(BaseVertex));
-
-        for (auto vert : vertices) {
-            s_3DRenderData.VertexBufferPtr->Position = transform * vert.Position;
-            s_3DRenderData.VertexBufferPtr->Color = vert.Color;
-            s_3DRenderData.VertexBufferPtr->TexCoord = vert.TexCoord;
-            s_3DRenderData.VertexBufferPtr->EntityID = entityID;
-            ++s_3DRenderData.VertexBufferPtr;
-            ++s_3DRenderData.VertexCount;
-        }
-
-        //statistics
-        s_3DRenderData.stats.TriCount += (s_3DRenderData.IndexCount - count) / 3;
-
-    }
-
-    void Renderer3D::DrawMesh(const glm::mat4& transform, MeshComponent &meshComp, int entityID)
-    {
-        DrawMesh(transform, meshComp.mesh, entityID);
-    }
     void Renderer3D::SubmitLight(const glm::mat4 &transform, PointLightComponent &light, int entityID)
     {
         PointLightInfo lightInfo = light.light.GetLightInfo();
@@ -322,7 +408,7 @@ namespace oil{
     void Renderer3D::RenderLighting()
     {
         uint32_t dataSize = (uint8_t *)s_3DRenderData.PointLightBufferPtr - (uint8_t *)s_3DRenderData.PointLightBufferBase;
-        s_3DRenderData.PointLightArray->SetData(s_3DRenderData.VertexBufferBase, dataSize);
+        s_3DRenderData.PointLightArray->SetData(s_3DRenderData.PointLightBufferBase, dataSize);
 
         s_3DRenderData.QuadVertexArray->Bind();
 

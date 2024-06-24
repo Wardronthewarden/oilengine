@@ -1,6 +1,8 @@
 #include <pch/oilpch.h>
 #include "FileUtils.h"
 
+#include "Serializer.h"
+
 namespace oil{
 
     namespace utils{
@@ -62,6 +64,7 @@ namespace oil{
             end = file.tellp();
             return end-beg;
         }
+
 
     }//utils
 

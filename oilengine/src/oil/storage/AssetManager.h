@@ -11,12 +11,16 @@
 
 #include "stb_image.h"
 
-
 //Necessary includes
 #include "Asset.h"
 
 namespace oil{
 
+    namespace utils{
+        struct AssetHeader;
+    }
+    class Mesh;
+    class Model;
 
     struct DragDropInfo{
         ContentType contentType;
@@ -87,10 +91,11 @@ namespace oil{
             template<typename T>
             static Asset<T> GetAsset(UUID id)
             {
+                if(!id) return Asset<T>();
+                
                 UUID assetID = LoadAsset(id);
                 if (assetID)
                     return Asset<T>(assetID, s_AssetLookup<T>[assetID]);
-                OIL_CORE_ERROR("Failed to get asset!");
                 return Asset<T>();
                 
             }
@@ -98,6 +103,8 @@ namespace oil{
 
             template<typename T>
             static void RefreshAsset(UUID id);
+            template<typename T>
+            static void RefreshAsset(Asset<T>& asset);
 
             static bool IDExists(UUID id);
 
@@ -126,7 +133,7 @@ namespace oil{
             static std::filesystem::path GetPath(UUID id);
             static UUID AddEntry(std::filesystem::path assetPath, UUID id = 0);
             template<typename T>
-            static void LoadAssetInternal(YAML::Node& node, std::filesystem::path path, utils::AssetHeader header);
+            static void LoadAssetInternal(std::ifstream& stream, utils::AssetHeader header);
 
         private:
             static Ref<DragDropInfo> s_DragDropInfo;
@@ -134,7 +141,7 @@ namespace oil{
             static std::filesystem::path s_RootAssetPath;
             static std::filesystem::path s_AssetLookupTablePath;
 
-            static YAML::Node s_AssetLookupTable;
+            static std::unordered_map<UUID, std::filesystem::path> s_AssetLookupTable;
 
             template<typename T>
             static std::unordered_map<UUID, Ref<T>> s_AssetLookup;

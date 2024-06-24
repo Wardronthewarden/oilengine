@@ -15,7 +15,7 @@ add_subdirectory(vendor/assimp)
 add_library(oilengine STATIC 
                 src/oil/core/Application.cpp
                 src/oil/storage/FileUtils.cpp
-                src/oil/storage/Asset.cpp
+                src/oil/storage/Serializer.cpp
                 src/oil/storage/AssetManager.cpp
                 src/oil/core/UUID.cpp
                 src/oil/core/Log.cpp
@@ -45,6 +45,7 @@ add_library(oilengine STATIC
                 src/oil/Renderer/Buffer.cpp
                 src/oil/Renderer/FrameBuffer.cpp
                 src/oil/Renderer/Shader.cpp
+                src/oil/Renderer/Material.cpp
                 src/oil/Renderer/Texture.cpp
                 src/oil/Renderer/SubTexture2D.cpp
                 src/oil/Renderer/VertexArray.cpp

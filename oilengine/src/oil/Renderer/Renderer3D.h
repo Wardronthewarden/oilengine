@@ -12,8 +12,8 @@
 
 namespace oil{
 
-
-
+    struct Render3DBatch;
+    class Material;
 
     class Renderer3D{
         public:
@@ -24,13 +24,13 @@ namespace oil{
             static void BeginScene(const EditorCamera& camera);
             static void BeginScene(const Camera& camera, const glm::mat4& transform);
             static void EndScene();
-            static void Flush();
 
             //Sprites
 
             static void DrawSprite();
 
             //Meshes
+            static void SubmitMesh(const glm::mat4& transform, Ref<Mesh> mesh, Ref<Material> material, int entityID);
 
             static void DrawMesh(const glm::mat4& transform, Ref<Mesh> mesh, int entityID);
             static void DrawMesh(const glm::mat4& transform, MeshComponent& meshComp, int entityID);
@@ -42,11 +42,17 @@ namespace oil{
             static void SubmitLight(const glm::mat4& transform, DirecLightComponent& light, int entityID);
 
 
-            //Shading steps
+            //Lighting
             static void InitLightingInfo();
             static void RenderLighting();
             static void StartLightingPass();
 
+            //Control steps
+            static void ClearBuffers();
+            static void RenderLitMeshes();
+
+            //Batching
+            static void RenderBatch(const Ref<Material> material, const Ref<Render3DBatch> batch);
             
 
             //Stats
