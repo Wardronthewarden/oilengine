@@ -194,7 +194,8 @@ namespace oil{
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass"); 
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetIntArray("u_Textures", samplers, s_3DRenderData.MaxTextureSlots);
-        s_3DRenderData.DefaultMaterial = CreateRef<Material>(s_3DRenderData.ActiveShader);
+        //create the default material from the default surface shader asset
+        s_3DRenderData.DefaultMaterial = CreateRef<Material>(AssetManager::GetAssetReference<Shader>(AssetManager::GetHandleByName("DefaultSurfaceShader")));
         //s_3DRenderData.DefaultMaterial->SetUniform<int*>("u_Textures", samplers);
 
         
@@ -366,12 +367,14 @@ namespace oil{
 
         //Bind render buffer and shader
         RBuffers.GBuffer->Bind();
-        s_3DRenderData.ActiveShader = material->GetShader();
+        /* s_3DRenderData.ActiveShader = material->GetShader();
+        s_3DRenderData.ActiveShader->Bind(); */
+
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass"); 
         s_3DRenderData.ActiveShader->Bind();
 
-
         //Send uniforms to shader
-        material->UpdateUniforms();
+        //material->UploadUniforms();
 
         //Command draw
         RenderCommand::DrawIndexed(s_3DRenderData.MeshVertexArray, batch->IndexCount);

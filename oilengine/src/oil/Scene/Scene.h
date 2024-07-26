@@ -39,7 +39,6 @@ namespace oil {
         friend class SceneSerializer;
         friend class SceneHierarchyPanel;
         friend class Serializer;
-        friend class AssetManager;
 
     };
 

@@ -68,31 +68,24 @@ namespace oil{
                     entityDeleted = true;
                 
                 
-                if (ImGui::Button("Add Component"))
-                    ImGui::OpenPopup("AddComponent");
-
-                    if(ImGui::BeginPopup("AddComponent")){
+                if (ImGui::BeginMenu("Add Component")){
 
                         if (ImGui::MenuItem("Camera")){
                             m_SelectionContext.AddComponent<CameraComponent>();
-                            ImGui::ClosePopupsExceptModals();
                         }
                         if (ImGui::MenuItem("Sprite Renderer")){
                             m_SelectionContext.AddComponent<SpriteRendererComponent>();
-                            ImGui::ClosePopupsExceptModals();
                         }
                         if (ImGui::MenuItem("Mesh")){
                             m_SelectionContext.AddComponent<MeshComponent>();
-                            ImGui::ClosePopupsExceptModals();
                         }
                         if (ImGui::MenuItem("Model")){
                             m_SelectionContext.AddComponent<ModelComponent>();
-                            ImGui::ClosePopupsExceptModals();
                         }
-                        ImGui::EndPopup();
             
-                    }
                 
+                    ImGui::EndMenu();
+                }
                 ImGui::EndPopup();
             }
 
@@ -370,30 +363,63 @@ namespace oil{
         });
 
         DrawComponent<ModelComponent>("Model", entity, [this](auto& component){
+        std::string buttonLabel = "Model";
+        
 
-        if(ImGui::Button("Model", ImVec2(100.0f, 0.0f)));
+        if(ImGui::Button("+", ImVec2(50.0f, 50.0f)));
 
         if (ImGui::BeginDragDropTarget()){
+            if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
+
+                Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
+                if (info->contentType == ContentType::Model){
+                    OIL_ASSERT(AssetManager::IsValid(info->Handle), "Invalid handle dragged!");
+                    if (info->Handle){
+                        component.ID = info->Handle;
+                        component.model = AssetManager::GetAsset<Model>(info->Handle);
+                    }
+                    else
+                        OIL_CORE_ERROR("Failed to load model: {0}", info->itemPath);
+                }
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+        ImGui::SameLine();
+        ImGui::TextWrapped(buttonLabel.c_str());
+        buttonLabel = "Material slot ";
+        if (!component.model)
+            return;
+        
+        for (uint32_t i = 0; i < component.model->GetMaterialCount(); ++i){
+
+
+                if(ImGui::Button("+" + i, ImVec2(50.0f, 50.0f)));
+
+                if (ImGui::BeginDragDropTarget()){
                     if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
 
                         Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
-                        if (info->contentType == ContentType::Model){
-                            if (!AssetManager::IDExists(info->ID))
-                                info->ID = AssetManager::LoadAsset(info->itemPath);
-                            if (info->ID){
-                                component.ID = info->ID;
-                                component.model = AssetManager::GetAsset<Model>(info->ID).GetContent();
+                        if (info->contentType == ContentType::Material){
+                            OIL_ASSERT(AssetManager::IsValid(info->Handle), "Invalid handle dragged!");
+                            if (info->Handle){
+                                component.ID = info->Handle;
+                                component.model->SetMaterial(AssetManager::GetAssetReference<Material>(info->Handle), i);
                             }
                             else
-                                OIL_CORE_ERROR("Failed to load asset: {0}", info->itemPath);
+                                OIL_CORE_ERROR("Failed to load material: {0}", info->itemPath);
                         }
                     }
 
                     ImGui::EndDragDropTarget();
                 }
-
+                ImGui::SameLine();
+                ImGui::TextWrapped((buttonLabel + std::to_string(i)).c_str());
+        }
     
         });
+
+        
         
     }
 }

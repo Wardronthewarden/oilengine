@@ -30,6 +30,19 @@ namespace oil{
         virtual void SetMat3(const std::string& name, const glm::mat3& value) override;
         virtual void SetMat4(const std::string& name, const glm::mat4& value) override;
 
+        virtual int GetInt(const std::string& name) override;
+        virtual std::vector<int> GetIntArray(const std::string& name) override;
+        virtual float GetFloat(const std::string& name) override;
+        virtual glm::vec2& GetFloat2(const std::string& name) override;
+        virtual glm::vec3& GetFloat3(const std::string& name) override;
+        virtual glm::vec4& GetFloat4(const std::string& name) override;
+        virtual glm::mat3& GetMat3(const std::string& name) override;
+        virtual glm::mat4& GetMat4(const std::string& name) override;
+
+        virtual std::vector<ShaderUniform> GetUniformNames() override;
+
+        UniformType GlTypeToUniformType(GLenum type);
+
 
         void UploadUniformMat3(const std::string& name, const glm::mat3& matrix);
         void UploadUniformMat4(const std::string& name, const glm::mat4& matrix);

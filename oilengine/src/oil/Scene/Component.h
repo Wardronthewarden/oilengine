@@ -4,6 +4,7 @@
 #include "oil/core/UUID.h"
 #include "oil/Renderer/Texture.h"
 #include "oil/Renderer/Model.h"
+#include "oil/Renderer/Material.h"
 #include "oil/Renderer/Light.h"
 #include "oil/storage/AssetManager.h"
 

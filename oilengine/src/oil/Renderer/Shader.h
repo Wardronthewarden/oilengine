@@ -3,9 +3,21 @@
 #include <string>
 #include <unordered_map>
 #include <glm/glm.hpp>
-#include <oil/storage/Asset.h>
 
 namespace oil{
+
+    enum class UniformType{
+        None = 0,
+        Float,
+        Float2, Float3, Float4,
+        Int,
+        Mat3x3, Mat4x4
+    };
+
+    struct ShaderUniform{
+        UniformType Type;
+        std::string Name;
+    };
 
     class Shader{
     public:
@@ -22,6 +34,17 @@ namespace oil{
         virtual void SetFloat4(const std::string& name, const glm::vec4& value) = 0;
         virtual void SetMat3(const std::string& name, const glm::mat3& value) = 0;
         virtual void SetMat4(const std::string& name, const glm::mat4& value) = 0;
+
+        virtual int GetInt(const std::string& name) = 0;
+        virtual std::vector<int> GetIntArray(const std::string& name) = 0;
+        virtual float GetFloat(const std::string& name) = 0;
+        virtual glm::vec2& GetFloat2(const std::string& name) = 0;
+        virtual glm::vec3& GetFloat3(const std::string& name) = 0;
+        virtual glm::vec4& GetFloat4(const std::string& name) = 0;
+        virtual glm::mat3& GetMat3(const std::string& name) = 0;
+        virtual glm::mat4& GetMat4(const std::string& name) = 0;
+        
+        virtual std::vector<ShaderUniform> GetUniformNames() = 0;
 
         virtual const std::string& GetName() const = 0;
         virtual const std::string& GetPath() const = 0;

@@ -13,24 +13,48 @@ namespace oil{
         std::filesystem::path path;
     };
 
+    class MaterialEditorPanel;
+
     class ContentBrowserPanel{
     public:
         ContentBrowserPanel();
 
         void Init();
 
-        //Draw folder contents
-        Ref<Texture2D> RenderDirectoryEntry(FolderContentInfo& directoryEntry);
-        void GetFolderContents();
+        //load all assets from AssetManager::CurrentAssetPath into m_CurrentFolderContents 
+        void LoadCurrentFolderContents();
+
+        //return the folder contents from a path relative to AssetManager::RootPath.
+        //Returns directories
+        std::vector<FolderContentInfo> GetFolderContents(std::string path);
+        //return all assets under relative path. 
+        //does not return directories as entries
+        std::vector<FolderContentInfo> GetFolderContentsRecursive(std::filesystem::path path);
 
 
         void OnImGuiRender();
+
+        //render elements
+        Ref<Texture2D> RenderDirectoryEntry(FolderContentInfo& directoryEntry);
+
+        void RenderBrowserContextMenu();
+        void OpenBrowserItemActions();
+
+    private:
+        int NameEditCompletionCallback(ImGuiInputTextCallbackData* data);
 
     private:
         Ref<Texture2D> m_DirectoryIcon;
         Ref<Texture2D> m_FileIcon;
 
         std::vector<FolderContentInfo> m_CurrentFolderContents;
+        std::unordered_set<uint32_t> m_SelectedItems; //indices into m_CurrentFolderContents
+
+        //inputs
+        bool m_NameEditMode = false;
+        char m_NameInputBuffer[32] = "";
+
+        Ref<MaterialEditorPanel> m_MaterialEditorPanel;
     };
 
 }

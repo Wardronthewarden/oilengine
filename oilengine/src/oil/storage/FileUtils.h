@@ -12,14 +12,6 @@
 #include <oil/core/core.h>
 #include <oil/core/UUID.h>
 
-//Importer includes
-#include "assimp/Importer.hpp"
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
-#include "stb_image.h"
-#include "Serializer.h"
-
 namespace YAML{
     
     //YAML overwrites
@@ -52,6 +44,8 @@ namespace YAML{
             return true;
         }
     };
+
+
 }
 
 namespace oil{
@@ -88,14 +82,6 @@ namespace oil{
 
 
         //Templated functions
-        template <typename T>
-        Ref<T> LoadAssetObject(std::ifstream& stream)
-        {
-
-            YAML::Node node = utils::ReadAssetBody(stream);
-            return Serializer::Deserialize<T>(node);
-        }
-
         template <typename T, typename U>
         std::unordered_map<T,U> LoadHashmap(std::filesystem::path path){
             std::ifstream stream(path);

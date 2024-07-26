@@ -25,8 +25,8 @@ oil::Application::Application(const std::string& name)
     m_Window = std::unique_ptr<Window>(Window::Create(WindowProps(name)));
     m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
 
-    Renderer::Init();
     AssetManager::Init("Assets", "Internal");
+    Renderer::Init();
 
     m_ImGuiLayer = new ImGuiLayer;
     PushOverlay(m_ImGuiLayer);

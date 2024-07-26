@@ -1,5 +1,7 @@
 #include "pch/oilpch.h"
 #include "Shader.h"
+#include <oil/storage/Asset.h>
+
 
 #include "Renderer.h"
 #include "Platform/OpenGL/OpenGLShader.h"
@@ -57,7 +59,7 @@ namespace oil{
     }
 
     template <>
-    ContentType Asset<Shader>::GetType()
+    ContentType AssetRef<Shader>::GetType()
     {
         return ContentType::Shader;
     }

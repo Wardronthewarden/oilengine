@@ -7,9 +7,7 @@
 //All types of assets will be included in this file going forward, and should be included from here
 namespace oil{
 
-    //forward declarations
-    class AssetManager;
-    class Entity;
+    using AssetHandle = UUID;
 
     enum class ContentType{
         None        = 0,
@@ -29,52 +27,61 @@ namespace oil{
     };
 
 
+
     template<typename T>
-    class Asset{
+    class AssetRef{
     public:
-        Asset()
-            : m_ID(0){};
-        Asset(const Ref<T> ref)
-            : m_AssetReference(ref) {};
-        Asset(UUID id)
-            : m_ID(id) {};
-        Asset(UUID id, const Ref<T> ref)
-            : m_ID(id), m_AssetReference(ref) {};
-        ~Asset() = default;
+        AssetRef()
+            : m_Handle(0){};
+        AssetRef(AssetHandle handle) {
+            SetHandle(handle);
+        };
+        AssetRef(AssetHandle handle, Ref<Ref<T>> refLocation) {
+            SetHandle(handle);
+            SetReferenceLocation(refLocation);
+        };
+        ~AssetRef() = default;
 
         
-        UUID GetID() const { return m_ID; }
+        AssetHandle GetHandle() const { return m_Handle; }
+        void SetHandle(AssetHandle handle) { m_Handle = handle; }
 
-        void SetID(UUID id) { m_ID = id; }
-        Ref<T> GetContent() {return m_AssetReference; };
-
-        void Referesh() { AssetManager::RefreshAsset(&this); }
-
-        //operator overloads
-        T* operator->(){
-            return m_AssetReference.get();
+        void SetReferenceLocation(Ref<Ref<T>> refLocation){
+            m_ReferenceLocation = refLocation;
+            m_Reference = *m_ReferenceLocation.get();    
         }
 
-        operator Ref<T>() const{
-            return m_AssetReference;
+        Ref<T> Get(){
+            if(!m_Handle){
+                return Ref<T>();
+            }
+            if(m_Reference.expired()){
+                m_Reference = *m_ReferenceLocation.get();
+            }
+            return m_Reference.lock();
         }
 
-        operator UUID() const{
-            return m_ID;
+        T* operator ->(){
+            return Get().get();
+        }
+
+        operator Ref<T>(){
+            return Get();
+        }
+
+        operator AssetHandle() const{
+            return m_Handle;
         };
 
 
         //Defined for each Type of content that extends asset
         inline static ContentType GetType();
 
-    private:
-        void SetAsset(Asset<T> asset) { this = asset; }
-        void SetContent(Ref<T> content) { m_AssetReference = content; }
-        friend class AssetManager;
 
     private:
-        UUID m_ID;
-        Ref<T> m_AssetReference = nullptr;
+        AssetHandle m_Handle;
+        std::weak_ptr<T> m_Reference;
+        Ref<Ref<T>> m_ReferenceLocation = nullptr;
     };
 
 }

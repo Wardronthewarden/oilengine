@@ -95,6 +95,93 @@ void OpenGLShader::SetMat4(const std::string &name, const glm::mat4 &value)
     UploadUniformMat4(name, value);
 }
 
+int OpenGLShader::GetInt(const std::string &name)
+{
+	int ret;
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glGetUniformiv(m_RendererID, location, &ret);
+    return ret;
+}
+
+std::vector<int> OpenGLShader::GetIntArray(const std::string &name)
+{
+    return std::vector<int>();
+}
+
+float OpenGLShader::GetFloat(const std::string &name)
+{
+    float ret;
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glGetUniformfv(m_RendererID, location, &ret);
+    return ret;
+}
+
+glm::vec2 &OpenGLShader::GetFloat2(const std::string &name)
+{
+    glm::vec2 ret = glm::vec2();
+	return ret;
+}
+
+glm::vec3 &OpenGLShader::GetFloat3(const std::string &name)
+{
+    glm::vec3 ret = glm::vec3();
+	return ret;
+}
+
+glm::vec4 &OpenGLShader::GetFloat4(const std::string &name)
+{
+    glm::vec4 ret = glm::vec4();
+	return ret;
+}
+
+glm::mat3 &OpenGLShader::GetMat3(const std::string &name)
+{
+    glm::mat3 ret = glm::mat3();
+	return ret;
+}
+
+glm::mat4 &OpenGLShader::GetMat4(const std::string &name)
+{
+    glm::mat4 ret = glm::mat4();
+	return ret;
+}
+
+std::vector<ShaderUniform> OpenGLShader::GetUniformNames()
+{
+	std::vector<ShaderUniform> ret;
+	GLint count, size;
+	GLenum type;
+	glGetProgramiv(m_RendererID, GL_ACTIVE_UNIFORMS, &count);
+
+	const GLsizei bufSize = 16;
+	GLchar name[bufSize];
+	GLsizei length;
+
+	for(int i = 0; i < count; ++i){
+		glGetActiveUniform(m_RendererID, (GLuint)i, bufSize, &length, &size, &type, name);
+		ret.push_back({GlTypeToUniformType(type), std::string(name)});
+	}
+    return ret;
+}
+
+UniformType OpenGLShader::GlTypeToUniformType(GLenum type)
+{
+	switch (type){
+		case GL_FLOAT: 			return UniformType::Float;
+		case GL_FLOAT_VEC2: 	return UniformType::Float2;
+		case GL_FLOAT_VEC3: 	return UniformType::Float3;
+		case GL_FLOAT_VEC4: 	return UniformType::Float4;
+		
+		case GL_FLOAT_MAT3: 	return UniformType::Float4;
+		case GL_FLOAT_MAT4: 	return UniformType::Float4;
+
+		case GL_INT: 			return UniformType::Int;
+
+		default: return UniformType::None;	
+	}
+	
+}
+
 void OpenGLShader::UploadUniformMat3(const std::string &name, const glm::mat3 &matrix)
 { 
 	GLint location = glGetUniformLocation(m_RendererID, name.c_str());

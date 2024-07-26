@@ -25,8 +25,7 @@ namespace oil{
         bool OnMouseReleased(MouseButtonReleasedEvent& e);
 
         void NewScene();
-        void OpenScene();
-        void OpenScene(const std::filesystem::path& path);
+        void OpenScene(AssetHandle sceneHandle);
         void SaveSceneAs();
         void SaveScene();
 
@@ -40,12 +39,15 @@ namespace oil{
         void UI_Toolbar();
         void RenderViewport();
         void RenderStats();
+
+        //Opening different workstations
+        void OpenMaterial(AssetRef<Material> material);
     private:
         OrthographicCameraController m_CameraController;
 
         Ref<FrameBuffer> m_FrameBuffer;
 
-        Asset<Scene> m_ActiveScene;
+        AssetRef<Scene> m_ActiveScene;
 
         // Data
         std::string m_ActiveSceneFilepath;
@@ -73,7 +75,8 @@ namespace oil{
         SceneHierarchyPanel m_SceneHierarchyPanel;
         ContentBrowserPanel m_ContentBrowserPanel;
 
-        Asset<Model> m_ModelAssetTest;
+
+        AssetRef<Model> m_ModelAssetTest;
 
 
         //Controls

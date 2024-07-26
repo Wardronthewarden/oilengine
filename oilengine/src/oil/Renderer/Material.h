@@ -1,23 +1,20 @@
 #pragma once
 
 #include <oil/core/core.h>
+#include "oil/storage/Asset.h"
 #include "oil/Renderer/Shader.h"
 
 
 namespace oil{
 
-    //Forward declarations
-    template<typename T>
-    class Asset;
-
     class Material{
     public:
         Material() = default;
-        Material(Asset<Shader> shader);
+        Material(AssetRef<Shader> shader);
         Material(const Material& other);
         ~Material();
 
-        Asset<Shader> GetShader() const; 
+        AssetRef<Shader> GetShader() const; 
 
         template<typename T>
         const T GetUniform(std::string name){
@@ -25,7 +22,7 @@ namespace oil{
                 T val = mapRef.find(name);
                 if (val != mapRef.end())
                     return val;
-                OIL_WARN("Uniform {1} does not exist on material.", name);
+                OIL_WARN("Uniform {0} does not exist on material.", name);
                 return T();
     
         }
@@ -40,16 +37,29 @@ namespace oil{
     
         }
 
+        template<typename T>
+        void RenameUniform(std::string target, std::string newName){
+            std::unordered_map<std::string, T>& mapRef = GetUniformsOfType<T>();
+            mapRef[newName] = mapRef[target];
+            mapRef.erase(target);
+        }
+
+        void RemoveUniform(std::string name);
+
+        void ResetUniform(std::string name);
+
         void UpdateUniforms();
+
+        void UploadUniforms();
 
     private:
         friend class Serializer;
 
-        void SetShader(const Asset<Shader>& shader); 
+        void SetShader(const AssetRef<Shader>& shader); 
 
     private:
         //Shader
-        Asset<Shader> m_Shader;
+        AssetRef<Shader> m_Shader;
 
 
         //Uniforms

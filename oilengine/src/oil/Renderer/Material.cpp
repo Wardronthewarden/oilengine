@@ -2,9 +2,10 @@
 #include "oil/Renderer/Material.h"
 #include <oil/Renderer/Shader.h>
 #include "oil/storage/Asset.h"
+#include "Material.h"
 
 namespace oil{
-    Material::Material(Asset<Shader> shader)
+    Material::Material(AssetRef<Shader> shader)
         : m_Shader(shader)
     {
 
@@ -23,7 +24,7 @@ namespace oil{
 
     Material::~Material(){}
 
-    Asset<Shader> Material::GetShader() const
+    AssetRef<Shader> Material::GetShader() const
     {
         return m_Shader; 
     }
@@ -68,9 +69,13 @@ namespace oil{
     {
         return nullptr;
     }
+
     
-    void Material::UpdateUniforms(){
-        for (const auto& it : m_UniformInts){
+
+    void Material::UploadUniforms(){
+
+       
+    for (const auto& it : m_UniformInts){
             m_Shader->SetInt(it.first, it.second);
         }
         for (const auto& it : m_UniformFloats){
@@ -93,13 +98,57 @@ namespace oil{
         }
     }
 
-    void Material::SetShader(const Asset<Shader> &shader)
+    void Material::SetShader(const AssetRef<Shader> &shader)
     {
         m_Shader = shader; 
+        std::vector<ShaderUniform> uniforms = m_Shader->GetUniformNames();
+        for (const auto& uniform : uniforms){
+            switch(uniform.Type){
+                case UniformType::Int:{
+                    if(!m_UniformInts.contains(uniform.Name)) 
+                        m_UniformInts[uniform.Name] = m_Shader->GetInt(uniform.Name);
+                    break;
+                }
+                case UniformType::Float:{
+                    if(!m_UniformFloats.contains(uniform.Name)) 
+                        m_UniformFloats[uniform.Name] = m_Shader->GetFloat(uniform.Name);
+                    break;
+                }
+                case UniformType::Float2:{
+                    if(!m_UniformFloat2s.contains(uniform.Name)) 
+                        m_UniformFloat2s[uniform.Name] = m_Shader->GetFloat2(uniform.Name);
+                    break;
+                }
+                case UniformType::Float3:{
+                    if(!m_UniformFloat3s.contains(uniform.Name)) 
+                        m_UniformFloat3s[uniform.Name] = m_Shader->GetFloat3(uniform.Name);
+                    break;
+                }
+                case UniformType::Float4:{
+                    if(!m_UniformFloat4s.contains(uniform.Name)) 
+                        m_UniformFloat4s[uniform.Name] = m_Shader->GetFloat4(uniform.Name);
+                    break;
+                }
+                case UniformType::Mat3x3:{
+                    if(!m_UniformMat3s.contains(uniform.Name)) 
+                        m_UniformMat3s[uniform.Name] = m_Shader->GetMat3(uniform.Name);
+                    break;
+                }
+                case UniformType::Mat4x4:{
+                    if(!m_UniformMat4s.contains(uniform.Name)) 
+                        m_UniformMat4s[uniform.Name] = m_Shader->GetMat4(uniform.Name);
+                    break;
+                }
+                default:{
+                    OIL_CORE_ERROR("Type not implemented on shader uniforms!");
+                    break;
+                }
+            }
+        }
     }
 
     template <>
-    ContentType Asset<Material>::GetType()
+    ContentType AssetRef<Material>::GetType()
     {
         return ContentType::Material;
     }

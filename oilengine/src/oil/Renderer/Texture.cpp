@@ -36,7 +36,7 @@ Ref<Texture2D> Texture2D::Create(const std::string &path)
 }
 
     template <>
-    ContentType Asset<Texture2D>::GetType()
+    ContentType AssetRef<Texture2D>::GetType()
     {
         return ContentType::Texture2D;
     }

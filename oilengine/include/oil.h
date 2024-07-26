@@ -28,6 +28,9 @@
 #include "oil/Scene/ScriptableEntity.h"
 #include "oil/Scene/Component.h"
 
+// Utils
+#include "oil/storage/FileUtils.h"
+
 
 // ------Rendering-------------
 

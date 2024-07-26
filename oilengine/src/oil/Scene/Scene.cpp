@@ -240,7 +240,7 @@ namespace oil{
 
 
     template <>
-    ContentType Asset<Scene>::GetType()
+    ContentType AssetRef<Scene>::GetType()
     {
         return ContentType::Scene;
     }

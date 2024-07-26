@@ -16,7 +16,7 @@ add_library(oilengine STATIC
                 src/oil/core/Application.cpp
                 src/oil/storage/FileUtils.cpp
                 src/oil/storage/Serializer.cpp
-                src/oil/storage/AssetManager.cpp
+                src/oil/storage/EditorAssetManager.cpp
                 src/oil/core/UUID.cpp
                 src/oil/core/Log.cpp
                 src/oil/core/Layer.cpp
@@ -74,7 +74,7 @@ generate_export_header(oilengine
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 
-target_compile_definitions(oilengine PRIVATE -DOIL_DEBUG -DGLFW_INCLUDE_NONE)
+target_compile_definitions(oilengine PRIVATE -DOIL_DEBUG -DOIL_EDITOR -DOIL_ASSET_IMPORTER -DGLFW_INCLUDE_NONE)
 
 
 target_precompile_headers(oilengine PUBLIC src/pch/oilpch.h)

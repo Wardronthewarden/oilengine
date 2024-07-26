@@ -7,7 +7,7 @@ namespace oil{
 
     //Forward declarations
     template<typename T>
-    class Asset;
+    class AssetRef;
 
     class Model{
     public:
@@ -19,10 +19,11 @@ namespace oil{
         void AddMesh(const Ref<Mesh> mesh);
 
         const std::vector<Ref<Mesh>> GetMeshes() { return m_Meshes; };
-        const std::vector<Asset<Material>> GetMaterials() { return m_Materials; };
-        const Asset<Material> GetMaterial(uint32_t index);
+        const std::vector<AssetRef<Material>> GetMaterials() { return m_Materials; };
+        AssetRef<Material> GetMaterial(uint32_t index);
+        const uint32_t GetMaterialCount() { return m_Materials.size(); }
 
-        void SetMaterial(const Asset<Material>& mat, uint32_t index);
+        void SetMaterial(const AssetRef<Material>& mat, uint32_t index);
 
         void SetMaterialsToDefault();
 
@@ -34,7 +35,7 @@ namespace oil{
 
     private:
         std::vector<Ref<Mesh>> m_Meshes;
-        std::vector<Asset<Material>> m_Materials;
+        std::vector<AssetRef<Material>> m_Materials;
         uint32_t m_BufferSize = 0;
 
     };

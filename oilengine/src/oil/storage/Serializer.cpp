@@ -2,7 +2,6 @@
 #include "Serializer.h"
 
 //File writing
-#include "FileUtils.h"
 #include <fstream>
 
 //Required for extraction
@@ -190,6 +189,25 @@
         }
     };
 
+    //Data structures
+    template<>
+    struct convert<oil::AssetMetadata>{
+        static Node encode(const oil::AssetMetadata& rhs){
+            Node node;
+            node.push_back(rhs.Type);
+            node.push_back(rhs.AssetPath);
+            node.push_back(rhs.SrcPath);
+            return node;
+        }
+
+        static bool decode(const Node& node, oil::AssetMetadata& rhs){
+            rhs.Type = (oil::ContentType)node[0].as<uint32_t>();
+            rhs.AssetPath = node[1].as<std::string>();
+            rhs.SrcPath = node[2].as<std::string>();
+            return true;
+        }
+    };
+
 
 }
 
@@ -200,7 +218,7 @@ namespace oil{
     //Serializer functions
 
     template<>
-    void Serializer::Serialize<Scene>(const Ref<Scene> scene, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Scene>(const Ref<Scene> scene, std::filesystem::path path, UUID id)
     {
         YAML::Emitter out;
         std::ofstream fout(path);
@@ -244,7 +262,7 @@ namespace oil{
     }
 
     template<>
-    Ref<Scene> Serializer::Deserialize<Scene>(YAML::Node file)
+    Ref<Scene> Serializer::DeserializeAssetYAML<Scene>(YAML::Node file)
     {
         Ref<Scene> scene = CreateRef<Scene>();
 
@@ -334,7 +352,7 @@ namespace oil{
     }
 
     template<>
-    void Serializer::Serialize<Model>(const Ref<Model> model, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Model>(const Ref<Model> model, std::filesystem::path path, UUID id)
     {
 
         std::ofstream fout(path);
@@ -475,7 +493,7 @@ namespace oil{
     }
 
     template<>
-    Ref<Model> Serializer::Deserialize<Model>(YAML::Node file)
+    Ref<Model> Serializer::DeserializeAssetYAML<Model>(YAML::Node file)
     {
         Ref<Model> model = CreateRef<Model>();
         YAML::Binary bin = file["Buffers"]["Data"].as<YAML::Binary>();
@@ -528,7 +546,7 @@ namespace oil{
         model->SetMaterialsToDefault(); //can't load materials just yet
         for (int i = 0; i < materials.size(); ++i){
             if(materials[i])
-                model->SetMaterial(AssetManager::GetAsset<Material>(materials[i].as<UUID>()), i);
+                model->SetMaterial(AssetRef<Material>(materials[i].as<UUID>()), i);
         }
 
         delete[bufferSize] buffer;
@@ -537,7 +555,7 @@ namespace oil{
     }
 
     template<>
-    void Serializer::Serialize<Texture2D>(const Ref<Texture2D> texture, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Texture2D>(const Ref<Texture2D> texture, std::filesystem::path path, UUID id)
     {
         std::ofstream fout(path);
         
@@ -578,7 +596,7 @@ namespace oil{
             OIL_CORE_INFO("Texture saved successfully!");
             utils::WriteAssetBody(fout, out);
         }else{
-            OIL_CORE_ERROR("Failed to build YAML representation for model!");
+            OIL_CORE_ERROR("Failed to build YAML representation for texture!");
         }
         header.fileSize = utils::GetFileSize(fout);
         utils::WriteAssetHeader(fout, header);
@@ -589,7 +607,7 @@ namespace oil{
     }
 
     template<>
-    Ref<Texture2D> Serializer::Deserialize<Texture2D>(YAML::Node file)
+    Ref<Texture2D> Serializer::DeserializeAssetYAML<Texture2D>(YAML::Node file)
     {
         //Image metadata chunk
         uint32_t width, height;
@@ -617,7 +635,7 @@ namespace oil{
     }
 
  template<>
-    void Serializer::Serialize<Shader>(const Ref<Shader> shader, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Shader>(const Ref<Shader> shader, std::filesystem::path path, UUID id)
     {
         std::ofstream fout(path);
         
@@ -641,7 +659,7 @@ namespace oil{
         out << YAML::EndMap;
 
         if(out.good()){
-            OIL_CORE_INFO("Shaderr saved successfully!");
+            OIL_CORE_INFO("Shader saved successfully!");
             utils::WriteAssetBody(fout, out);
         }else{
             OIL_CORE_ERROR("Failed to build YAML representation for shader!");
@@ -654,13 +672,13 @@ namespace oil{
     }
 
     template<>
-    Ref<Shader> Serializer::Deserialize<Shader>(YAML::Node file)
+    Ref<Shader> Serializer::DeserializeAssetYAML<Shader>(YAML::Node file)
     {
         return Shader::Create(file["Body"]["SRCPath"].as<std::string>());
     }
 
  template<>
-    void Serializer::Serialize<Material>(const Ref<Material> material, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Material>(const Ref<Material> material, std::filesystem::path path, UUID id)
     {
         std::ofstream fout(path);
         
@@ -689,7 +707,7 @@ namespace oil{
             uniforms["mat4"][uniform.first] = uniform.second;
 
         chunk["uniforms"] = uniforms;
-        chunk["Shader"] = material->GetShader().GetID();
+        chunk["Shader"] = material->GetShader().GetHandle();
 
         //Chunk 1
         out << YAML::Key << "Body";
@@ -699,10 +717,10 @@ namespace oil{
         out << YAML::EndMap;
 
         if(out.good()){
-            OIL_CORE_INFO("Texture saved successfully!");
+            OIL_CORE_INFO("Material saved successfully!");
             utils::WriteAssetBody(fout, out);
         }else{
-            OIL_CORE_ERROR("Failed to build YAML representation for model!");
+            OIL_CORE_ERROR("Failed to build YAML representation for material!");
         }
         header.fileSize = utils::GetFileSize(fout);
         utils::WriteAssetHeader(fout, header);
@@ -712,7 +730,7 @@ namespace oil{
     }
 
     template<>
-    Ref<Material> Serializer::Deserialize<Material>(YAML::Node file)
+    Ref<Material> Serializer::DeserializeAssetYAML<Material>(YAML::Node file)
     {
         Ref<Material> material = CreateRef<Material>();
 
@@ -733,14 +751,24 @@ namespace oil{
         for (auto uniform : uniforms["mat4"])
             material->SetUniform<glm::mat4>(uniform.first.as<std::string>(), uniform.second.as<glm::mat4>());
 
-        material->SetShader(AssetManager::GetAsset<Shader>(file["Body"]["Shader"].as<UUID>()));
+        material->SetShader(AssetRef<Shader>(file["Body"]["Shader"].as<UUID>()));
         return material;
     }
+
+    void Serializer::SerializeAssetRegistry(std::filesystem::path path, std::unordered_map<AssetHandle, AssetMetadata> dataTable)
+    {
+        utils::SaveHashmap<AssetHandle, AssetMetadata>(path, dataTable);
+    }
+
+    std::unordered_map<AssetHandle, AssetMetadata> Serializer::DeserializeAssetRegistry(std::filesystem::path path)
+    {
+        return utils::LoadHashmap<AssetHandle, AssetMetadata>(path);
+    }
+
 
 
     //Serializer internal
     //--------------------------------------------------------------------------------------------------------------------------------------
-
     void Serializer::SerializeEntity(YAML::Emitter &out, Entity &entity)
     {
         OIL_ASSERT(entity.HasComponent<IDComponent>(), "Entity does not have a UUID");

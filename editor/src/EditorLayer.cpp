@@ -28,24 +28,24 @@ EditorLayer::EditorLayer()
 void EditorLayer::OnAttach()
 {
     //Scene
-    m_ActiveScene = CreateRef<Scene>();
-
+    OpenScene(AssetManager::GetHandleByName("DefaultScene"));
     m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
-    m_ActiveSceneFilepath = "Assets/Scenes/cube.oil";
 
     //Asset management setup
     //TODO: draw from init file
-    OpenScene(m_ActiveSceneFilepath);
 
     //Framebuffer
     m_FrameBuffer = Renderer3D::GetFrameBuffer();
 
 
     //Textures
-    m_DefaultTexture = Texture2D::Create("Internal/Assets/Textures/Checkerboard.png");
-    m_IconPlay = Texture2D::Create("Internal/Assets/Textures/PlayButton.png");
-    m_IconStop = Texture2D::Create("Internal/Assets/Textures/StopButton.png");
+    /* AssetManager::GetAsset(AssetManager::GetHandleByName("Checkerboard"))
+    AssetManager::GetAsset(AssetManager::GetHandleByName("PlayButton"))
+    AssetManager::GetAsset(AssetManager::GetHandleByName("StopButton")) */
+    m_DefaultTexture = Texture2D::Create("Internal/Assets/src/Textures/Checkerboard.png");
+    m_IconPlay = Texture2D::Create("Internal/Assets/src/Textures/PlayButton.png");
+    m_IconStop = Texture2D::Create("Internal/Assets/src/Textures/StopButton.png");
 
 
 #if 0
@@ -164,7 +164,7 @@ void EditorLayer::OnUpdate(Timestep dt)
 
     if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y){
         int pixelData = m_FrameBuffer->ReadPixel(1, mouseX, mouseY);
-        m_HoveredEntity = pixelData < 0 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.GetContent().get());
+        m_HoveredEntity = pixelData < 0 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.Get().get());
     }
 
     m_FrameBuffer->Unbind();
@@ -227,13 +227,6 @@ void EditorLayer::OnImGuiRender()
     {
         if (ImGui::BeginMenu("File"))
         {
-            if(ImGui::MenuItem("New", "Ctrl+N")){
-                NewScene();
-            }
-
-            if(ImGui::MenuItem("Open...", "Ctrl+O")){
-                OpenScene();
-            }
 
             if(ImGui::MenuItem("Save", "Ctrl+S")){
                 SaveScene();
@@ -292,18 +285,6 @@ bool EditorLayer::OnKeyPressed(KeyPressedEvent &e)
                 SaveSceneAs();
             else if (m_ControlPressed)
                 SaveScene();
-            break;
-        }
-        
-        case OIL_KEY_N:{
-            if (m_ControlPressed)
-                NewScene();
-            break;
-        }
-        
-        case OIL_KEY_O:{
-            if (m_ControlPressed)
-                OpenScene();
             break;
         }
 
@@ -433,41 +414,28 @@ bool EditorLayer::OnMouseReleased(MouseButtonReleasedEvent &e)
 }
 void EditorLayer::NewScene()
 {
-    m_ActiveScene = AssetManager::CreateAsset<Scene>();
+    m_ActiveScene = AssetManager::CreateAsset<Scene>("unnamed_scene", CreateRef<Scene>());
     m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
     m_SceneHierarchyPanel.SetContext(m_ActiveScene);
 }
-void EditorLayer::OpenScene()
-{
-    m_ActiveSceneFilepath = FileDialogs::OpenFile("Oil Scene (*.oil)\0*.oil\0");
 
-        if(!m_ActiveSceneFilepath.empty()){
-            OpenScene(m_ActiveSceneFilepath);
-        }
-}
-void EditorLayer::OpenScene(const std::filesystem::path &path)
+void EditorLayer::OpenScene(AssetHandle sceneHandle)
 {
-    if(std::filesystem::exists(path)){
-        UUID id = AssetManager::LoadAsset(path);
-        m_ActiveScene = AssetManager::GetAsset<Scene>(id);
-        return;
-    }
-    OIL_CORE_WARN("Scene {0} does not exist. Opening default scene.", path);
-
+    m_ActiveScene = AssetManager::GetAssetReference<Scene>(sceneHandle);
 }
 void EditorLayer::SaveSceneAs()
 {
-    m_ActiveSceneFilepath = FileDialogs::SaveFile("Oil Scene (*.oil)\0*.oil\0");
+    std::filesystem::path Filepath = FileDialogs::SaveFile("Oil Scene (*.oil)\0*.oil\0");
                 
-        if(!m_ActiveSceneFilepath.empty()){
-            AssetManager::SaveAssetAs<Scene>(m_ActiveScene, m_ActiveSceneFilepath);
-        }
+    if(!Filepath.empty()){
+        AssetHandle handle = AssetManager::CreateAsset<Scene>(Filepath.stem().string(), m_ActiveScene, Filepath.parent_path());
+        AssetManager::SaveAsset<Scene>(handle);
+    }
 }
 void EditorLayer::SaveScene()
 {
-    if(!m_ActiveSceneFilepath.empty()){
-        AssetManager::SaveAsset(m_ActiveScene);
-    }
+    AssetManager::SaveAsset<Scene>(m_ActiveScene.GetHandle());
+    
 }
 void EditorLayer::Import()
 {
@@ -553,8 +521,8 @@ void EditorLayer::RenderViewport()
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
             Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
 
-            if (info->contentType == ContentType::Scene);
-                OpenScene(std::filesystem::path(g_AssetPath) / info->itemPath);
+            if (info->contentType == ContentType::Scene)
+                OpenScene(info->Handle);
         }
 
         ImGui::EndDragDropTarget();
