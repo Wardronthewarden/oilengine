@@ -147,6 +147,11 @@ namespace oil{
                     AssetManager::CreateAsset<Scene>("unnamed_scene", CreateRef<Scene>(), AssetManager::GetCurrentDirectory());
                     LoadCurrentFolderContents();
                 }
+                if (ImGui::MenuItem("Shader")){
+                    //This does not work yet
+                    //AssetManager::CreateAsset<Shader>("unnamed_scene", Shader::Create(AssetManager::), AssetManager::GetCurrentDirectory());
+                    LoadCurrentFolderContents();
+                }
 
                 ImGui::EndMenu();
             }

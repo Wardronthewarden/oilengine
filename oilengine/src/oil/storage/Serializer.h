@@ -18,7 +18,7 @@ namespace oil{
 
         //Asset serialization
         template<typename T>
-        static void SerializeAsset(const Ref<T> asset , std::filesystem::path path, UUID assetHandle);
+        static void SerializeAsset(const Ref<T> asset , AssetMetadata metadata, UUID assetHandle);
 
         template<typename T>
         static Ref<T> DeserializeAssetYAML(YAML::Node file);

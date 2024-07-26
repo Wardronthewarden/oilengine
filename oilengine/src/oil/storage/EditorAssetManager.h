@@ -65,8 +65,8 @@ namespace oil{
 
             //New asset creation
             template<typename T>
-            static AssetHandle CreateAsset(std::string name, Ref<T> assetObject, std::filesystem::path dir = s_RootAssetPath){
-                OIL_CORE_ASSERT(!dir.has_extension(), "Can not create file at path {0}.", dir.string());
+            static AssetHandle CreateAsset(std::string name, Ref<T> assetObject, std::filesystem::path dest = s_RootAssetPath, std::filesystem::path src = ""){
+                OIL_CORE_ASSERT(!dest.has_extension(), "Can not create file at path {0}.", dest.string());
                 //Generate metadata for file
                 AssetHandle handle = GenerateAssetHandle(10);
                 if(!handle){
@@ -75,11 +75,12 @@ namespace oil{
                 }
                 RegisterAsset(handle);
                 SetName(handle, name);
-                SetPath(handle, dir / (name + ".oil"));
+                SetPath(handle, dest / (name + ".oil"));
                 SetType(handle, AssetRef<T>::GetType());
+                SetSource(handle, src);
                 SaveAssetRegistry();
                 //serialize the asset
-                Serializer::SerializeAsset<T>(assetObject, dir / (name + ".oil"), handle);
+                Serializer::SerializeAsset<T>(assetObject, GetMetadata(handle), handle);
                 return handle;
 
             }
@@ -136,7 +137,7 @@ namespace oil{
 
             template<typename T>
             static void SaveAsset(AssetHandle handle){
-                Serializer::SerializeAsset<T>(*s_AssetLookup<T>[handle].get(), s_AssetRegistry[handle].AssetPath, handle);
+                Serializer::SerializeAsset<T>(*s_AssetLookup<T>[handle].get(), GetMetadata(handle), handle);
             }
 
             //Getting assets
@@ -163,15 +164,18 @@ namespace oil{
             //Internal asset handling
             static void ReimportInternalAssets();
 
+            //source handling
+            template<typename T>
+            static void ReimportAsset(AssetHandle handle);
+
+            static std::filesystem::path CreateSource(std::filesystem::path dest, std::filesystem::path src = "");
+
             //Meta queries
-            static ContentType GetType(AssetHandle handle) {
-                return s_AssetRegistry[handle].Type;
-            }
+            
             static bool IsValid(AssetHandle handle);
 
             static AssetHandle GetHandleByName(std::string name);
 
-            //Editor asset manager functions -------------------------
             //Metadata functions
             static AssetMetadata GetMetadata(AssetHandle handle);
             static void SetMetadata(AssetHandle handle, AssetMetadata metadata);
@@ -179,9 +183,16 @@ namespace oil{
             static void RegisterAsset(AssetHandle handle);
 
             static void SetSource(AssetHandle handle, std::filesystem::path src);
+            static std::filesystem::path GetSource(AssetHandle handle);
+            
             static void SetPath(AssetHandle handle, std::filesystem::path path);
+            static std::filesystem::path GetPath(AssetHandle handle);
+            
             static void SetType(AssetHandle handle, ContentType type);
+            static ContentType GetType(AssetHandle handle);
+
             static bool SetName(AssetHandle handle, std::string& name);
+            static std::string GetName(AssetHandle handle);
 
             //Project directory queries and functions
             static std::filesystem::path GetRootDirectory() { return s_RootAssetPath; }
@@ -237,5 +248,10 @@ namespace oil{
             static Assimp::Importer s_Importer;
             
     };
+
+    template <typename T>
+    inline void EditorAssetManager::ReimportAsset(AssetHandle handle)
+    {
+    }
 
 }

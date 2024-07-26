@@ -89,13 +89,13 @@ namespace oil{
                 for(const auto it : std::filesystem::directory_iterator(internalSrc/"Shaders")){
                     //Import any new shaders
                     if(s_AssetNameRegistry.find(it.path().stem().string()) == s_AssetNameRegistry.end())
-                        CreateAsset<Shader>(it.path().stem().string(), Shader::Create(it.path().string()), s_InternalAssetPath/"Shaders");
+                        CreateAsset<Shader>(it.path().stem().string(), Shader::Create(it.path().string()), s_InternalAssetPath/"Shaders", it.path());
 
                 }
                 for(const auto it : std::filesystem::directory_iterator(internalSrc/"Textures")){
                     //Import any new Textures
                     if(s_AssetNameRegistry.find(it.path().stem().string()) == s_AssetNameRegistry.end())
-                        CreateAsset<Texture2D>(it.path().stem().string(), Texture2D::Create(it.path().string()), s_InternalAssetPath/"Textures");
+                        CreateAsset<Texture2D>(it.path().stem().string(), Texture2D::Create(it.path().string()), s_InternalAssetPath/"Textures", it.path());
 
                 }
                 for(const auto it : std::filesystem::directory_iterator(s_InternalAssetPath/"Scenes")){
@@ -115,12 +115,46 @@ namespace oil{
 
     #endif
 
-    
+    template <>
+    inline void EditorAssetManager::ReimportAsset<Shader>(AssetHandle handle)
+    {
+        OIL_CORE_ASSERT(s_AssetRegistry.contains(handle), "Trying to reimport asset that does not exist!");
+        Ref<Shader> reference = Shader::Create(GetSource(handle).string());
+        if (s_AssetLookup<Shader>.contains(handle)){
+            s_AssetLookup<Shader>[handle].reset(&reference);
+        }else{
+            s_AssetLookup<Shader>[handle] = CreateRef<Ref<Shader>>(reference);
+        }
+}
+
+    std::filesystem::path EditorAssetManager::CreateSource(std::filesystem::path dest, std::filesystem::path src)
+    {   
+        OIL_CORE_ASSERT(!dest.empty(), "No destination passed to create source file.");
+        if (std::filesystem::exists(dest)){
+            //generate new filename if it already exists
+            std::filesystem::path parent = dest.parent_path();
+            std::string filename = dest.stem().string(), extension = dest.extension().string();
+            for(int i = 0; i < 1000; ++i){
+                std::string temp = filename + std::to_string(i);
+                if (!std::filesystem::exists(parent / (temp + extension))){
+                    dest = parent / (temp + extension);
+                    break;
+                }
+            }
+        }
+        if(src.empty()){
+            std::ofstream {dest};
+            return dest;
+        }
+        OIL_CORE_ASSERT(dest.extension() == src.extension(), "Source extension mismatch!");
+        std::filesystem::copy(src, dest);
+        return dest;
+    }
 
     bool EditorAssetManager::IsValid(AssetHandle handle)
     {
 
-        if(s_AssetRegistry.find(handle) != s_AssetRegistry.end())
+        if (s_AssetRegistry.find(handle) != s_AssetRegistry.end())
             return true;
         OIL_CORE_WARN("AssetHandle {0} Is not valid", handle);
         return false;
@@ -188,6 +222,12 @@ namespace oil{
         OIL_CORE_ERROR("Asset with Handle: {0} does not exist.", handle);
     }
 
+    std::filesystem::path EditorAssetManager::GetPath(AssetHandle handle)
+    {
+        OIL_CORE_ASSERT(IsValid(handle), "Tried to get path of an asset that does not exist yet!");
+        return s_AssetRegistry[handle].AssetPath;
+    }
+
     void EditorAssetManager::SetType(AssetHandle handle, ContentType type)
     {
         OIL_CORE_ASSERT(IsValid(handle), "Tried to set a type for an asset that does not exist yet!");
@@ -195,11 +235,23 @@ namespace oil{
         
     }
 
+    ContentType EditorAssetManager::GetType(AssetHandle handle)
+    {
+        OIL_CORE_ASSERT(IsValid(handle), "Tried to get type of an asset that does not exist yet!");
+        return s_AssetRegistry[handle].Type;
+    }
+
     void EditorAssetManager::SetSource(AssetHandle handle, std::filesystem::path src)
     {
         OIL_CORE_ASSERT(IsValid(handle), "Tried to set a source for an asset that does not exist yet!");
         s_AssetRegistry[handle].SrcPath = src;
         
+    }
+
+    std::filesystem::path EditorAssetManager::GetSource(AssetHandle handle)
+    {
+        OIL_CORE_ASSERT(IsValid(handle), "Tried to get source of an asset that does not exist yet!");
+        return s_AssetRegistry[handle].SrcPath;
     }
 
     bool EditorAssetManager::SetName(AssetHandle handle, std::string& name)
@@ -236,6 +288,12 @@ namespace oil{
 
         return true;
         
+    }
+
+    std::string EditorAssetManager::GetName(AssetHandle handle)
+    {
+        OIL_CORE_ASSERT(IsValid(handle), "Tried to get name of an asset that does not exist yet!");
+        return s_AssetRegistry[handle].AssetPath.stem().string();
     }
 
     bool EditorAssetManager::StepIntoDirectory(std::filesystem::path path)

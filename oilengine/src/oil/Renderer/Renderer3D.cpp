@@ -137,6 +137,9 @@ namespace oil{
         //Scene info
         glm::vec3 CamPosition;
 
+        //Global uniforms
+        glm::mat4 u_VPmat;
+
         //Statistics
         Renderer3D::Stats stats;
     };
@@ -225,8 +228,7 @@ namespace oil{
     }
 
     void Renderer3D::BeginScene(const OrthographicCamera& camera){
-        s_3DRenderData.ActiveShader->Bind();
-        s_3DRenderData.ActiveShader->SetMat4("u_VPMat", camera.GetVPMatrix());
+        s_3DRenderData.u_VPmat = camera.GetVPMatrix();
 
         ClearBuffers();
 
@@ -234,14 +236,10 @@ namespace oil{
     }
     void Renderer3D::BeginScene(const EditorCamera &camera)
     {
-        glm::mat4 VPmat = camera.GetVPMatrix();
+        //set up global uniforms
+        s_3DRenderData.u_VPmat = camera.GetVPMatrix();
+        //legacy
         s_3DRenderData.CamPosition = camera.GetPosition();
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass");
-
-
-        s_3DRenderData.ActiveShader->Bind();
-        s_3DRenderData.ActiveShader->SetMat4("u_VPMat", VPmat);
-
         
         ClearBuffers();
 
@@ -251,12 +249,8 @@ namespace oil{
     }
     void Renderer3D::BeginScene(const Camera &camera, const glm::mat4 &transform)
     {
-        glm::mat4 VPmat = camera.GetProjection() * glm::inverse(transform);
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass");
-
-        s_3DRenderData.ActiveShader->Bind();
-        s_3DRenderData.ActiveShader->SetMat4("u_VPMat", VPmat);
-
+        //set up global uniforms
+        s_3DRenderData.u_VPmat = camera.GetProjection() * glm::inverse(transform);
         
         ClearBuffers();
 
@@ -367,14 +361,13 @@ namespace oil{
 
         //Bind render buffer and shader
         RBuffers.GBuffer->Bind();
-        /* s_3DRenderData.ActiveShader = material->GetShader();
-        s_3DRenderData.ActiveShader->Bind(); */
-
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass"); 
+        s_3DRenderData.ActiveShader = material->GetShader();
         s_3DRenderData.ActiveShader->Bind();
 
+        s_3DRenderData.ActiveShader->SetMat4("u_VPMat", s_3DRenderData.u_VPmat);
+
         //Send uniforms to shader
-        //material->UploadUniforms();
+        material->UploadUniforms();
 
         //Command draw
         RenderCommand::DrawIndexed(s_3DRenderData.MeshVertexArray, batch->IndexCount);

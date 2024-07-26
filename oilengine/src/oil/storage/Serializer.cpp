@@ -218,10 +218,10 @@ namespace oil{
     //Serializer functions
 
     template<>
-    void Serializer::SerializeAsset<Scene>(const Ref<Scene> scene, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Scene>(const Ref<Scene> scene, AssetMetadata metadata, UUID id)
     {
         YAML::Emitter out;
-        std::ofstream fout(path);
+        std::ofstream fout(metadata.AssetPath);
 
          out << YAML::BeginMap;
         //Header
@@ -352,10 +352,10 @@ namespace oil{
     }
 
     template<>
-    void Serializer::SerializeAsset<Model>(const Ref<Model> model, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Model>(const Ref<Model> model, AssetMetadata metadata, UUID id)
     {
 
-        std::ofstream fout(path);
+        std::ofstream fout(metadata.AssetPath);
         //Header
         utils::AssetHeader header(id, ContentType::Model, 0, OILENGINE_VERSION_MAJOR, OILENGINE_VERSION_MINOR);
 
@@ -555,9 +555,9 @@ namespace oil{
     }
 
     template<>
-    void Serializer::SerializeAsset<Texture2D>(const Ref<Texture2D> texture, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Texture2D>(const Ref<Texture2D> texture, AssetMetadata metadata, UUID id)
     {
-        std::ofstream fout(path);
+        std::ofstream fout(metadata.AssetPath);
         
         YAML::Emitter out;
         out << YAML::BeginMap;
@@ -635,9 +635,9 @@ namespace oil{
     }
 
  template<>
-    void Serializer::SerializeAsset<Shader>(const Ref<Shader> shader, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Shader>(const Ref<Shader> shader, AssetMetadata metadata, UUID id)
     {
-        std::ofstream fout(path);
+        std::ofstream fout(metadata.AssetPath);
         
         YAML::Emitter out;
         out << YAML::BeginMap;
@@ -648,7 +648,7 @@ namespace oil{
         chunk["ShaderType"] = 1;
         chunk["ShaderLang"] = "OGL";
         chunk["Compiled"] = false;
-        chunk["SRCPath"] = shader->GetPath();
+        chunk["SRCPath"] = metadata.SrcPath;
        
 
         //Chunk 1
@@ -678,9 +678,9 @@ namespace oil{
     }
 
  template<>
-    void Serializer::SerializeAsset<Material>(const Ref<Material> material, std::filesystem::path path, UUID id)
+    void Serializer::SerializeAsset<Material>(const Ref<Material> material, AssetMetadata metadata, UUID id)
     {
-        std::ofstream fout(path);
+        std::ofstream fout(metadata.AssetPath);
         
         YAML::Emitter out;
         out << YAML::BeginMap;

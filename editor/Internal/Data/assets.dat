@@ -1,44 +1,48 @@
-8756562761391966562:
+8664726635734440003:
+  - 1397245010
+  - Internal\Assets/Shaders\DefaultSurfaceShader.oil
+  - Internal\Assets/src\Shaders\DefaultSurfaceShader.glsl
+3570226639708039829:
+  - 1413830706
+  - Internal\Assets/Textures\Checkerboard.oil
+  - Internal\Assets/src\Textures\Checkerboard.png
+6762098500268395147:
+  - 1413830706
+  - Internal\Assets/Textures\DirectoryIcon.oil
+  - Internal\Assets/src\Textures\DirectoryIcon.png
+6014992387509125073:
+  - 1413830706
+  - Internal\Assets/Textures\SimulateButton.oil
+  - Internal\Assets/src\Textures\SimulateButton.png
+17311520877676789082:
+  - 1413830706
+  - Internal\Assets/Textures\FileIcon.oil
+  - Internal\Assets/src\Textures\FileIcon.png
+17850041304124276049:
+  - 1413830706
+  - Internal\Assets/Textures\PauseButton.oil
+  - Internal\Assets/src\Textures\PauseButton.png
+17787947900419123578:
+  - 1413830706
+  - Internal\Assets/Textures\PlayButton.oil
+  - Internal\Assets/src\Textures\PlayButton.png
+9324495369708253647:
+  - 1413830706
+  - Internal\Assets/Textures\StepButton.oil
+  - Internal\Assets/src\Textures\StepButton.png
+9642603777008268526:
+  - 1413830706
+  - Internal\Assets/Textures\StopButton.oil
+  - Internal\Assets/src\Textures\StopButton.png
+11692393473627067245:
   - 1396919877
   - Internal\Assets/Scenes\DefaultScene.oil
   - ""
-18065459156709810849:
-  - 1413830706
-  - Internal\Assets/Textures\Checkerboard.oil
+0:
+  - 0
   - ""
-13743077277120138795:
-  - 1413830706
-  - Internal\Assets/Textures\DirectoryIcon.oil
   - ""
-6572552848711807968:
-  - 1413830706
-  - Internal\Assets/Textures\FileIcon.oil
-  - ""
-9328692729219950873:
-  - 1413830706
-  - Internal\Assets/Textures\PauseButton.oil
-  - ""
-7497590478242344530:
-  - 1413830706
-  - Internal\Assets/Textures\PlayButton.oil
-  - ""
-4933915358411872327:
-  - 1413830706
-  - Internal\Assets/Textures\SimulateButton.oil
-  - ""
-2924998728601503402:
-  - 1413830706
-  - Internal\Assets/Textures\StepButton.oil
-  - ""
-7263457472118785594:
-  - 1413830706
-  - Internal\Assets/Textures\StopButton.oil
-  - ""
-14498119468769177041:
+12035689507315115775:
   - 1297040460
   - Assets\Models\monkey.oil
-  - ""
-7746059459864942095:
-  - 1397245010
-  - Internal\Assets/Shaders\DefaultSurfaceShader.oil
   - ""
