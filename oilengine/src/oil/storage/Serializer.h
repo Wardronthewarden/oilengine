@@ -39,6 +39,7 @@ namespace oil{
                     std::ofstream ostream(path);
                     OIL_CORE_WARN("Asset held a different handle from the library. Overwriting file header from registry with handle [{0}]", assetHandle);
                     header.ID = assetHandle;
+                    ostream << stream.rdbuf();
                     utils::WriteAssetHeader(ostream, header);
                 }
 

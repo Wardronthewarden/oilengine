@@ -61,6 +61,17 @@ void OpenGLShader::Unbind() const
     glUseProgram(0);
 }
 
+void OpenGLShader::Recompile(std::string srcPath)
+{
+	m_Path = srcPath;
+	if(!m_Path.empty()){
+		std::string src = ReadFile(m_Path);
+		auto shaderSources = PreProcess(src);
+
+		Compile(shaderSources);
+	}
+}
+
 void OpenGLShader::SetInt(const std::string& name, const int& value){
 	UploadUniformInt(name, value);
 }
@@ -116,37 +127,47 @@ float OpenGLShader::GetFloat(const std::string &name)
     return ret;
 }
 
-glm::vec2 &OpenGLShader::GetFloat2(const std::string &name)
+glm::vec2 OpenGLShader::GetFloat2(const std::string &name)
 {
-    glm::vec2 ret = glm::vec2();
+    glm::vec2 ret;
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glGetUniformfv(m_RendererID, location, glm::value_ptr(ret));
 	return ret;
 }
 
-glm::vec3 &OpenGLShader::GetFloat3(const std::string &name)
+glm::vec3 OpenGLShader::GetFloat3(const std::string &name)
 {
-    glm::vec3 ret = glm::vec3();
+    glm::vec3 ret;
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glGetUniformfv(m_RendererID, location, glm::value_ptr(ret));
 	return ret;
 }
 
-glm::vec4 &OpenGLShader::GetFloat4(const std::string &name)
+glm::vec4 OpenGLShader::GetFloat4(const std::string &name)
 {
-    glm::vec4 ret = glm::vec4();
+    glm::vec4 ret;
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glGetUniformfv(m_RendererID, location, glm::value_ptr(ret));
 	return ret;
 }
 
-glm::mat3 &OpenGLShader::GetMat3(const std::string &name)
+glm::mat3 OpenGLShader::GetMat3(const std::string &name)
 {
-    glm::mat3 ret = glm::mat3();
+    glm::mat3 ret;
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glGetUniformfv(m_RendererID, location, glm::value_ptr(ret));
 	return ret;
 }
 
-glm::mat4 &OpenGLShader::GetMat4(const std::string &name)
+glm::mat4 OpenGLShader::GetMat4(const std::string &name)
 {
-    glm::mat4 ret = glm::mat4();
+    glm::mat4 ret;
+	GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+	glGetUniformfv(m_RendererID, location, glm::value_ptr(ret));
 	return ret;
 }
 
-std::vector<ShaderUniform> OpenGLShader::GetUniformNames()
+std::vector<ShaderUniform> OpenGLShader::GetUniformNames() const
 {
 	std::vector<ShaderUniform> ret;
 	GLint count, size;
@@ -164,7 +185,7 @@ std::vector<ShaderUniform> OpenGLShader::GetUniformNames()
     return ret;
 }
 
-UniformType OpenGLShader::GlTypeToUniformType(GLenum type)
+UniformType OpenGLShader::GlTypeToUniformType(GLenum type) const
 {
 	switch (type){
 		case GL_FLOAT: 			return UniformType::Float;
@@ -172,8 +193,8 @@ UniformType OpenGLShader::GlTypeToUniformType(GLenum type)
 		case GL_FLOAT_VEC3: 	return UniformType::Float3;
 		case GL_FLOAT_VEC4: 	return UniformType::Float4;
 		
-		case GL_FLOAT_MAT3: 	return UniformType::Float4;
-		case GL_FLOAT_MAT4: 	return UniformType::Float4;
+		case GL_FLOAT_MAT3: 	return UniformType::Mat3x3;
+		case GL_FLOAT_MAT4: 	return UniformType::Mat4x4;
 
 		case GL_INT: 			return UniformType::Int;
 
@@ -322,7 +343,13 @@ void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSource
 std::unordered_map<GLenum, std::string> OpenGLShader::PreProcess(const std::string &source)
 {
     std::unordered_map<GLenum, std::string> shaderSources;
+	//get shader domain
+	const char* domainToken = "#domain";
+	
+	//get shading model
+	const char* shModelToken = "#model";
 
+	//process shader source for each type
 	const char* typeToken = "#type";
 	size_t typeTokenLength = strlen(typeToken);
 	size_t pos = source.find(typeToken, 0);

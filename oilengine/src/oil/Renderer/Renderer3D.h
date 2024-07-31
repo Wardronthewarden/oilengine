@@ -30,7 +30,7 @@ namespace oil{
             static void DrawSprite();
 
             //Meshes
-            static void SubmitMesh(const glm::mat4& transform, Ref<Mesh> mesh, Ref<Material> material, int entityID);
+            static void SubmitMesh(const glm::mat4& transform, Ref<Mesh> mesh, AssetHandle material, int entityID);
 
             static void DrawMesh(const glm::mat4& transform, Ref<Mesh> mesh, int entityID);
             static void DrawMesh(const glm::mat4& transform, MeshComponent& meshComp, int entityID);

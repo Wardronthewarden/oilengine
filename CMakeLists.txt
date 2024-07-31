@@ -38,6 +38,7 @@ include_directories(${ENGINE_DIR}/include
 
 add_executable(Editor   editor/src/EditorApp.cpp
                         editor/src/EditorLayer.cpp
+                        editor/src/utils/UIlib.cpp
                         editor/src/Panels/SceneHierarchyPanel.cpp
                         editor/src/Panels/ContentBrowserPanel.cpp
                         editor/src/Panels/MaterialEditorPanel.cpp

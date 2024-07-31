@@ -6,6 +6,8 @@
 
 namespace oil{
 
+    static bool IsHidden(const std::filesystem::path path);
+
     struct FolderContentInfo{
         UUID ID;
         ContentType type;
@@ -52,7 +54,7 @@ namespace oil{
 
         //inputs
         bool m_NameEditMode = false;
-        char m_NameInputBuffer[32] = "";
+        std::string m_NameInputBuffer = "";
 
         Ref<MaterialEditorPanel> m_MaterialEditorPanel;
     };

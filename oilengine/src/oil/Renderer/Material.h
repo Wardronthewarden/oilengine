@@ -19,9 +19,8 @@ namespace oil{
         template<typename T>
         const T GetUniform(std::string name){
                 std::unordered_map<std::string, T>& mapRef = GetUniformsOfType<T>(); 
-                T val = mapRef.find(name);
-                if (val != mapRef.end())
-                    return val;
+                if (mapRef.contains(name))
+                    return mapRef[name];
                 OIL_WARN("Uniform {0} does not exist on material.", name);
                 return T();
     
@@ -36,7 +35,7 @@ namespace oil{
                 mapRef[name] = value;
     
         }
-
+        
         template<typename T>
         void RenameUniform(std::string target, std::string newName){
             std::unordered_map<std::string, T>& mapRef = GetUniformsOfType<T>();
@@ -44,8 +43,14 @@ namespace oil{
             mapRef.erase(target);
         }
 
-        void RemoveUniform(std::string name);
+        template<typename T>
+        void RemoveUniform(std::string name){
+            std::unordered_map<std::string, T>& mapRef = GetUniformsOfType<T>(); 
+            if (mapRef.contains(name))
+                mapRef.erase(name);
+        }
 
+        template<typename T>
         void ResetUniform(std::string name);
 
         void UpdateUniforms();
@@ -68,8 +73,6 @@ namespace oil{
         std::unordered_map<std::string, glm::vec2> m_UniformFloat2s;
         std::unordered_map<std::string, glm::vec3> m_UniformFloat3s;
         std::unordered_map<std::string, glm::vec4> m_UniformFloat4s;
-        std::unordered_map<std::string, glm::mat3> m_UniformMat3s;
-        std::unordered_map<std::string, glm::mat4> m_UniformMat4s;
 
     };
 

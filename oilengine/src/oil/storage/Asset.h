@@ -73,6 +73,10 @@ namespace oil{
             return m_Handle;
         };
 
+        operator bool() const{
+            return bool(m_Handle);
+        }
+
 
         //Defined for each Type of content that extends asset
         inline static ContentType GetType();

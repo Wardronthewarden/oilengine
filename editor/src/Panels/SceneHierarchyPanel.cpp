@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <glm/gtc/type_ptr.hpp>
+#include "utils/UIlib.h"
 
 namespace oil{
 
@@ -73,12 +74,6 @@ namespace oil{
                         if (ImGui::MenuItem("Camera")){
                             m_SelectionContext.AddComponent<CameraComponent>();
                         }
-                        if (ImGui::MenuItem("Sprite Renderer")){
-                            m_SelectionContext.AddComponent<SpriteRendererComponent>();
-                        }
-                        if (ImGui::MenuItem("Mesh")){
-                            m_SelectionContext.AddComponent<MeshComponent>();
-                        }
                         if (ImGui::MenuItem("Model")){
                             m_SelectionContext.AddComponent<ModelComponent>();
                         }
@@ -102,72 +97,6 @@ namespace oil{
                     m_SelectionContext = {};
             }
 
-    }
-
-    static void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f){
-
-        ImGuiIO& io = ImGui::GetIO();
-        auto boldFont = io.Fonts->Fonts[0];
-
-        ImGui::PushID(label.c_str());
-        
-        ImGui::Columns(2);
-
-        ImGui::SetColumnWidth(0, columnWidth);
-        ImGui::Text(label.c_str());
-        ImGui::NextColumn();
-
-        ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
-
-        float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-        ImVec2 buttonSize = {lineHeight + 3.0f, lineHeight };
-        
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.8f, 0.1f, 0.15f, 1.0f});
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.9f, 0.2f, 0.25f, 1.0f});
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.7f, 0.05f, 0.075f, 1.0f});
-        ImGui::PushFont(boldFont);
-        if(ImGui::Button("X", buttonSize))
-            values.x = resetValue;
-        ImGui::PopStyleColor(3);
-        ImGui::PopFont();
-        
-        ImGui::SameLine();
-        ImGui::DragFloat("##X", &values.x, 0.1f);
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-        
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.2f, 0.7f, 0.2f, 1.0f});
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.3f, 0.8f, 0.3f, 1.0f});
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.1f, 0.6f, 0.1f, 1.0f});
-        ImGui::PushFont(boldFont);
-        if(ImGui::Button("Y", buttonSize))
-            values.y = resetValue;
-        ImGui::PopStyleColor(3);
-        ImGui::PopFont();
-
-        ImGui::SameLine();
-        ImGui::DragFloat("##Y", &values.y, 0.1f);
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-        
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.1f, 0.25f, 0.8f, 1.0f});
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.2f, 0.35f, 0.9f, 1.0f});
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.05f, 0.15f, 0.7f, 1.0f});
-        ImGui::PushFont(boldFont);
-        if(ImGui::Button("Z", buttonSize))
-            values.z = resetValue;
-        ImGui::PopStyleColor(3);
-        ImGui::PopFont();
-
-        ImGui::SameLine();
-        ImGui::DragFloat("##Z", &values.z, 0.1f);
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-
-        ImGui::PopStyleVar();
-        ImGui::Columns(1);
-        ImGui::PopID();
     }
 
     template<typename T, typename UIFunction>
@@ -234,14 +163,6 @@ namespace oil{
                 m_SelectionContext.AddComponent<CameraComponent>();
                 ImGui::CloseCurrentPopup();
             }
-           if (ImGui::MenuItem("Sprite Renderer")){
-                m_SelectionContext.AddComponent<SpriteRendererComponent>();
-                ImGui::CloseCurrentPopup();
-            }
-           if (ImGui::MenuItem("Mesh")){
-                m_SelectionContext.AddComponent<MeshComponent>();
-                ImGui::CloseCurrentPopup();
-            }
            if (ImGui::MenuItem("Model")){
                 m_SelectionContext.AddComponent<ModelComponent>();
                 ImGui::CloseCurrentPopup();
@@ -253,11 +174,11 @@ namespace oil{
         ImGui::PopItemWidth();
 
         DrawComponent<TransformComponent>("Transform", entity, [](auto& component){
-            DrawVec3Control("Translation", component.Translation);
-                glm::vec3 rotation = glm::degrees(component.Rotation);
-                DrawVec3Control("Rotation", rotation);
-                component.Rotation = glm::radians(rotation);
-                DrawVec3Control("Scale", component.Scale, 1.0f);
+            UI::DrawVec3Control("Translation", component.Translation);
+            glm::vec3 rotation = glm::degrees(component.Rotation);
+            UI::DrawVec3Control("Rotation", rotation);
+            component.Rotation = glm::radians(rotation);
+            UI::DrawVec3Control("Scale", component.Scale, 1.0f);
         });
 
         DrawComponent<CameraComponent>("Camera", entity, [](auto& component){
@@ -315,27 +236,6 @@ namespace oil{
                 }
         });
 
-        DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [this](auto& component){
-                ImGui::ColorEdit4("Color", glm::value_ptr(component.Color));
-                
-                ImGui::Button("Texture", ImVec2(100.0f, 0.0f));
-                if (ImGui::BeginDragDropTarget()){
-                    if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
-
-                        Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
-                        if (info->contentType == ContentType::Texture2D){
-                            //TODO: move away from this
-                            std::filesystem::path texturePath = std::filesystem::path(g_AssetPath) / info->itemPath;
-                            component.Texture = Texture2D::Create(texturePath.string());
-                        }
-                    }
-
-                    ImGui::EndDragDropTarget();
-                }
-
-                ImGui::DragFloat("Tiling Factor", &component.TilingFactor, 0.1f, 0.0f, 10.0f);
-        });
-
 
         //Mesh component is deprecated
         DrawComponent<MeshComponent>("Mesh", entity, [this](auto& component){
@@ -363,58 +263,41 @@ namespace oil{
         });
 
         DrawComponent<ModelComponent>("Model", entity, [this](auto& component){
-        std::string buttonLabel = "Model";
-        
+        std::string buttonLabel;
+        if(component.model){
+            buttonLabel = AssetManager::GetName(component.model);
+        }else{
+            buttonLabel = "Model";
+        }
 
         if(ImGui::Button("+", ImVec2(50.0f, 50.0f)));
 
-        if (ImGui::BeginDragDropTarget()){
-            if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
-
-                Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
-                if (info->contentType == ContentType::Model){
-                    OIL_ASSERT(AssetManager::IsValid(info->Handle), "Invalid handle dragged!");
-                    if (info->Handle){
-                        component.ID = info->Handle;
-                        component.model = AssetManager::GetAsset<Model>(info->Handle);
-                    }
-                    else
-                        OIL_CORE_ERROR("Failed to load model: {0}", info->itemPath);
-                }
-            }
-
-            ImGui::EndDragDropTarget();
+        //drag drop 
+        UUID draggedID = UI::AcceptAssetDrop(ContentType::Model);
+        if (draggedID){
+            component.SetModel(AssetManager::GetAssetReference<Model>(draggedID));  
         }
+
         ImGui::SameLine();
         ImGui::TextWrapped(buttonLabel.c_str());
-        buttonLabel = "Material slot ";
         if (!component.model)
             return;
         
-        for (uint32_t i = 0; i < component.model->GetMaterialCount(); ++i){
+        //materials
+        for (uint32_t i = 0; i < component.Materials.size(); ++i){
 
 
-                if(ImGui::Button("+" + i, ImVec2(50.0f, 50.0f)));
+                if(ImGui::Button("+", ImVec2(50.0f, 50.0f)));
 
-                if (ImGui::BeginDragDropTarget()){
-                    if (ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){
-
-                        Ref<DragDropInfo> info = AssetManager::GetDragDropInfo();
-                        if (info->contentType == ContentType::Material){
-                            OIL_ASSERT(AssetManager::IsValid(info->Handle), "Invalid handle dragged!");
-                            if (info->Handle){
-                                component.ID = info->Handle;
-                                component.model->SetMaterial(AssetManager::GetAssetReference<Material>(info->Handle), i);
-                            }
-                            else
-                                OIL_CORE_ERROR("Failed to load material: {0}", info->itemPath);
-                        }
-                    }
-
-                    ImGui::EndDragDropTarget();
+                //drag drop 
+                UUID draggedID = UI::AcceptAssetDrop(ContentType::Material);
+                if (draggedID){
+                    component.Materials[i] = draggedID; 
                 }
+
                 ImGui::SameLine();
-                ImGui::TextWrapped((buttonLabel + std::to_string(i)).c_str());
+                buttonLabel = AssetManager::GetName(component.Materials[i]);
+                ImGui::TextWrapped(buttonLabel.c_str());
         }
     
         });

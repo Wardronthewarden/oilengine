@@ -107,11 +107,22 @@ namespace oil{
 
     //Asset components
     struct ModelComponent{
-        UUID ID;
-        Ref<Model> model;
+        AssetRef<Model> model;
+        std::vector<AssetHandle> Materials;
 
         ModelComponent() = default;
         ModelComponent(const ModelComponent&) = default;
+
+        void ResetMaterial(uint32_t index){
+            Materials[index] = model->GetMaterial(index);
+        }
+
+        void SetModel(AssetRef<Model> newModel){
+            model = newModel;
+            Materials.resize(newModel->GetMaterialCount());
+            for (int i = 0; i < Materials.size(); ++i)
+                ResetMaterial(i);
+        }
     };
 
 

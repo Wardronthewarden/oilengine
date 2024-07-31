@@ -12,7 +12,7 @@ namespace oil{
 
         void OnImguiRender();
 
-        void Compile();
+        void Save();
 
         bool IsOpen() { return m_Open; }
 

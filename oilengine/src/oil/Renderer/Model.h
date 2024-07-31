@@ -1,13 +1,10 @@
 #pragma once
-
+#include <oil/core/UUID.h>
 #include "Mesh.h"
-#include "Material.h"
 
 namespace oil{
 
-    //Forward declarations
-    template<typename T>
-    class AssetRef;
+    using AssetHandle = UUID;
 
     class Model{
     public:
@@ -19,11 +16,11 @@ namespace oil{
         void AddMesh(const Ref<Mesh> mesh);
 
         const std::vector<Ref<Mesh>> GetMeshes() { return m_Meshes; };
-        const std::vector<AssetRef<Material>> GetMaterials() { return m_Materials; };
-        AssetRef<Material> GetMaterial(uint32_t index);
-        const uint32_t GetMaterialCount() { return m_Materials.size(); }
+        const std::vector<AssetHandle> GetMaterials() { return m_DefaultMaterials; };
+        AssetHandle GetMaterial(uint32_t index);
+        const uint32_t GetMaterialCount() { return m_DefaultMaterials.size(); }
 
-        void SetMaterial(const AssetRef<Material>& mat, uint32_t index);
+        void SetMaterial(const AssetHandle& mat, uint32_t index);
 
         void SetMaterialsToDefault();
 
@@ -31,11 +28,11 @@ namespace oil{
         friend class AssetImporter;
         friend class Serializer;
         
-        void SetMaterialCount(const uint32_t count) { m_Materials.resize(count); };
+        void SetMaterialCount(const uint32_t count) { m_DefaultMaterials.resize(count); };
 
     private:
         std::vector<Ref<Mesh>> m_Meshes;
-        std::vector<AssetRef<Material>> m_Materials;
+        std::vector<AssetHandle> m_DefaultMaterials;
         uint32_t m_BufferSize = 0;
 
     };

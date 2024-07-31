@@ -2,7 +2,7 @@
 #include "ContentBrowserPanel.h"
 #include "MaterialEditorPanel.h"
 
-#include <imgui.h>
+#include "utils/UIlib.h"
 
 
 namespace oil{
@@ -52,7 +52,7 @@ namespace oil{
                 fi.name = directoryEntry.path().stem().string();
                 //Check if the entry is a directory
                 if(!(directoryEntry.path().filename().extension() == ".oil")){
-                    if(directoryEntry.is_directory()){
+                    if(directoryEntry.is_directory() && !IsHidden(directoryEntry.path())){
                         fi.type = ContentType::Directory;
                         fi.ID = 0;
                         m_CurrentFolderContents.push_back(fi);
@@ -76,7 +76,7 @@ namespace oil{
                 fi.name = directoryEntry.path().stem().string();
                 //Check if the entry is a directory
                 if(!(directoryEntry.path().filename().extension() == ".oil")){
-                    if(directoryEntry.is_directory()){
+                    if(directoryEntry.is_directory() && !IsHidden(directoryEntry.path())){
                         fi.type = ContentType::Directory;
                         fi.ID = 0;
                         contents.push_back(fi);
@@ -101,7 +101,7 @@ namespace oil{
             fi.name = directoryEntry.path().stem().string();
             //Check if the entry is a directory
             if(!(directoryEntry.path().filename().extension() == ".oil")){
-                if(directoryEntry.is_directory()){
+                if(directoryEntry.is_directory() && !IsHidden(directoryEntry.path())){
                     std::vector<FolderContentInfo> subfolder = GetFolderContentsRecursive(fi.path); 
                     contents.insert(contents.end(), subfolder.begin(), subfolder.end());
                 }
@@ -128,6 +128,7 @@ namespace oil{
             if (ImGui::Button("<=")){
                 AssetManager::StepOutOfDirectory();
                 LoadCurrentFolderContents();
+                //TODO: drag asset one folder back
             }
         }
 
@@ -148,8 +149,8 @@ namespace oil{
                     LoadCurrentFolderContents();
                 }
                 if (ImGui::MenuItem("Shader")){
-                    //This does not work yet
-                    //AssetManager::CreateAsset<Shader>("unnamed_scene", Shader::Create(AssetManager::), AssetManager::GetCurrentDirectory());
+                    std::filesystem::path src = AssetManager::CreateSource(AssetManager::GetRootDirectory() / (".shaderSources/unnamed_shader.glsl"),AssetManager::GetSource(AssetManager::GetHandleByName("DefaultSurfaceShader")));
+                    AssetManager::CreateAsset<Shader>("unnamed_shader", Shader::Create(src.string()), AssetManager::GetCurrentDirectory(), src);
                     LoadCurrentFolderContents();
                 }
 
@@ -169,24 +170,73 @@ namespace oil{
 
         uint32_t i = 0;
         for (FolderContentInfo& directoryEntry : m_CurrentFolderContents){
-
-            Ref<Texture2D> icon = RenderDirectoryEntry(directoryEntry);
+            Ref<Texture2D> thumbnail = RenderDirectoryEntry(directoryEntry);
+            bool isEdited = m_NameEditMode && m_SelectedItems.contains(i);
+            
             ImGui::PushID(directoryEntry.name.c_str());
 
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
-            ImGui::ImageButton((ImTextureID)icon->GetRendererID(), {thumbnailSize, thumbnailSize}, {0, 1}, {1, 0});
+            if (UI::DrawAssetItemBrowser(thumbnail, isEdited ? m_NameInputBuffer : directoryEntry.name, isEdited)){
 
+              
+                std::filesystem::path newName;
+                if (directoryEntry.type == ContentType::Directory){
+                    newName = directoryEntry.path.parent_path() / m_NameInputBuffer;
+                    std::filesystem::rename(directoryEntry.path, newName);
+                    //update all asset paths under a folder 
+                    for(auto& content : GetFolderContentsRecursive(newName)){
+                        AssetManager::SetPath(content.ID, content.path);
+                    }
 
-            if (ImGui::BeginDragDropSource()){
+                }else{
+                    newName = (directoryEntry.path.parent_path() / m_NameInputBuffer).replace_extension(".oil");
+                    std::filesystem::rename(directoryEntry.path,  newName);
+                    AssetManager::SetPath(directoryEntry.ID, newName);
+                    if(directoryEntry.type == ContentType::Shader){
+                        std::string n = newName.filename().stem().string();
+                        AssetManager::RenameSource(directoryEntry.ID, n);
+                        AssetManager::SaveAsset<Shader>(directoryEntry.ID);
+                    }
+                }
 
-                Ref<DragDropInfo> idref = AssetManager::OnDragAsset({directoryEntry.type, directoryEntry.path.c_str(), directoryEntry.ID});
-
-                ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &idref, sizeof(UUID), ImGuiCond_Once);
-                ImGui::EndDragDropSource();
+                
+                m_NameEditMode = false;
+                LoadCurrentFolderContents();
             }
 
+            if (directoryEntry.type == ContentType::Directory){
+                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)){
 
-            ImGui::PopStyleColor();
+                    ImGui::SetDragDropPayload("DIR", &directoryEntry.path, sizeof(std::filesystem::path), ImGuiCond_Once);
+                    ImGui::EndDragDropSource();
+                }
+
+                 if (ImGui::BeginDragDropTarget()){
+                    //Accept asset drop
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OIL_ASSET")){
+                        OIL_ASSERT(payload->DataSize == sizeof(UUID), "Payload size mismatch!");
+                        UUID draggedID = *(UUID*)payload->Data;
+                        AssetManager::SetPath(draggedID, directoryEntry.path);
+                    }
+                    //Accept directory drop
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DIR")){
+                        OIL_ASSERT(payload->DataSize == sizeof(std::filesystem::path), "Payload size mismatch!");
+                        std::filesystem::path draggedPath = *(std::filesystem::path*)payload->Data;
+                        //TODO: set new directory path here
+                    }
+
+                    ImGui::EndDragDropTarget();
+                }
+            }else{
+                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)){
+
+                    ImGui::SetDragDropPayload("OIL_ASSET", &directoryEntry.ID, sizeof(UUID), ImGuiCond_Once);
+                    ImGui::EndDragDropSource();
+                }
+            }
+            
+            if (isEdited && (Input::IsMouseButtonPressed(OIL_MOUSE_BUTTON_1) && !ImGui::IsItemHovered())){
+                m_NameEditMode = false;
+            }
 
             //Item opening
             if(ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)){
@@ -195,7 +245,15 @@ namespace oil{
                     LoadCurrentFolderContents();
 
                 switch(directoryEntry.type){
-                    case ContentType::Material: m_MaterialEditorPanel->OpenMaterialToEdit(AssetManager::GetAssetReference<Material>(directoryEntry.ID));
+                    case ContentType::Material:{
+                        m_MaterialEditorPanel->OpenMaterialToEdit(AssetManager::GetAssetReference<Material>(directoryEntry.ID));
+                        break;
+                    } 
+                    case ContentType::Shader:{
+                        std::string command = "code " + AssetManager::GetSource(directoryEntry.ID).string();
+                        std::system(command.c_str());
+                        break;
+                    } 
                 }
             }
 
@@ -212,100 +270,90 @@ namespace oil{
             ImGui::OpenPopupOnItemClick("BrowserItemActions");
                 
 
-                if(ImGui::BeginPopup("BrowserItemActions")){
-                    if(!m_SelectedItems.contains(i)){
-                        m_SelectedItems.clear();
-                        m_SelectedItems.emplace(i);
+            if(ImGui::BeginPopup("BrowserItemActions")){
+                if(!m_SelectedItems.contains(i)){
+                    m_SelectedItems.clear();
+                    m_SelectedItems.emplace(i);
+                }
+
+                if(std::filesystem::is_directory(directoryEntry.path)){
+                    if(ImGui::MenuItem("Remove Directory")){
+                        std::filesystem::remove(directoryEntry.path);
+                        LoadCurrentFolderContents();
+                    }
+                }else{
+                    if(ImGui::MenuItem("Delete Asset")){
+                        switch (directoryEntry.type){
+                            case ContentType::Model:{
+                                AssetManager::DeleteAsset<Model>(directoryEntry.ID);
+                                break;
+                            } 
+                            case ContentType::Shader:{
+                                AssetManager::DeleteAsset<Shader>(directoryEntry.ID);
+                                break;
+                            } 
+                            case ContentType::Material:{
+                                AssetManager::DeleteAsset<Material>(directoryEntry.ID);
+                                break;
+                            } 
+                            case ContentType::Scene:{
+                                AssetManager::DeleteAsset<Scene>(directoryEntry.ID);
+                                break;
+                            } 
+                            case ContentType::Texture2D:{
+                                AssetManager::DeleteAsset<Texture2D>(directoryEntry.ID);
+                                break;
+                            } 
+                            default: OIL_ERROR("ContentType deletion of {0} is not yet implemented!");
+                        }
+                        LoadCurrentFolderContents();
                     }
 
-                    if(std::filesystem::is_directory(directoryEntry.path)){
-                        if(ImGui::MenuItem("Remove Directory")){
-                            std::filesystem::remove(directoryEntry.path);
-                            LoadCurrentFolderContents();
-                        }
-                    }else{
-                        if(ImGui::MenuItem("Delete Asset")){
-                            switch (directoryEntry.type){
-                                case ContentType::Model:{
-                                    AssetManager::DeleteAsset<Model>(directoryEntry.ID);
-                                    break;
-                                } 
-                                case ContentType::Shader:{
-                                    AssetManager::DeleteAsset<Shader>(directoryEntry.ID);
-                                    break;
-                                } 
-                                case ContentType::Material:{
-                                    AssetManager::DeleteAsset<Material>(directoryEntry.ID);
-                                    break;
-                                } 
-                                case ContentType::Scene:{
-                                    AssetManager::DeleteAsset<Scene>(directoryEntry.ID);
-                                    break;
-                                } 
-                                case ContentType::Texture2D:{
-                                    AssetManager::DeleteAsset<Texture2D>(directoryEntry.ID);
-                                    break;
-                                } 
-                                default: OIL_ERROR("ContentType deletion of {0} is not yet implemented!");
+                    switch (directoryEntry.type){
+                        case ContentType::Shader:{
+                            if(ImGui::MenuItem("Create Material")){
+                                AssetManager::CreateAsset<Material>("unnamed_material", CreateRef<Material>(AssetManager::GetAssetReference<Shader>(directoryEntry.ID)), AssetManager::GetCurrentDirectory());
+                                LoadCurrentFolderContents();
+                                break;
                             }
-                            LoadCurrentFolderContents();
-                        }
-                        
-                    }
-
-                    //general actions
-                    if(m_SelectedItems.contains(i) && (m_SelectedItems.size() == 1)){
-                        if(ImGui::MenuItem("Rename")){
-                            m_NameEditMode = true;
-                            memcpy(m_NameInputBuffer, directoryEntry.name.c_str(), directoryEntry.name.size());
+                            if(ImGui::MenuItem("Recompile")){
+                                AssetManager::GetAsset<Shader>(directoryEntry.ID)->Recompile(AssetManager::GetSource(directoryEntry.ID).string());
+                                break;
+                            }
                         }
                     }
-                    ImGui::EndPopup();
-                }
-            
-            //Only allow name edit if a single item is selected
-            if (m_NameEditMode && m_SelectedItems.contains(i)){
-                if(ImGui::InputText("##ContentNameInput", m_NameInputBuffer, 32, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue)){
                     
-                    std::filesystem::path newName;
-                    if (directoryEntry.type == ContentType::Directory){
-                        newName = directoryEntry.path.parent_path() / m_NameInputBuffer;
-                        std::filesystem::rename(directoryEntry.path, newName);
-                        //update all asset paths under a folder 
-                        for(auto& content : GetFolderContentsRecursive(newName)){
-                            AssetManager::SetPath(content.ID, content.path);
-                        }
+                }
 
-                    }else{
-                        newName = (directoryEntry.path.parent_path() / m_NameInputBuffer).replace_extension(".oil");
-                        std::filesystem::rename(directoryEntry.path,  newName);
-                        AssetManager::SetPath(directoryEntry.ID, newName);
+                //general actions
+                if(m_SelectedItems.contains(i) && (m_SelectedItems.size() == 1)){
+                    if(ImGui::MenuItem("Rename")){
+                        m_NameEditMode = true;
+                        m_NameInputBuffer = directoryEntry.name.c_str();
                     }
-
-                    
-                    m_NameEditMode = false;
-                    LoadCurrentFolderContents();
                 }
-                ImGui::SetKeyboardFocusHere(1);
-                if(Input::IsMouseButtonPressed(OIL_MOUSE_BUTTON_1) && !ImGui::IsItemHovered()){
-                    m_NameEditMode = false;
-                }
-            
+                ImGui::EndPopup();
             }
-            else{
-                ImGui::TextWrapped(directoryEntry.name.c_str());
-            }
-
-            ImGui::NextColumn();
-
+                
             ImGui::PopID();
+            
+            ImGui::NextColumn();
             i++;
+        }
+
              
-        } 
+        
         ImGui::Columns(1);
 
         ImGui::End();
 
         m_MaterialEditorPanel->OnImguiRender();
+    }
+    bool IsHidden(const std::filesystem::path path)
+    {
+        std::string name = path.filename().string();
+        if(name [0] == '.')
+            return true;
+        return false;
     }
 }

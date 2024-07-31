@@ -102,10 +102,10 @@ namespace oil{
         Render3DBatch* meshBatch;
 
         //default materials
-        Ref<Material> DefaultMaterial;
+        AssetHandle DefaultMaterial;
         
         //Material batches
-        std::unordered_map<Ref<Material>, Ref<Render3DBatch>> LitMeshes; 
+        std::unordered_map<AssetHandle, Ref<Render3DBatch>> LitMeshes; 
         
 
         //Light Vertex arrays
@@ -198,7 +198,7 @@ namespace oil{
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetIntArray("u_Textures", samplers, s_3DRenderData.MaxTextureSlots);
         //create the default material from the default surface shader asset
-        s_3DRenderData.DefaultMaterial = CreateRef<Material>(AssetManager::GetAssetReference<Shader>(AssetManager::GetHandleByName("DefaultSurfaceShader")));
+        s_3DRenderData.DefaultMaterial = AssetManager::GetHandleByName("DefaultMaterial");
         //s_3DRenderData.DefaultMaterial->SetUniform<int*>("u_Textures", samplers);
 
         
@@ -305,7 +305,7 @@ namespace oil{
         SubmitMesh(transform, meshComp.mesh, s_3DRenderData.DefaultMaterial, entityID);
     }
 
-    void Renderer3D::SubmitMesh(const glm::mat4 &transform, Ref<Mesh> mesh, Ref<Material> material, int entityID)
+    void Renderer3D::SubmitMesh(const glm::mat4 &transform, Ref<Mesh> mesh, AssetHandle material, int entityID)
     {
         if(!material) material = s_3DRenderData.DefaultMaterial;
         
@@ -316,7 +316,7 @@ namespace oil{
         //Indices
         if (s_3DRenderData.LitMeshes[material]->AppendIndices(mesh->GetIndexBuffer()) == -1){
             //Reset if buffer overflows
-            RenderBatch(material, s_3DRenderData.LitMeshes[material]);
+            RenderBatch(AssetManager::GetAsset<Material>(material), s_3DRenderData.LitMeshes[material]);
             s_3DRenderData.LitMeshes[material]->ResetData();
             SubmitMesh(transform, mesh, material, entityID);
         }
@@ -342,7 +342,7 @@ namespace oil{
     void Renderer3D::RenderLitMeshes()
     {
         for(auto& it : s_3DRenderData.LitMeshes){
-            RenderBatch(it.first, it.second);
+            RenderBatch(AssetManager::GetAsset<Material>(it.first), it.second);
             it.second->ResetData();
         }
     }
@@ -370,7 +370,9 @@ namespace oil{
         material->UploadUniforms();
 
         //Command draw
-        RenderCommand::DrawIndexed(s_3DRenderData.MeshVertexArray, batch->IndexCount);
+        if(batch->IndexCount){
+            RenderCommand::DrawIndexed(s_3DRenderData.MeshVertexArray, batch->IndexCount);
+        }
         
         //statistics
         s_3DRenderData.stats.DrawCalls++;

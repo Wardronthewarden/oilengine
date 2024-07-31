@@ -105,6 +105,10 @@ namespace oil{
                     return false;
                 }
 
+                if(IsLoaded<T>(handle)){
+                    return true;
+                }
+
                 Ref<T> reference = Serializer::DeserializeAsset<T>(s_AssetRegistry[handle].AssetPath, handle);
                 if(reference){
                     if (s_AssetLookup<T>.contains(handle)){
@@ -184,6 +188,7 @@ namespace oil{
 
             static void SetSource(AssetHandle handle, std::filesystem::path src);
             static std::filesystem::path GetSource(AssetHandle handle);
+            static void RenameSource(AssetHandle handle, std::string& name);
             
             static void SetPath(AssetHandle handle, std::filesystem::path path);
             static std::filesystem::path GetPath(AssetHandle handle);

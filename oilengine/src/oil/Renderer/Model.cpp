@@ -11,25 +11,25 @@ namespace oil{
         m_Meshes.push_back(mesh);
         m_BufferSize += mesh->GetBufferSize();
     }
-    AssetRef<Material> Model::GetMaterial(uint32_t index)
+    AssetHandle Model::GetMaterial(uint32_t index)
     {
         
-        if (m_Materials.size() < index)
-            return m_Materials[index];
-        return AssetRef<Material>();
+        if (m_DefaultMaterials.size() < index)
+            return m_DefaultMaterials[index];
+        return 0;
         
     }
-    void Model::SetMaterial(const AssetRef<Material> &mat, uint32_t index)
+    void Model::SetMaterial(const AssetHandle &mat, uint32_t index)
     {
     
-        OIL_CORE_ASSERT(index < m_Materials.size(), "Can't set material on Model. Index out of bounds!");
-        m_Materials[index] = mat;
+        OIL_CORE_ASSERT(index < m_DefaultMaterials.size(), "Can't set material on Model. Index out of bounds!");
+        m_DefaultMaterials[index] = mat;
     
     }
     void Model::SetMaterialsToDefault()
     {
          
-        for (auto material : m_Materials) material = AssetRef<Material>();
+        for (auto material : m_DefaultMaterials) material = AssetHandle();
         
     }
     

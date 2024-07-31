@@ -134,7 +134,7 @@
         }
 
         static bool decode(const Node& node, glm::mat4& rhs){
-            if(!node.IsSequence() || node.size() != rhs.length())
+            if(!node.IsSequence() || node.size() != 16)
                 return false;
 
             int k = 0;
@@ -341,8 +341,13 @@ namespace oil{
                 auto modelComponent = entity["ModelComponent"];
                 if(modelComponent){
                     auto& mc = deserializedEntity.AddComponent<ModelComponent>();
-                    mc.ID = entity["ModelComponent"]["ID"].as<UUID>();
-                    mc.model = AssetManager::GetAsset<Model>(mc.ID);
+
+                    mc.SetModel(AssetManager::GetAssetReference<Model>(entity["ModelComponent"]["ID"].as<UUID>()));
+                    
+                    YAML::Node materials = entity["ModelComponent"]["Materials"];
+                    for (int i = 0; i < materials.size(); ++i){
+                        mc.Materials[i] = materials[i].as<UUID>();
+                    }
                 }
             }
         }
@@ -546,7 +551,7 @@ namespace oil{
         model->SetMaterialsToDefault(); //can't load materials just yet
         for (int i = 0; i < materials.size(); ++i){
             if(materials[i])
-                model->SetMaterial(AssetRef<Material>(materials[i].as<UUID>()), i);
+                model->SetMaterial(materials[i].as<UUID>(), i);
         }
 
         delete[bufferSize] buffer;
@@ -674,6 +679,7 @@ namespace oil{
     template<>
     Ref<Shader> Serializer::DeserializeAssetYAML<Shader>(YAML::Node file)
     {
+        //TODO: this needs to change
         return Shader::Create(file["Body"]["SRCPath"].as<std::string>());
     }
 
@@ -701,10 +707,6 @@ namespace oil{
             uniforms["vec3"][uniform.first] = uniform.second;
         for (auto uniform : material->GetUniformsOfType<glm::vec4>())
             uniforms["vec4"][uniform.first] = uniform.second;
-        for (auto uniform : material->GetUniformsOfType<glm::mat3>())
-            uniforms["mat3"][uniform.first] = uniform.second;
-        for (auto uniform : material->GetUniformsOfType<glm::mat4>())
-            uniforms["mat4"][uniform.first] = uniform.second;
 
         chunk["uniforms"] = uniforms;
         chunk["Shader"] = material->GetShader().GetHandle();
@@ -746,12 +748,8 @@ namespace oil{
             material->SetUniform<glm::vec3>(uniform.first.as<std::string>(), uniform.second.as<glm::vec3>());
         for (auto uniform : uniforms["vec4"])
             material->SetUniform<glm::vec4>(uniform.first.as<std::string>(), uniform.second.as<glm::vec4>());
-        for (auto uniform : uniforms["mat3"])
-            material->SetUniform<glm::mat3>(uniform.first.as<std::string>(), uniform.second.as<glm::mat3>());
-        for (auto uniform : uniforms["mat4"])
-            material->SetUniform<glm::mat4>(uniform.first.as<std::string>(), uniform.second.as<glm::mat4>());
 
-        material->SetShader(AssetRef<Shader>(file["Body"]["Shader"].as<UUID>()));
+        material->SetShader(AssetManager::GetAssetReference<Shader>(file["Body"]["Shader"].as<UUID>()));
         return material;
     }
 
@@ -840,7 +838,12 @@ namespace oil{
             out << YAML::BeginMap; // MeshComponent
 
             auto& modelComponent = entity.GetComponent<ModelComponent>();
-            out << YAML::Key << "ID" << YAML::Value << modelComponent.ID;
+            out << YAML::Key << "ID" << YAML::Value << (AssetHandle)modelComponent.model;
+            out << YAML::Key << "Materials";
+            out << YAML::BeginSeq;
+            for (auto material : modelComponent.Materials)
+                out << material;
+            out << YAML::EndSeq;
 
             out << YAML::EndMap;
         }

@@ -65,6 +65,11 @@ void main(){
 #version 440 core
 
 uniform vec4 u_Color = vec4(1.0);
+uniform vec2 u_Test2 = vec2(1.0);
+uniform vec3 u_Test3 = vec3(1.0);
+uniform float u_Test = 1.0;
+uniform float u_Test4 = 1.0;
+uniform vec3 u_OtherTest = vec3(1.0);
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_Position;
@@ -83,7 +88,7 @@ in f_Data{
 
 void main(){
 
-    o_Color = frag.Color * u_Color;
+    o_Color = frag.Color * vec4(u_Test3, u_Test) * u_Test4;
     o_Position = frag.Position;
     o_Normal = frag.Normal;
     o_TexCoord = vec4(frag.TexCoord, 1.0, 1.0);

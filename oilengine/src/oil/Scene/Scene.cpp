@@ -152,7 +152,7 @@ namespace oil{
                         continue;
                     for(auto mesh : model.model->GetMeshes()){
                         //Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
-                        Renderer3D::SubmitMesh(transform.GetTransform(), mesh, model.model->GetMaterial(mesh->GetMaterialIndex()), (uint32_t)entity);
+                        Renderer3D::SubmitMesh(transform.GetTransform(), mesh, model.Materials[mesh->GetMaterialIndex()], (uint32_t)entity);
                     }
                 }
                 

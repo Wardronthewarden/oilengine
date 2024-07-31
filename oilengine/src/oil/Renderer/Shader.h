@@ -6,6 +6,14 @@
 
 namespace oil{
 
+    enum class ShaderDomain{
+        None = 0
+    };
+
+    enum class ShaderModel{
+        None = 0
+    };
+
     enum class UniformType{
         None = 0,
         Float,
@@ -26,6 +34,8 @@ namespace oil{
         virtual void Bind() const = 0;
         virtual void Unbind() const = 0;
 
+        virtual void Recompile(std::string srcPath) = 0;
+
         virtual void SetInt(const std::string& name, const int& value) = 0;
         virtual void SetIntArray(const std::string& name, int* values, uint32_t count) = 0;
         virtual void SetFloat(const std::string& name, const float& value) = 0;
@@ -38,16 +48,18 @@ namespace oil{
         virtual int GetInt(const std::string& name) = 0;
         virtual std::vector<int> GetIntArray(const std::string& name) = 0;
         virtual float GetFloat(const std::string& name) = 0;
-        virtual glm::vec2& GetFloat2(const std::string& name) = 0;
-        virtual glm::vec3& GetFloat3(const std::string& name) = 0;
-        virtual glm::vec4& GetFloat4(const std::string& name) = 0;
-        virtual glm::mat3& GetMat3(const std::string& name) = 0;
-        virtual glm::mat4& GetMat4(const std::string& name) = 0;
+        virtual glm::vec2 GetFloat2(const std::string& name) = 0;
+        virtual glm::vec3 GetFloat3(const std::string& name) = 0;
+        virtual glm::vec4 GetFloat4(const std::string& name) = 0;
+        virtual glm::mat3 GetMat3(const std::string& name) = 0;
+        virtual glm::mat4 GetMat4(const std::string& name) = 0;
         
-        virtual std::vector<ShaderUniform> GetUniformNames() = 0;
+        virtual std::vector<ShaderUniform> GetUniformNames() const = 0;
 
         virtual const std::string& GetName() const = 0;
         virtual const std::string& GetPath() const = 0;
+        virtual const ShaderType GetShaderDomain() const = 0;
+        virtual const ShaderType GetShaderModel() const = 0;
 
         static Ref<Shader> Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
         static Ref<Shader> Create(const std::string& filepath);
