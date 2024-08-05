@@ -48,8 +48,8 @@ namespace oil{
 
     //Texture2D
     OpenGLTexture2D::OpenGLTexture2D(uint32_t width, uint32_t height)
+        : OpenGLTexture2D(width, height, TextureFormat::RGBA8)
     {
-        OpenGLTexture2D(width, height, TextureFormat::RGBA8);
     }
 
     OpenGLTexture2D::OpenGLTexture2D(uint32_t width, uint32_t height, TextureFormat format)
@@ -100,6 +100,11 @@ namespace oil{
 
     void OpenGLTexture2D::SetData(DataBuffer<unsigned char> buffer)
     {
+        uint32_t bpc = GetNoChannels(m_InternalFormat);
+        OIL_CORE_ASSERT(buffer.GetSize() == m_Width * m_Height * bpc, "Data must be entire texture!");
+
+        m_Data.SetData(buffer);
+        glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, m_DataFormat, GetFormatComponentType(m_InternalFormat), m_Data);
     }
 
     void OpenGLTexture2D::SetData(void *data, uint32_t size)

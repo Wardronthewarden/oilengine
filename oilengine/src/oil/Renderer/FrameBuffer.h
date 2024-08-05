@@ -58,6 +58,8 @@ namespace oil{
         virtual void ClearAttachment(uint32_t attachmentIndex, int value) = 0;
         virtual void ClearAttachment(uint32_t attachmentIndex, float value) = 0;
 
+        //bind attachments to  texture slots, incremented from startIndex.
+        //the startIndex returns increased by the number of slots bound as color attachments
         virtual void BindColorAttachments() = 0;
         virtual void UnbindColorAttachments() = 0;
 

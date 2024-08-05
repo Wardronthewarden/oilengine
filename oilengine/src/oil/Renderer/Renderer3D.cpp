@@ -122,7 +122,8 @@ namespace oil{
 
         //Textures
         std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
-        uint32_t TextureSlotIndex = 0;
+        Ref<Texture2D> WhiteTexture;
+        uint32_t TextureSlotsUsed = 0;
 
         //Screen quad
         Ref<VertexArray> QuadVertexArray;
@@ -190,6 +191,10 @@ namespace oil{
         for (uint32_t i = 0; i<s_3DRenderData.MaxTextureSlots; ++i)
             samplers[i] = i;
 
+        s_3DRenderData.WhiteTexture = Texture2D::Create(1,1);
+        uint32_t whiteTextureData = 0xffffffff;
+        s_3DRenderData.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
+
         // Setup base shader
         s_3DRenderData.ShaderLib = CreateRef<ShaderLibrary>();
 
@@ -229,8 +234,11 @@ namespace oil{
 
     void Renderer3D::BeginScene(const OrthographicCamera& camera){
         s_3DRenderData.u_VPmat = camera.GetVPMatrix();
+        s_3DRenderData.CamPosition = camera.GetPosition();
 
         ClearBuffers();
+        s_3DRenderData.TextureSlotsUsed = 0;
+
 
         StartNewBatch();
     }
@@ -238,13 +246,13 @@ namespace oil{
     {
         //set up global uniforms
         s_3DRenderData.u_VPmat = camera.GetVPMatrix();
-        //legacy
         s_3DRenderData.CamPosition = camera.GetPosition();
         
         ClearBuffers();
+        s_3DRenderData.TextureSlotsUsed = 0;
+        s_3DRenderData.WhiteTexture->Bind(s_3DRenderData.TextureSlotsUsed++);            
 
         
-
         StartNewBatch();
     }
     void Renderer3D::BeginScene(const Camera &camera, const glm::mat4 &transform)
@@ -253,6 +261,10 @@ namespace oil{
         s_3DRenderData.u_VPmat = camera.GetProjection() * glm::inverse(transform);
         
         ClearBuffers();
+        s_3DRenderData.TextureSlotsUsed = 0;
+        //Bind all engine textures
+        s_3DRenderData.WhiteTexture->Bind(s_3DRenderData.TextureSlotsUsed++);            
+
 
         StartNewBatch();
     }
@@ -277,7 +289,6 @@ namespace oil{
     void Renderer3D::StartNewBatch()
     {
         //Reset batch information
-        s_3DRenderData.TextureSlotIndex = 0;
         s_3DRenderData.meshBatch->ResetData();
 
         s_3DRenderData.MeshVertexArray->Bind();
@@ -354,11 +365,6 @@ namespace oil{
         s_3DRenderData.MeshIndexBuffer->SetData(*(batch->IBuffer), batch->IndexCount);
 
 
-        //Bind all textures
-        for (uint32_t i = 0; i< s_3DRenderData.TextureSlotIndex; ++i){
-            s_3DRenderData.TextureSlots[i]->Bind(i);            
-        }
-
         //Bind render buffer and shader
         RBuffers.GBuffer->Bind();
         s_3DRenderData.ActiveShader = material->GetShader();
@@ -368,6 +374,7 @@ namespace oil{
 
         //Send uniforms to shader
         material->UploadUniforms();
+        material->UploadTextures(s_3DRenderData.TextureSlotsUsed);
 
         //Command draw
         if(batch->IndexCount){
@@ -401,6 +408,8 @@ namespace oil{
         s_3DRenderData.PointLightBufferPtr = s_3DRenderData.PointLightBufferBase;
 
         s_3DRenderData.PointLightArray->Bind();
+
+        s_3DRenderData.TextureSlotsUsed = 0;
     }
 
     void Renderer3D::RenderLighting()

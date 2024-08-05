@@ -20,6 +20,7 @@ namespace oil{
         AssetRef<Material> m_OpenedMaterial;
 
         bool m_Open;
+        Ref<Texture2D> m_EmptyThumbnail;
 
     };
 

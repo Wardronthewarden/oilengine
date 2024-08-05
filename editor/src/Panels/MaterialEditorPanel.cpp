@@ -5,11 +5,13 @@ namespace oil{
     MaterialEditorPanel::MaterialEditorPanel()
         : m_Open(false)
     {
+        m_EmptyThumbnail = Texture2D::Create("Internal/Assets/src/Textures/FileIcon.png");;
     }
 
     MaterialEditorPanel::MaterialEditorPanel(AssetRef<Material> material)
         : m_Open(true)
     {
+        m_EmptyThumbnail = Texture2D::Create("Internal/Assets/src/Textures/FileIcon.png");;
         OpenMaterialToEdit(material);
     }
 
@@ -32,8 +34,10 @@ namespace oil{
 
             ImGui::SameLine();
 
-            if(ImGui::Button("Recompile"))
-                m_OpenedMaterial->GetShader()->Recompile(AssetManager::GetSource(m_OpenedMaterial).string());
+            if(ImGui::Button("Recompile")){
+                m_OpenedMaterial->GetShader()->Recompile(AssetManager::GetSource(m_OpenedMaterial->GetShader()).string());
+                m_OpenedMaterial->UpdateUniforms();
+            }
 
             ImGui::SameLine();    
             if(ImGui::Button("Save"))
@@ -43,12 +47,6 @@ namespace oil{
             if(ImGui::Button("Close"))
                 m_Open = false;
 
-            if (ImGui::BeginPopupContextWindow()){
-                if(ImGui::MenuItem("New Float")){
-                    m_OpenedMaterial->SetUniform("u_NewFloat", 1.0f);
-                }
-                ImGui::EndPopup();
-            }
 
             for (auto& uniform : m_OpenedMaterial->GetShader()->GetUniformNames()){
                 std::string uniformName = uniform.Name.c_str() + 2; 
@@ -78,6 +76,20 @@ namespace oil{
                         glm::vec4 value = m_OpenedMaterial->GetUniform<glm::vec4>(uniform.Name);
                         if (UI::DrawVec4Control(uniformName, value, 0.0f, 100)){
                             m_OpenedMaterial->SetUniform(uniform.Name, value);
+                        }
+                        break;
+                    }
+                    case UniformType::Texture2D:{
+                        AssetRef<Texture2D> texRef = m_OpenedMaterial->GetTexture<Texture2D>(uniform.Name);
+                        if(texRef){
+                            UI::DrawAssetItemList(texRef, uniformName, 50.0f, 0.0f, 100.0f);
+                        }else{
+                            std::string label = "empty texture";
+                            UI::DrawAssetItemList(m_EmptyThumbnail, label, 50.0f, 0.0f, 100.0f);
+                        }
+                        UUID id = UI::AcceptAssetDrop(ContentType::Texture2D);
+                        if (id){
+                            m_OpenedMaterial->SetTexture<Texture2D>(uniform.Name, AssetManager::GetAssetReference<Texture2D>(id));
                         }
                         break;
                     }

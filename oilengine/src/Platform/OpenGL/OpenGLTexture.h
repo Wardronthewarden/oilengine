@@ -32,10 +32,10 @@ namespace oil{
         void SetupTexture();
 
     private:
-        std::string m_Path;
         uint32_t m_Width, m_Height;
-        uint32_t m_RendererID;
         TextureFormat m_InternalFormat;
+        uint32_t m_RendererID;
+        std::string m_Path;
         GLenum m_DataFormat, m_FormatComponentType;
         DataBuffer<unsigned char> m_Data;
     };

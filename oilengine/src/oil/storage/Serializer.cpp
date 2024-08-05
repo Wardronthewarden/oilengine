@@ -162,6 +162,33 @@
     };
 
     template<>
+    struct convert<oil::ShaderDomain>{
+        static Node encode(const oil::ShaderDomain& rhs){
+            Node node;
+            node = (uint32_t)rhs;
+            return node;
+        }
+
+        static bool decode(const Node& node, oil::ShaderDomain& rhs){
+            rhs = (oil::ShaderDomain)node.as<uint32_t>();
+            return true;
+        }
+    };
+    template<>
+    struct convert<oil::ShaderModel>{
+        static Node encode(const oil::ShaderModel& rhs){
+            Node node;
+            node = (uint32_t)rhs;
+            return node;
+        }
+
+        static bool decode(const Node& node, oil::ShaderModel& rhs){
+            rhs = (oil::ShaderModel)node.as<uint32_t>();
+            return true;
+        }
+    };
+
+    template<>
     struct convert<oil::ContentType>{
         static Node encode(const oil::ContentType& rhs){
             Node node;
@@ -650,7 +677,8 @@ namespace oil{
         utils::AssetHeader header(id, ContentType::Shader, 0, OILENGINE_VERSION_MAJOR, OILENGINE_VERSION_MINOR);
 
         YAML::Node chunk;
-        chunk["ShaderType"] = 1;
+        chunk["ShaderDomain"] = shader->GetShaderDomain();
+        chunk["ShaderModel"] = shader->GetShaderModel();
         chunk["ShaderLang"] = "OGL";
         chunk["Compiled"] = false;
         chunk["SRCPath"] = metadata.SrcPath;
@@ -707,8 +735,15 @@ namespace oil{
             uniforms["vec3"][uniform.first] = uniform.second;
         for (auto uniform : material->GetUniformsOfType<glm::vec4>())
             uniforms["vec4"][uniform.first] = uniform.second;
-
+        
         chunk["uniforms"] = uniforms;
+
+        YAML::Node textures;
+        for (auto texture : material->GetTexturesOfType<Texture2D>())
+            textures["tex2D"][texture.first] = UUID(texture.second);
+
+        chunk["textures"] = textures;
+
         chunk["Shader"] = material->GetShader().GetHandle();
 
         //Chunk 1
@@ -748,6 +783,13 @@ namespace oil{
             material->SetUniform<glm::vec3>(uniform.first.as<std::string>(), uniform.second.as<glm::vec3>());
         for (auto uniform : uniforms["vec4"])
             material->SetUniform<glm::vec4>(uniform.first.as<std::string>(), uniform.second.as<glm::vec4>());
+        
+        YAML::Node textures = file["Body"]["textures"];
+        
+        for (auto texture : textures["tex2D"]){
+            AssetRef<Texture2D> texRef = AssetManager::GetAssetReference<Texture2D>(texture.second.as<UUID>());
+            material->SetTexture<Texture2D>(texture.first.as<std::string>(), texRef);
+        }
 
         material->SetShader(AssetManager::GetAssetReference<Shader>(file["Body"]["Shader"].as<UUID>()));
         return material;

@@ -6,22 +6,14 @@
   - 1413830706
   - Internal\Assets/Textures\Checkerboard.oil
   - Internal\Assets/src\Textures\Checkerboard.png
-6762098500268395147:
-  - 1413830706
-  - Internal\Assets/Textures\DirectoryIcon.oil
-  - Internal\Assets/src\Textures\DirectoryIcon.png
 6014992387509125073:
   - 1413830706
   - Internal\Assets/Textures\SimulateButton.oil
   - Internal\Assets/src\Textures\SimulateButton.png
-17787947900419123578:
+6762098500268395147:
   - 1413830706
-  - Internal\Assets/Textures\PlayButton.oil
-  - Internal\Assets/src\Textures\PlayButton.png
-9216179194776731503:
-  - 5062996
-  - Assets\Shaders\materials\unnamed_material1.oil
-  - ""
+  - Internal\Assets/Textures\DirectoryIcon.oil
+  - Internal\Assets/src\Textures\DirectoryIcon.png
 16996166409656902962:
   - 5062996
   - Assets\Shaders\materials\test.oil
@@ -34,6 +26,18 @@
   - 1413830706
   - Internal\Assets/Textures\StepButton.oil
   - Internal\Assets/src\Textures\StepButton.png
+17787947900419123578:
+  - 1413830706
+  - Internal\Assets/Textures\PlayButton.oil
+  - Internal\Assets/src\Textures\PlayButton.png
+9216179194776731503:
+  - 5062996
+  - Assets\Shaders\materials\unnamed_material1.oil
+  - ""
+4789201687886590943:
+  - 1413830706
+  - Assets\Textures\PauseButton1.oil
+  - C:\dev\c++\oilengine\editor\Internal\Assets\src\Textures\PauseButton.png
 17850041304124276049:
   - 1413830706
   - Internal\Assets/Textures\PauseButton.oil
@@ -50,14 +54,14 @@
   - 1396919877
   - Internal\Assets/Scenes\DefaultScene.oil
   - ""
-14587630775644326890:
-  - 1397245010
-  - Assets\Shaders\TestShader.oil
-  - Assets\.shaderSources\TestShader.glsl
 0:
   - 0
   - ""
   - ""
+14587630775644326890:
+  - 1397245010
+  - Assets\Shaders\TestShader.oil
+  - Assets\.shaderSources\TestShader.glsl
 7566013175594810801:
   - 1297040460
   - Assets\Models\monkey.oil
@@ -70,3 +74,7 @@
   - 5062996
   - Assets\Shaders\materials\unnamed_material.oil
   - ""
+5005726521902621544:
+  - 1413830706
+  - Assets\Textures\Check.oil
+  - C:\dev\c++\oilengine\editor\Internal\Assets\src\Textures\Checkerboard.png

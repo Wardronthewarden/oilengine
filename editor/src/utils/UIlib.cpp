@@ -307,6 +307,16 @@ bool UI::DrawAssetItemBrowser(Ref<Texture2D> thumbnail, std::string& name, bool 
     return changed;
 }
 
+void UI::DrawAssetItemList(Ref<Texture2D> thumbnail, std::string& name,  float thumbnailSize, float padding, float widthLimit)
+{
+    ImGui::BeginGroup();
+    ImGui::ImageButton((ImTextureID)thumbnail->GetRendererID(), {thumbnailSize, thumbnailSize}, {0, 1}, {1, 0});
+
+    ImGui::SameLine();
+    ImGui::TextWrapped(name.c_str());
+    ImGui::EndGroup();
+}
+
 UUID UI::AcceptAssetDrop(ContentType type)
 {
     if (ImGui::BeginDragDropTarget()){

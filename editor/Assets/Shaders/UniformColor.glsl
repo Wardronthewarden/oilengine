@@ -1,3 +1,6 @@
+#domain surface
+#model lit
+
 #type vertex
 #version 330 core
 

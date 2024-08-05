@@ -7,11 +7,16 @@
 namespace oil{
 
     enum class ShaderDomain{
-        None = 0
+        None = 0,
+        Surface,
+        PostProcess,
+        Engine
     };
 
     enum class ShaderModel{
-        None = 0
+        None = 0,
+        Lit,
+        Unlit
     };
 
     enum class UniformType{
@@ -19,7 +24,9 @@ namespace oil{
         Float,
         Float2, Float3, Float4,
         Int,
-        Mat3x3, Mat4x4
+        Mat3x3, Mat4x4,
+
+        Texture2D
     };
 
     struct ShaderUniform{
@@ -58,8 +65,8 @@ namespace oil{
 
         virtual const std::string& GetName() const = 0;
         virtual const std::string& GetPath() const = 0;
-        virtual const ShaderType GetShaderDomain() const = 0;
-        virtual const ShaderType GetShaderModel() const = 0;
+        virtual const ShaderDomain GetShaderDomain() const = 0;
+        virtual const ShaderModel GetShaderModel() const = 0;
 
         static Ref<Shader> Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
         static Ref<Shader> Create(const std::string& filepath);

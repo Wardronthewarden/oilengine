@@ -1,3 +1,6 @@
+#domain surface
+#model lit
+
 #type vertex
 #version 440 core
 
@@ -65,6 +68,7 @@ void main(){
 #version 440 core
 
 uniform vec4 u_Color = vec4(1.0);
+uniform sampler2D u_TexTest;
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_Position;
@@ -83,7 +87,7 @@ in f_Data{
 
 void main(){
 
-    o_Color = frag.Color * u_Color;
+    o_Color = frag.Color * u_Color * texture(u_TexTest, frag.TexCoord);
     o_Position = frag.Position;
     o_Normal = frag.Normal;
     o_TexCoord = vec4(frag.TexCoord, 1.0, 1.0);

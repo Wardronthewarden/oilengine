@@ -20,7 +20,7 @@ namespace oil{
         bool DrawAssetItemBrowser(Ref<Texture2D> thumbnail, std::string& name, bool nameEditMode, float thumbnailSize = 90.0f, float padding = 10.0f);
 
         //Asset display for list items
-        void DrawAssetItemList();
+        void DrawAssetItemList(Ref<Texture2D> thumbnail, std::string& name,  float thumbnailSize, float padding, float widthLimit);
 
         //drag drop utils
         UUID AcceptAssetDrop(ContentType type);

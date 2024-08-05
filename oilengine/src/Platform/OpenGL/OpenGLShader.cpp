@@ -21,6 +21,32 @@ static GLenum ShaderTypeFromString(const std::string& type){
 	return 0;
 }
 
+static ShaderDomain ShaderDomainFromString(const std::string& domain){
+	if (domain == "surface")
+		return ShaderDomain::Surface;
+	if (domain == "post_process")
+		return ShaderDomain::PostProcess;
+	if (domain == "engine")
+		return ShaderDomain::Engine;
+	if (domain == "none")
+		return ShaderDomain::None;
+
+	OIL_CORE_ASSERT(false, "Unknown shader domain!")
+	return ShaderDomain::None;
+}
+
+static ShaderModel ShaderModelFromString(const std::string& model){
+	if (model == "lit")
+		return ShaderModel::Lit;
+	if (model == "unlit")
+		return ShaderModel::Unlit;
+	if (model == "none")
+		return ShaderModel::None;
+
+	OIL_CORE_ASSERT(false, "Unknown shader model!")
+	return ShaderModel::None;
+}
+
 OpenGLShader::OpenGLShader(const std::string &filepath)
 	: m_Path(filepath)
 {
@@ -196,6 +222,8 @@ UniformType OpenGLShader::GlTypeToUniformType(GLenum type) const
 		case GL_FLOAT_MAT3: 	return UniformType::Mat3x3;
 		case GL_FLOAT_MAT4: 	return UniformType::Mat4x4;
 
+		case GL_SAMPLER_2D: 	return UniformType::Texture2D;
+
 		case GL_INT: 			return UniformType::Int;
 
 		default: return UniformType::None;	
@@ -343,16 +371,40 @@ void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSource
 std::unordered_map<GLenum, std::string> OpenGLShader::PreProcess(const std::string &source)
 {
     std::unordered_map<GLenum, std::string> shaderSources;
+	size_t pos = 0;
+
 	//get shader domain
 	const char* domainToken = "#domain";
-	
+	size_t domainTokenLength = strlen(domainToken);
+	pos = source.find(domainToken, 0);
+	if(pos != std::string::npos){
+		size_t eol = source.find_first_of("\r\n", pos);
+		OIL_CORE_ASSERT(eol != std::string::npos, "Syntax error");
+		size_t begin = pos + domainTokenLength + 1;
+		std::string domain = source.substr(begin, eol - begin);
+		m_ShaderDomain = ShaderDomainFromString(domain); 
+		if(!(uint32_t)m_ShaderDomain)
+			OIL_CORE_WARN("Invalid shader domain specified!");
+	}
+
 	//get shading model
 	const char* shModelToken = "#model";
+	size_t shModelTokenLength = strlen(shModelToken);
+	pos = source.find(shModelToken, 0);
+	if(pos != std::string::npos){
+		size_t eol = source.find_first_of("\r\n", pos);
+		OIL_CORE_ASSERT(eol != std::string::npos, "Syntax error");
+		size_t begin = pos + shModelTokenLength + 1;
+		std::string model = source.substr(begin, eol - begin);
+		m_ShaderModel = ShaderModelFromString(model); 
+		if(!(uint32_t)m_ShaderModel)
+			OIL_CORE_WARN("Invalid shader model specified!");
+	}
 
 	//process shader source for each type
 	const char* typeToken = "#type";
 	size_t typeTokenLength = strlen(typeToken);
-	size_t pos = source.find(typeToken, 0);
+	pos = source.find(typeToken, 0);
 	while (pos != std::string::npos){
 		size_t eol = source.find_first_of("\r\n", pos);
 		OIL_CORE_ASSERT(eol != std::string::npos, "Syntax error");

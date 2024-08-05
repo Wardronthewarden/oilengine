@@ -18,6 +18,7 @@ namespace oil{
         m_UniformFloat2s = other.m_UniformFloat2s;
         m_UniformFloat3s = other.m_UniformFloat3s;
         m_UniformFloat4s = other.m_UniformFloat4s;
+        m_UniformTextures = other.m_UniformTextures;
     }
 
     Material::~Material(){}
@@ -52,11 +53,13 @@ namespace oil{
     {
         return m_UniformFloat4s;
     }
-    template <typename T>
-    std::unordered_map<std::string, T> &Material::GetUniformsOfType()
+
+    template <>
+    std::unordered_map<std::string, AssetRef<Texture2D>> &Material::GetTexturesOfType<Texture2D>()
     {
-        return nullptr;
+        return m_UniformTextures;
     }
+ 
 
     template <>
     void Material::ResetUniform<float>(std::string name)
@@ -98,8 +101,17 @@ namespace oil{
             mapRef[name] = m_Shader->GetInt(name);
     }
 
+    template <>
+    void Material::ResetUniform<Texture2D>(std::string name)
+    {
+        std::unordered_map<std::string, AssetRef<Texture2D>>& mapRef = GetTexturesOfType<Texture2D>(); 
+        if (mapRef.contains(name))
+            mapRef[name] = AssetRef<Texture2D>();
+    }
+
     void Material::UpdateUniforms()
     {
+        //TODO: ignore engine uniforms
         std::vector<ShaderUniform> uniforms = m_Shader->GetUniformNames();
         for (const auto& uniform : uniforms){
             switch (uniform.Type){
@@ -133,6 +145,12 @@ namespace oil{
                     }
                     break;
                 }
+                case UniformType::Texture2D:{
+                    if(!m_UniformTextures.contains(uniform.Name)){
+                        m_UniformTextures[uniform.Name] = AssetRef<Texture2D>();
+                    }
+                    break;
+                }
                 case UniformType::Mat3x3: break;
                 case UniformType::Mat4x4: break;
                 default:
@@ -162,45 +180,22 @@ namespace oil{
         }
     }
 
+    void Material::UploadTextures(int startIndex)
+    {
+        for (auto &it : m_UniformTextures){
+            if (it.second){
+                it.second.Get()->Bind(startIndex);
+                m_Shader->SetInt(it.first, startIndex++);
+            }else{
+                m_Shader->SetInt(it.first, 0);
+            }
+        }
+    }
+
     void Material::SetShader(const AssetRef<Shader> &shader)
     {
         m_Shader = shader; 
-        std::vector<ShaderUniform> uniforms = m_Shader->GetUniformNames();
-        for (const auto& uniform : uniforms){
-            switch(uniform.Type){
-                case UniformType::Int:{
-                    if(!m_UniformInts.contains(uniform.Name))  
-                        m_UniformInts[uniform.Name] = m_Shader->GetInt(uniform.Name);
-                    break;
-                }
-                case UniformType::Float:{
-                    if(!m_UniformFloats.contains(uniform.Name)) 
-                        m_UniformFloats[uniform.Name] = m_Shader->GetFloat(uniform.Name);
-                    break;
-                }
-                case UniformType::Float2:{
-                    if(!m_UniformFloat2s.contains(uniform.Name)) 
-                        m_UniformFloat2s[uniform.Name] = m_Shader->GetFloat2(uniform.Name);
-                    break;
-                }
-                case UniformType::Float3:{
-                    if(!m_UniformFloat3s.contains(uniform.Name)) 
-                        m_UniformFloat3s[uniform.Name] = m_Shader->GetFloat3(uniform.Name);
-                    break;
-                }
-                case UniformType::Float4:{
-                    if(!m_UniformFloat4s.contains(uniform.Name)) 
-                        m_UniformFloat4s[uniform.Name] = m_Shader->GetFloat4(uniform.Name);
-                    break;
-                }
-                case UniformType::Mat3x3: break;
-                case UniformType::Mat4x4: break;
-                default:{
-                    OIL_CORE_ERROR("Type not implemented on shader uniforms!");
-                    break;
-                }
-            }
-        }
+        UpdateUniforms();
     }
 
     template <>

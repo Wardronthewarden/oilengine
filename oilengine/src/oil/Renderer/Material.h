@@ -3,6 +3,7 @@
 #include <oil/core/core.h>
 #include "oil/storage/Asset.h"
 #include "oil/Renderer/Shader.h"
+#include "oil/Renderer/Texture.h"
 
 
 namespace oil{
@@ -15,6 +16,10 @@ namespace oil{
         ~Material();
 
         AssetRef<Shader> GetShader() const; 
+        
+        //Uniforms
+        template<typename T>
+        std::unordered_map<std::string, T>& GetUniformsOfType();
 
         template<typename T>
         const T GetUniform(std::string name){
@@ -27,12 +32,31 @@ namespace oil{
         }
 
         template<typename T>
-        std::unordered_map<std::string, T>& GetUniformsOfType();
-
-        template<typename T>
         void SetUniform(std::string name, T value){
                 std::unordered_map<std::string, T>& mapRef = GetUniformsOfType<T>(); 
                 mapRef[name] = value;
+    
+        }
+
+
+        //Textures
+        template<typename T>
+        std::unordered_map<std::string, AssetRef<T>>& GetTexturesOfType();
+
+        template<typename T>
+        const AssetRef<T> GetTexture(std::string name){
+                std::unordered_map<std::string, AssetRef<T>>& mapRef = GetTexturesOfType<T>(); 
+                if (mapRef.contains(name))
+                    return mapRef[name];
+                OIL_WARN("Texture {0} does not exist on material.", name);
+                return AssetRef<T>();
+    
+        }
+
+        template<typename T>
+        void SetTexture(std::string name, AssetRef<T> ref){
+                std::unordered_map<std::string, AssetRef<T>>& mapRef = GetTexturesOfType<T>(); 
+                mapRef[name] = ref;
     
         }
         
@@ -53,9 +77,12 @@ namespace oil{
         template<typename T>
         void ResetUniform(std::string name);
 
+
         void UpdateUniforms();
 
+        //Prepare for rendering
         void UploadUniforms();
+        void UploadTextures(int startIndex);
 
     private:
         friend class Serializer;
@@ -73,8 +100,10 @@ namespace oil{
         std::unordered_map<std::string, glm::vec2> m_UniformFloat2s;
         std::unordered_map<std::string, glm::vec3> m_UniformFloat3s;
         std::unordered_map<std::string, glm::vec4> m_UniformFloat4s;
+        
+        //Textures
+        std::unordered_map<std::string, AssetRef<Texture2D>> m_UniformTextures;
 
     };
-
 
 }
