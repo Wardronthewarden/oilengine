@@ -128,7 +128,23 @@ namespace oil{
             if (ImGui::Button("<=")){
                 AssetManager::StepOutOfDirectory();
                 LoadCurrentFolderContents();
-                //TODO: drag asset one folder back
+            }
+            if (ImGui::BeginDragDropTarget()){
+                //Accept asset drop
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OIL_ASSET")){
+                    OIL_ASSERT(payload->DataSize == sizeof(UUID), "Payload size mismatch!");
+                    UUID draggedID = *(UUID*)payload->Data;
+                    AssetManager::SetPath(draggedID, AssetManager::GetPath(draggedID).parent_path().parent_path());
+                    LoadCurrentFolderContents();
+                }
+                //Accept directory drop
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DIR")){
+                    OIL_ASSERT(payload->DataSize == sizeof(std::filesystem::path), "Payload size mismatch!");
+                    std::filesystem::path draggedPath = *(std::filesystem::path*)payload->Data;
+                    //TODO: set new directory path here
+                }
+
+                ImGui::EndDragDropTarget();
             }
         }
 
@@ -216,6 +232,8 @@ namespace oil{
                         OIL_ASSERT(payload->DataSize == sizeof(UUID), "Payload size mismatch!");
                         UUID draggedID = *(UUID*)payload->Data;
                         AssetManager::SetPath(draggedID, directoryEntry.path);
+                        LoadCurrentFolderContents();
+
                     }
                     //Accept directory drop
                     if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DIR")){
