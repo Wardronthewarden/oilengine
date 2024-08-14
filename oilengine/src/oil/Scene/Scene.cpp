@@ -159,10 +159,6 @@ namespace oil{
 
             Renderer3D::EndScene();
 
-            Renderer3D::InitLightingInfo();
-
-            //Submit Lights
-            Renderer3D::RenderLighting();
 
         }
     }

@@ -25,20 +25,30 @@ namespace oil{
         return nullptr;
     }
 
-Ref<Texture2D> Texture2D::Create(const std::string &path)
-{
-    switch (Renderer::GetAPI()){
-            case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RenderAPI::API::None currently not supported!");
-            case RenderAPI::API::OpenGL: return CreateRef<OpenGLTexture2D>(path);
-        }
-        OIL_CORE_ASSERT(false, "Unknown RenderAPI!")
-        return nullptr;
-}
+    Ref<Texture2D> Texture2D::Create(const std::string &path)
+    {
+        switch (Renderer::GetAPI()){
+                case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RenderAPI::API::None currently not supported!");
+                case RenderAPI::API::OpenGL: return CreateRef<OpenGLTexture2D>(path);
+            }
+            OIL_CORE_ASSERT(false, "Unknown RenderAPI!")
+            return nullptr;
+    }
 
     template <>
     ContentType AssetRef<Texture2D>::GetType()
     {
         return ContentType::Texture2D;
+    }
+
+    Ref<TextureCube> TextureCube::Create(std::vector<Ref<Texture2D>> faces)
+    {
+         switch (Renderer::GetAPI()){
+            case RenderAPI::API::None: OIL_CORE_ASSERT(false, "RenderAPI::API::None currently not supported!");
+            case RenderAPI::API::OpenGL: return CreateRef<OpenGLTextureCube>(faces);
+        }
+        OIL_CORE_ASSERT(false, "Unknown RenderAPI!")
+        return nullptr;
     }
 
 }

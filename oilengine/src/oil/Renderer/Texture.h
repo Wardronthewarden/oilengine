@@ -9,6 +9,7 @@ namespace oil {
     enum class TextureFormat{
         //Channels
         None = 0,
+
         RED8        = 0x00010001,
         RG8         = 0x00020001,
         RGB8        = 0x00030001,
@@ -16,7 +17,20 @@ namespace oil {
         RED16       = 0x00010002,
         RG16        = 0x00020002,
         RGB16       = 0x00030002,
-        RGBA16      = 0x00040002
+        RGBA16      = 0x00040002,
+        RED32       = 0x00010003,
+        RG32        = 0x00020003,
+        RGB32       = 0x00030003,
+        RGBA32      = 0x00040003,
+        
+        RED16F      = 0x00010012,
+        RG16F       = 0x00020012,
+        RGB16F      = 0x00030012,
+        RGBA16F     = 0x00040012,
+        RED32F      = 0x00010013,
+        RG32F       = 0x00020013,
+        RGB32F      = 0x00030013,
+        RGBA32F     = 0x00040013
     };
 
     class Texture{
@@ -45,6 +59,11 @@ namespace oil {
         static Ref<Texture2D> Create(const std::string& path);
 
 
+    };
+
+    class TextureCube : public Texture{
+    public:
+        static Ref<TextureCube> Create(std::vector<Ref<Texture2D>> faces);
     };
 
 }

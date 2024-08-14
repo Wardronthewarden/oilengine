@@ -24,6 +24,7 @@ namespace oil{
 
         inline void SetViewportSize(float width, float height) { m_ViewportWidth = width; m_ViewportHeight = height; UpdateProjection(); }
 
+        const glm::mat4& GetProjMatrix() const { return m_Projection; }
         const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
         glm::mat4 GetVPMatrix() const { return m_Projection * m_ViewMatrix; }
 

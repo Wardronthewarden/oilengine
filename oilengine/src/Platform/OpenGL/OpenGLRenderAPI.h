@@ -14,5 +14,11 @@ namespace oil{
 
         virtual void DrawIndexed(const oil::Ref<VertexArray>& vertexArray, uint32_t indexCount) override;
 
+        virtual void SetDepthWriteEnabled(bool enabled) override;
+        virtual void SetDepthTestEnabled(bool enabled) override;
+        virtual void SetFaceCullingEnabled(bool enabled) override;
+        virtual void SetDepthTestOperator(DepthOperator oper) override;
+
+
     };
 }

@@ -215,6 +215,11 @@ namespace oil{
             return false;
         }
 
+        template<typename U>
+        U* As(){
+            return reinterpret_cast<U*>(m_Data);
+        }
+
     private:
         size_t m_Size = 0;
         T* m_Data = nullptr;

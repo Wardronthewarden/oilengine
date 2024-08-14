@@ -439,10 +439,10 @@ void EditorLayer::SaveScene()
 }
 void EditorLayer::Import()
 {
-    std::filesystem::path importSrc = FileDialogs::OpenFile("Import target\0*.png;*.jpg;*.obj;*.gltf;*.fbx\0\0");
+    std::filesystem::path importSrc = FileDialogs::OpenFile("Import target\0*.png;*.jpg;*.hdr;*.obj;*.gltf;*.fbx\0\0");
     if(!importSrc.empty()){
         std::string extension = importSrc.extension().string();
-        if(extension == ".png" || extension == ".jpg")
+        if(extension == ".png" || extension == ".jpg" || extension == ".hdr")
             AssetImporter::ImportImage(importSrc);
         else if(extension == ".obj" || extension == ".gltf" || extension == ".fbx")
             AssetImporter::ImportModel(importSrc);
@@ -514,7 +514,13 @@ void EditorLayer::RenderViewport()
 
 
     // VIEWPORT IMAGE RENDERING -----------------------------
-    uint32_t textureID = m_FrameBuffer->GetColorAttachmentRendererID(0);
+    //get the color attachment for display
+    uint32_t textureID;
+    if(false){
+        textureID = Renderer3D::GetFrameBufferID();
+    }else{
+        textureID = Renderer3D::GetDepthBufferID();
+    }
     ImGui::Image((void*)textureID, ImVec2{m_ViewportSize.x, m_ViewportSize.y}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
     if (ImGui::BeginDragDropTarget()){

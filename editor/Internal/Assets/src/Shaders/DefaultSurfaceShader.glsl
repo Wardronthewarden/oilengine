@@ -68,13 +68,16 @@ void main(){
 #version 440 core
 
 uniform vec4 u_Color = vec4(1.0);
-uniform sampler2D u_TexTest;
+uniform sampler2D u_DiffuseMap;
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_Position;
 layout(location = 2) out vec3 o_Normal;
 layout(location = 3) out vec4 o_TexCoord;
-layout(location = 4) out float o_EntityID;
+layout(location = 4) out float o_Metallic;
+layout(location = 5) out float o_Roughness;
+layout(location = 6) out float o_AO;
+layout(location = 7) out float o_EntityID;
 
 in f_Data{
     vec4 Position;
@@ -87,9 +90,16 @@ in f_Data{
 
 void main(){
 
-    o_Color = frag.Color * u_Color * texture(u_TexTest, frag.TexCoord);
+
+    //default outputs
+
+    o_Color = frag.Color * u_Color * texture(u_DiffuseMap, frag.TexCoord);
     o_Position = frag.Position;
     o_Normal = frag.Normal;
     o_TexCoord = vec4(frag.TexCoord, 1.0, 1.0);
+    o_Metallic = 0.0;
+    o_Roughness = 0.8;
+    o_AO = 1.0;
+    
     o_EntityID = float(frag.EntityID);
 }

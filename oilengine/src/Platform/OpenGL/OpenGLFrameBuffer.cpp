@@ -158,9 +158,14 @@ namespace oil{
         }
 
         if (m_ColorAttachments.size() > 1){
-            OIL_CORE_ASSERT(m_ColorAttachments.size() <= 6, "The maximum color attachments possible are 6");
-            GLenum buffers[6] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5 };
+            OIL_CORE_ASSERT(m_ColorAttachments.size() <= 10, "The maximum color attachments possible are 10");
+            const int size = m_ColorAttachments.size();
+            GLenum* buffers = new GLenum[size];
+            for (int i = 0; i < size; i++)
+                buffers[i] =  GL_COLOR_ATTACHMENT0 + i;
+            
             glDrawBuffers(m_ColorAttachments.size(), buffers);
+            delete buffers;
 
         }else if(m_ColorAttachments.empty()){
             glDrawBuffer(GL_NONE);
@@ -235,5 +240,103 @@ namespace oil{
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
+    }
+    void OpenGLFrameBuffer::BindDepthAttachment()
+    {
+        int num = m_ColorAttachments.size();
+        glBindTextureUnit(num, m_DepthAttachment);
+
+    }
+    void OpenGLFrameBuffer::UnbindDepthAttachment()
+    {
+        int num = m_ColorAttachments.size();
+        glBindTextureUnit(num, 0);
+    }
+    void OpenGLFrameBuffer::CopyDepthAttachment(Ref<FrameBuffer> other)
+    {
+        OpenGLFrameBuffer* ptr = dynamic_cast<OpenGLFrameBuffer*>(other.get());
+        if(ptr){
+            OIL_CORE_ASSERT((ptr->m_Specification.Width == m_Specification.Width)
+             && (ptr->m_Specification.Height == m_Specification.Height),
+             "Depth attachment not identical!");
+
+            if(m_RendererID) glDeleteTextures(1, &m_DepthAttachment);
+
+            bool multisample = m_Specification.Samples > 1;
+
+            m_DepthAttachment = ptr->m_DepthAttachment;
+
+            glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+            utils::BindTexture(multisample, m_DepthAttachment);
+
+            //This might cause issues
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, utils::TextureTarget(multisample), m_DepthAttachment, 0);
+
+        }
+    }
+
+    //Frame buffer target
+    OpenGLFrameBufferTarget::OpenGLFrameBufferTarget(FrameBufferTextureFormat format, uint32_t width, uint32_t height)
+    {
+        m_TextureFormat = format;
+        Resize(width, height);
+    }
+    void OpenGLFrameBufferTarget::Resize(uint32_t width, uint32_t height)
+    {
+        if( width == 0 || height == 0 || width > s_MaxFrameBufferSize || height > s_MaxFrameBufferSize){
+            OIL_CORE_WARN("Attempted to resize frame buffer to ({0}, {1})", width, height);
+            return;
+        }
+
+        if(m_Width == width || m_Height == height){
+            OIL_CORE_WARN("Attempted to resize frame buffer to the same dimensions!)");
+            return;
+        }
+
+        m_Width = width;
+        m_Height = height;
+
+        if(m_RendererID){
+            glDeleteTextures(1, &m_RendererID);
+            m_RendererID = 0;
+        }
+
+        bool multisample = false; //TODO: implement multisampling support
+        utils::CreateTextures(multisample, &m_RendererID, 1);
+        utils::BindTexture(multisample, m_RendererID);
+
+        switch(m_TextureFormat){
+            case FrameBufferTextureFormat::RGB8:
+                glTexImage2D(GL_TEXTURE_2D, 1, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+                break;
+            case FrameBufferTextureFormat::RGBA8:
+                glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+                break;
+            case FrameBufferTextureFormat::RGB16F:
+                glTexImage2D(GL_TEXTURE_2D, 1, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+                break;
+            case FrameBufferTextureFormat::RGBA16F:
+                glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+                break;
+            case FrameBufferTextureFormat::R_INT:
+                glTexImage2D(GL_TEXTURE_2D, 1, GL_R32I, width, height, 0, GL_RED_INTEGER, GL_INT, nullptr);
+                break;
+            case FrameBufferTextureFormat::R_FLOAT:
+                glTexImage2D(GL_TEXTURE_2D, 1, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, nullptr);
+                break;
+            
+            //Depth attachments
+            case FrameBufferTextureFormat::DEPTH24STENCIL8:
+                glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, width, height);
+                break;
+        }
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
     }
 }

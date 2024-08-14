@@ -69,6 +69,8 @@ void main(){
 #version 440 core
 
 uniform vec4 u_Color = vec4(1.0);
+uniform float u_Metallic = 0.0;
+uniform float u_Roughness = 0.8;
 
 uniform float u_Strength = 1;
 
@@ -78,7 +80,10 @@ layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_Position;
 layout(location = 2) out vec3 o_Normal;
 layout(location = 3) out vec4 o_TexCoord;
-layout(location = 4) out float o_EntityID;
+layout(location = 4) out float o_Metallic;
+layout(location = 5) out float o_Roughness;
+layout(location = 6) out float o_AO;
+layout(location = 7) out float o_EntityID;
 
 in f_Data{
     vec4 Position;
@@ -91,9 +96,13 @@ in f_Data{
 
 void main(){
 
-    o_Color = vec4(floor(vec3(u_Strength) * texture(u_TexTest, frag.TexCoord).rgb), 1.0);
+    o_Color = frag.Color * u_Color;
     o_Position = frag.Position;
     o_Normal = frag.Normal;
     o_TexCoord = vec4(frag.TexCoord, 1.0, 1.0);
+    o_Metallic = u_Metallic;
+    o_Roughness = u_Roughness;
+    o_AO = 1.0;
+    
     o_EntityID = float(frag.EntityID);
 }

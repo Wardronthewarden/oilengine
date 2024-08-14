@@ -98,6 +98,10 @@ namespace oil{
         Ref<VertexBuffer> MeshVertexBuffer;
         Ref<IndexBuffer> MeshIndexBuffer;
 
+        //Primitives
+        Ref<Mesh> Cube;
+        Ref<Mesh> Plane;
+
         //temp mesh batch
         Render3DBatch* meshBatch;
 
@@ -125,6 +129,14 @@ namespace oil{
         Ref<Texture2D> WhiteTexture;
         uint32_t TextureSlotsUsed = 0;
 
+        //Environment map
+        Ref<TextureCube> SkyBoxTexture;
+
+        //Unit cube
+        Ref<VertexArray> CubeVertexArray;
+        Ref<VertexBuffer> CubeVertexBuffer;
+        Ref<IndexBuffer> CubeIndexBuffer;
+        
         //Screen quad
         Ref<VertexArray> QuadVertexArray;
         Ref<VertexBuffer> QuadVertexBuffer;
@@ -140,6 +152,8 @@ namespace oil{
 
         //Global uniforms
         glm::mat4 u_VPmat;
+        glm::mat4 u_ViewMatrix;
+        glm::mat4 u_ProjMatrix;
 
         //Statistics
         Renderer3D::Stats stats;
@@ -159,6 +173,55 @@ namespace oil{
 
     static uint32_t quadIndices[] = {
         0, 1, 2, 0, 2, 3
+    };
+
+    static float skyboxVertices[] = {
+        // positions          
+        -1.0f,  1.0f, -1.0f,    //0
+        -1.0f, -1.0f, -1.0f,    //1
+        1.0f, -1.0f, -1.0f,     //2
+        1.0f, -1.0f, -1.0f,     //2
+        1.0f,  1.0f, -1.0f,     //3
+        -1.0f,  1.0f, -1.0f,    //0
+
+        -1.0f, -1.0f,  1.0f,    //4
+        -1.0f, -1.0f, -1.0f,    //1
+        -1.0f,  1.0f, -1.0f,    //0
+        -1.0f,  1.0f, -1.0f,    //0
+        -1.0f,  1.0f,  1.0f,    //5
+        -1.0f, -1.0f,  1.0f,    //4
+
+        1.0f, -1.0f, -1.0f,     //2
+        1.0f, -1.0f,  1.0f,     //6
+        1.0f,  1.0f,  1.0f,     //7
+        1.0f,  1.0f,  1.0f,     //7
+        1.0f,  1.0f, -1.0f,     //3
+        1.0f, -1.0f, -1.0f,     //2
+
+        -1.0f, -1.0f,  1.0f,    //4
+        -1.0f,  1.0f,  1.0f,    //5
+        1.0f,  1.0f,  1.0f,     //7
+        1.0f,  1.0f,  1.0f,     //7
+        1.0f, -1.0f,  1.0f,     //6
+        -1.0f, -1.0f,  1.0f,    //4
+
+        -1.0f,  1.0f, -1.0f,    //0
+        1.0f,  1.0f, -1.0f,     //3
+        1.0f,  1.0f,  1.0f,     //7
+        1.0f,  1.0f,  1.0f,     //7
+        -1.0f,  1.0f,  1.0f,    //5
+        -1.0f,  1.0f, -1.0f,    //0
+
+        -1.0f, -1.0f, -1.0f,    //1
+        -1.0f, -1.0f,  1.0f,    //4
+        1.0f, -1.0f, -1.0f,     //2
+        1.0f, -1.0f, -1.0f,     //2
+        -1.0f, -1.0f,  1.0f,    //4
+        1.0f, -1.0f,  1.0f      //6
+    };
+
+    static float skyboxIndices[] = {
+        0
     };
 
     void Renderer3D::Init(){
@@ -213,7 +276,11 @@ namespace oil{
         //Find a better way
         s_3DRenderData.ActiveShader->SetIntArray("u_Textures", samplers, s_3DRenderData.MaxTextureSlots);
 
+        s_3DRenderData.ShaderLib->Load("PBR","Internal/Assets/src/Shaders/PBR.glsl");
         
+        
+        s_3DRenderData.ShaderLib->Add("SkyBox", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("SkyBoxShader")));
+
 
         //Setup screen quad
         s_3DRenderData.QuadVertexArray = VertexArray::Create();
@@ -224,6 +291,27 @@ namespace oil{
         s_3DRenderData.QuadVertexArray->AddVertexBuffer(s_3DRenderData.QuadVertexBuffer);
         s_3DRenderData.QuadIndexBuffer = IndexBuffer::Create(quadIndices, sizeof(quadIndices));
         s_3DRenderData.QuadVertexArray->SetIndexBuffer(s_3DRenderData.QuadIndexBuffer);
+
+        //Setup primitives
+        s_3DRenderData.Cube = Mesh::CreateCube();
+        s_3DRenderData.Plane = Mesh::CreatePlane();
+
+        //Setup unit cube
+        s_3DRenderData.CubeVertexArray = VertexArray::Create();
+        s_3DRenderData.CubeVertexBuffer = VertexBuffer::Create(s_3DRenderData.Cube->GetVertexBuffer()->As<float>(), s_3DRenderData.Cube->GetVertexBuffer()->GetSize());
+        s_3DRenderData.CubeVertexBuffer->SetLayout(baseLayout);
+        s_3DRenderData.CubeVertexArray->AddVertexBuffer(s_3DRenderData.CubeVertexBuffer);
+        s_3DRenderData.CubeIndexBuffer = IndexBuffer::Create(s_3DRenderData.Cube->GetIndexBuffer()->As<uint32_t>(),  s_3DRenderData.Cube->GetIndexBuffer()->GetSize());
+        s_3DRenderData.CubeVertexArray->SetIndexBuffer(s_3DRenderData.CubeIndexBuffer);
+
+        //cubemap test
+        std::vector<Ref<Texture2D>> faces;
+        for (int i = 0; i < 6; i++){
+            faces.push_back(Texture2D::Create("Internal/Assets/src/Textures/Checkerboard.png"));
+        }
+
+        s_3DRenderData.SkyBoxTexture = TextureCube::Create(faces);
+
 
         RBuffers.Init();
     }
@@ -246,6 +334,8 @@ namespace oil{
     {
         //set up global uniforms
         s_3DRenderData.u_VPmat = camera.GetVPMatrix();
+        s_3DRenderData.u_ProjMatrix = camera.GetProjMatrix();
+        s_3DRenderData.u_ViewMatrix = camera.GetViewMatrix();
         s_3DRenderData.CamPosition = camera.GetPosition();
         
         ClearBuffers();
@@ -277,7 +367,7 @@ namespace oil{
         RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
-        RBuffers.GBuffer->ClearAttachment(4, -1.0f);
+        RBuffers.GBuffer->ClearAttachment(7, -1.0f);
         RBuffers.FBuffer->ClearAttachment(1, -1);
     }
 
@@ -298,9 +388,23 @@ namespace oil{
 
     void Renderer3D::EndScene()
     {
-       //Render flow
+        //Render flow
         RenderLitMeshes(); 
 
+        InitLightingInfo();
+        RenderLighting();
+
+        RenderEnvironment();
+    }
+
+    uint32_t Renderer3D::GetDepthBufferID()
+    {
+        return RBuffers.GBuffer->GetDepthAttachmentRendererID();
+    }
+
+    uint32_t Renderer3D::GetFrameBufferID()
+    {
+        return RBuffers.FBuffer->GetColorAttachmentRendererID(0);
     }
 
     // Mesh drawing
@@ -352,6 +456,8 @@ namespace oil{
 
     void Renderer3D::RenderLitMeshes()
     {
+        RenderCommand::EnableFaceCulling();
+        RenderCommand::SetDepthTestOperator(DepthOperator::Less);
         for(auto& it : s_3DRenderData.LitMeshes){
             RenderBatch(AssetManager::GetAsset<Material>(it.first), it.second);
             it.second->ResetData();
@@ -402,6 +508,30 @@ namespace oil{
         
     }
 
+    void Renderer3D::RenderEnvironment()
+    {
+        s_3DRenderData.CubeVertexArray->Bind();
+        RenderCommand::DisableFaceCulling();
+        RenderCommand::DisableDepthWriting();
+        RenderCommand::SetDepthTestOperator(DepthOperator::Equal);
+        RBuffers.FBuffer->Bind();
+
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("SkyBox");
+        s_3DRenderData.ActiveShader->Bind();
+        glm::mat4 vpmat = s_3DRenderData.u_ProjMatrix * glm::mat4(glm::mat3(s_3DRenderData.u_ViewMatrix));
+        s_3DRenderData.ActiveShader->SetMat4("u_VPMat", vpmat);
+        s_3DRenderData.ActiveShader->SetInt("u_SkyBoxTexture", s_3DRenderData.SkyBoxTexture->GetRendererID());
+        RBuffers.GBuffer->BindDepthAttachment();
+        s_3DRenderData.ActiveShader->SetInt("u_SceneDepth", RBuffers.GBuffer->GetDepthAttachmentRendererID());
+        
+
+        RenderCommand::DrawIndexed(s_3DRenderData.CubeVertexArray, 36);
+
+        //Cleanup
+        RenderCommand::EnableDepthWriting();
+        RenderCommand::EnableFaceCulling();
+    }
+
     void Renderer3D::InitLightingInfo()
     {
         s_3DRenderData.PointLightCount = 0;
@@ -414,6 +544,7 @@ namespace oil{
 
     void Renderer3D::RenderLighting()
     {
+        RenderCommand::DisableDepthWriting();
         uint32_t dataSize = (uint8_t *)s_3DRenderData.PointLightBufferPtr - (uint8_t *)s_3DRenderData.PointLightBufferBase;
         s_3DRenderData.PointLightArray->SetData(s_3DRenderData.PointLightBufferBase, dataSize);
 
@@ -421,14 +552,32 @@ namespace oil{
 
 
         RBuffers.FBuffer->Bind();
-        RenderCommand::Clear();
         RBuffers.GBuffer->BindColorAttachments();
+        RBuffers.GBuffer->BindDepthAttachment();
 
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("Light pass");
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("PBR");
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetFloat3("u_CamPos", s_3DRenderData.CamPosition);
+
+        int i = 0;
+        s_3DRenderData.ActiveShader->SetInt("u_Albedo", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Position", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Normal", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Texcoord", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Metallic", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Roughness", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_AO", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_ID", i++);
+        
+        s_3DRenderData.ActiveShader->SetInt("u_SceneDepth", i++);
+
+
+
         RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
 
         RBuffers.GBuffer->UnbindColorAttachments();
+        RBuffers.GBuffer->UnbindDepthAttachment();
+
+        RenderCommand::EnableDepthWriting();
     }
 }

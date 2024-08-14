@@ -25,6 +25,11 @@ namespace oil{
             static void BeginScene(const Camera& camera, const glm::mat4& transform);
             static void EndScene();
 
+            //Queries
+            static uint32_t GetDepthBufferID();
+            static uint32_t GetFrameBufferID();
+            static uint32_t GetSceneNormalBufferID();
+
             //Sprites
 
             static void DrawSprite();
@@ -46,6 +51,9 @@ namespace oil{
             static void InitLightingInfo();
             static void RenderLighting();
             static void StartLightingPass();
+
+            //Environment
+            static void RenderEnvironment();
 
             //Control steps
             static void ClearBuffers();
@@ -83,7 +91,16 @@ namespace oil{
         void Init(){
             //Initialize GBuffer
             FrameBufferSpecification fbSpec;
-            fbSpec.Attachments = { FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::RGB16F, FrameBufferTextureFormat::RGBA16F, FrameBufferTextureFormat::R_FLOAT, FrameBufferTextureFormat::Depth  };
+            fbSpec.Attachments = {  FrameBufferTextureFormat::RGBA16F,      //albedo
+                                    FrameBufferTextureFormat::RGBA16F,      //position
+                                    FrameBufferTextureFormat::RGB16F,       //normal
+                                    FrameBufferTextureFormat::RGBA16F,      //texcoord
+                                    FrameBufferTextureFormat::R_FLOAT,      //metallic
+                                    FrameBufferTextureFormat::R_FLOAT,      //roughness
+                                    FrameBufferTextureFormat::R_FLOAT,      //AO
+                                    FrameBufferTextureFormat::R_FLOAT,      //entity ID
+                                    FrameBufferTextureFormat::Depth  
+                                };
             fbSpec.Width = 1280;
             fbSpec.Height = 720;
             GBuffer = FrameBuffer::Create(fbSpec);
