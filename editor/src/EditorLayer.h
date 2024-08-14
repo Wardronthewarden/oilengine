@@ -46,6 +46,7 @@ namespace oil{
         OrthographicCameraController m_CameraController;
 
         Ref<FrameBuffer> m_FrameBuffer;
+        Ref<FrameBuffer> m_GBuffer;
 
         AssetRef<Scene> m_ActiveScene;
 

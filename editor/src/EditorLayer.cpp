@@ -37,6 +37,7 @@ void EditorLayer::OnAttach()
 
     //Framebuffer
     m_FrameBuffer = Renderer3D::GetFrameBuffer();
+    m_GBuffer = Renderer3D::GetGBuffer();
 
 
     //Textures
@@ -116,6 +117,7 @@ void EditorLayer::OnUpdate(Timestep dt)
         m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f &&
         (spec.Width != m_ViewportSize.x || spec.Height != m_ViewportSize.y)){
             m_FrameBuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+            m_GBuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
             m_CameraController.OnResize(m_ViewportSize.x, m_ViewportSize.y);
             m_EditorCamera.SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
 
@@ -516,7 +518,7 @@ void EditorLayer::RenderViewport()
     // VIEWPORT IMAGE RENDERING -----------------------------
     //get the color attachment for display
     uint32_t textureID;
-    if(false){
+    if(true){
         textureID = Renderer3D::GetFrameBufferID();
     }else{
         textureID = Renderer3D::GetDepthBufferID();

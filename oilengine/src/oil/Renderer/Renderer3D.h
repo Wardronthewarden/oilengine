@@ -13,6 +13,7 @@
 namespace oil{
 
     struct Render3DBatch;
+    struct RenderBuffers;
     class Material;
 
     class Renderer3D{
@@ -78,6 +79,7 @@ namespace oil{
             static Stats GetStats();
 
             static Ref<FrameBuffer> GetFrameBuffer();
+            static Ref<FrameBuffer> GetGBuffer();
 
         private:
             static void StartNewBatch();
@@ -110,6 +112,11 @@ namespace oil{
             fbSpec.Width = 1280;
             fbSpec.Height = 720;
             FBuffer = FrameBuffer::Create(fbSpec);
+        }
+
+        void Resize(uint32_t width, uint32_t height){
+            FBuffer->Resize(width, height);
+            GBuffer->Resize(width, height);
         }
     };
 }

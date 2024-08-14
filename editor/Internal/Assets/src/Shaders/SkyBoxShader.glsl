@@ -38,7 +38,7 @@ uniform sampler2D u_SceneDepth;
 //main function
 void main(){
 
-    gl_FragDepth = texture(u_SceneDepth, s_TexCoords);
+    gl_FragDepth = 1.0;
     o_Color = texture(u_SkyBoxTexture, v_TexCoords);
     o_EntityID = -1;
 

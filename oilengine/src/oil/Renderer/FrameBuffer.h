@@ -51,10 +51,9 @@ namespace oil{
     public:
 
         virtual void Resize(uint32_t width, uint32_t height) = 0;
-        virtual void Bind() = 0;
-        virtual void Unbind() = 0;
+        virtual void Bind(uint32_t slot) = 0;
 
-        virtual void Clear(uint32_t value) = 0;
+        virtual void Clear(int value) = 0;
         virtual void Clear(float value) = 0;
         
         virtual inline uint32_t GetRendererID() = 0;
@@ -79,11 +78,9 @@ namespace oil{
 
         //Binds color attachments, startin from texture slot 0
         virtual void BindColorAttachments() = 0;
-        virtual void UnbindColorAttachments() = 0;
 
         //Binds the depth attachment to texture slot == num color attachments
         virtual void BindDepthAttachment() = 0;
-        virtual void UnbindDepthAttachment() = 0;
 
         virtual void SetColorAttachment(Ref<FrameBufferTarget> tgt, uint32_t slotIndex) = 0;
         virtual void SetDepthAttachment(Ref<FrameBufferTarget> tgt) = 0;

@@ -129,6 +129,9 @@ namespace oil{
         Ref<Texture2D> WhiteTexture;
         uint32_t TextureSlotsUsed = 0;
 
+        //Render targets
+        std::unordered_map<std::string, Ref<FrameBufferTarget>> RenderTargets;
+
         //Environment map
         Ref<TextureCube> SkyBoxTexture;
 
@@ -313,7 +316,14 @@ namespace oil{
         s_3DRenderData.SkyBoxTexture = TextureCube::Create(faces);
 
 
+        //Set up render buffers
         RBuffers.Init();
+
+        s_3DRenderData.RenderTargets["SceneDepth"] = FrameBufferTarget::Create(FrameBufferTextureFormat::DEPTH24STENCIL8, 1280, 720);
+
+        //Set common buffers
+        RBuffers.GBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
+        RBuffers.FBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
     }
 
     void Renderer3D::ShutDown(){
@@ -362,8 +372,9 @@ namespace oil{
     
     void Renderer3D::ClearBuffers()
     {
-        RBuffers.FBuffer->Bind();
         RenderCommand::SetClearColor({1.0f, 0.0f, 1.0f, 1.0f});
+
+        RBuffers.FBuffer->Bind();
         RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
@@ -374,6 +385,11 @@ namespace oil{
     Ref<FrameBuffer> Renderer3D::GetFrameBuffer()
     {
         return RBuffers.FBuffer;
+    }
+
+    Ref<FrameBuffer> Renderer3D::GetGBuffer()
+    {
+        return RBuffers.GBuffer;
     }
 
     void Renderer3D::StartNewBatch()
@@ -399,7 +415,8 @@ namespace oil{
 
     uint32_t Renderer3D::GetDepthBufferID()
     {
-        return RBuffers.GBuffer->GetDepthAttachmentRendererID();
+        
+        return s_3DRenderData.RenderTargets["SceneDepth"]->GetRendererID();
     }
 
     uint32_t Renderer3D::GetFrameBufferID()
@@ -574,9 +591,6 @@ namespace oil{
 
 
         RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
-
-        RBuffers.GBuffer->UnbindColorAttachments();
-        RBuffers.GBuffer->UnbindDepthAttachment();
 
         RenderCommand::EnableDepthWriting();
     }

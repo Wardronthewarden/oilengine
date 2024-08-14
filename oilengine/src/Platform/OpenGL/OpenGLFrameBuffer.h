@@ -7,12 +7,12 @@ namespace oil{
     class OpenGLFrameBufferTarget : public FrameBufferTarget{
     public:
         OpenGLFrameBufferTarget(FrameBufferTextureFormat format, uint32_t width, uint32_t height);
+        ~OpenGLFrameBufferTarget();
 
         virtual void Resize(uint32_t width, uint32_t height) override;
-        virtual void Bind() override;
-        virtual void Unbind() override;
+        virtual void Bind(uint32_t slot) override;
 
-        virtual void Clear(uint32_t value) override;
+        virtual void Clear(int value) override;
         virtual void Clear(float value) override;
         
         virtual inline uint32_t GetRendererID() override;
@@ -30,7 +30,7 @@ namespace oil{
         OpenGLFrameBuffer(const FrameBufferSpecification& spec);
         virtual ~OpenGLFrameBuffer();
 
-        void Invalidate();
+        void Initialize();
 
         virtual void Bind() override;
         virtual void Unbind() override;
@@ -42,16 +42,15 @@ namespace oil{
         virtual void ClearAttachment(uint32_t attachmentIndex, float value) override;
 
         virtual void BindColorAttachments() override;
-        virtual void UnbindColorAttachments() override;
 
         virtual void BindDepthAttachment() override;
-        virtual void UnbindDepthAttachment() override;
 
-        virtual void CopyDepthAttachment(Ref<FrameBuffer> other) override;
+        virtual void SetColorAttachment(Ref<FrameBufferTarget> tgt, uint32_t slotIndex) override;
+        virtual void SetDepthAttachment(Ref<FrameBufferTarget> tgt) override;
 
         virtual const FrameBufferSpecification& GetSpecification() const override { return m_Specification; }
-        virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const override { OIL_CORE_ASSERT(index < m_ColorAttachments.size(), "The maximum color attachments possible are 6"); return m_ColorAttachments[index]; }
-        virtual uint32_t GetDepthAttachmentRendererID() const override { return m_DepthAttachment; }
+        virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const override { OIL_CORE_ASSERT(index < m_ColorAttachments.size(), "The maximum color attachments possible are 6"); return m_ColorAttachments[index]->GetRendererID(); }
+        virtual uint32_t GetDepthAttachmentRendererID() const override { return m_DepthAttachment->GetRendererID(); }
 
     private:
         uint32_t m_RendererID = 0;
@@ -60,8 +59,8 @@ namespace oil{
         std::vector<FrameBufferTextureSpecification> m_ColorAttachmentSpecs;
         FrameBufferTextureSpecification m_DepthAttachmentSpec = FrameBufferTextureFormat::None;
 
-        std::vector<uint32_t> m_ColorAttachments;
-        uint32_t m_DepthAttachment = 0;
+        std::vector<Ref<FrameBufferTarget>> m_ColorAttachments;
+        Ref<FrameBufferTarget> m_DepthAttachment;
     };
 
 }

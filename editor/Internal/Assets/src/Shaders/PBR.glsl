@@ -148,6 +148,4 @@ void main(){
     o_Color = vec4(color, 1.0);
     o_EntityID = id;
 
-
-    gl_FragDepth = texture(u_SceneDepth, v_TexCoord).g;
 }
