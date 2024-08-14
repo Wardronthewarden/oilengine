@@ -1,6 +1,7 @@
 # DIRS
 commands/
 bin/
+editor/Assets
 
 # Prerequisites
 *.d
@@ -64,6 +65,7 @@ build/
 *.png
 *.jpg
 *.oil
+*.hdr
 
 
 # Initialization files
