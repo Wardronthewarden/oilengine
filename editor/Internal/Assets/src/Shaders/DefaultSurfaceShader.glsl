@@ -96,7 +96,7 @@ void main(){
     o_Color = frag.Color * u_Color * texture(u_DiffuseMap, frag.TexCoord);
     o_Position = frag.Position;
     o_Normal = frag.Normal;
-    o_TexCoord = vec4(frag.TexCoord, 1.0, 1.0);
+    o_TexCoord = vec4(frag.TexCoord, 0.0, 1.0);
     o_Metallic = 0.0;
     o_Roughness = 0.8;
     o_AO = 1.0;

@@ -51,7 +51,7 @@ const float PI = 3.14159265359;
 
 //function declarations
 vec3 fresnelSchlick(float cosTheta, vec3 F0){
-    return F0 + (1 - F0) * pow(clamp(1 - cosTheta, 0.0, 1.0), 5.0);
+    return F0 + (1 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 float distributionGGX(vec3 N , vec3 H, float roughness){
@@ -60,7 +60,7 @@ float distributionGGX(vec3 N , vec3 H, float roughness){
     float NdotH = max(dot(N, H), 0.0);
     float NdotH2 = NdotH*NdotH;
     
-    return a2 / (PI * pow(NdotH2 * (a2 - 1-0) + 1.0 , 2.0));
+    return a2 / (PI * pow(NdotH2 * (a2 - 1.0) + 1.0 , 2.0));
 }
 
 float geometrySchlickGGX(float NdotV, float roughness){

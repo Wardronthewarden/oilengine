@@ -319,11 +319,25 @@ namespace oil{
         //Set up render buffers
         RBuffers.Init();
 
-        s_3DRenderData.RenderTargets["SceneDepth"] = FrameBufferTarget::Create(FrameBufferTextureFormat::DEPTH24STENCIL8, 1280, 720);
+        s_3DRenderData.RenderTargets["LitScene"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA8, 1280, 720);
+        RBuffers.FBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["LitScene"], 0);
 
-        //Set common buffers
+        s_3DRenderData.RenderTargets["UnlitScene"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["UnlitScene"], 0);
+        
+        s_3DRenderData.RenderTargets["SceneDepth"] = FrameBufferTarget::Create(FrameBufferTextureFormat::DEPTH24STENCIL8, 1280, 720);
         RBuffers.GBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
         RBuffers.FBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
+
+        s_3DRenderData.RenderTargets["WorldPosition"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["WorldPosition"], 1);
+
+        s_3DRenderData.RenderTargets["WorldNormal"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["WorldNormal"], 2);
+        
+        s_3DRenderData.RenderTargets["Texcoords"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["Texcoords"], 3);
+
     }
 
     void Renderer3D::ShutDown(){
@@ -422,6 +436,11 @@ namespace oil{
     uint32_t Renderer3D::GetFrameBufferID()
     {
         return RBuffers.FBuffer->GetColorAttachmentRendererID(0);
+    }
+
+    uint32_t Renderer3D::GetBufferID(std::string bufferName)
+    {
+        return s_3DRenderData.RenderTargets[bufferName]->GetRendererID();
     }
 
     // Mesh drawing

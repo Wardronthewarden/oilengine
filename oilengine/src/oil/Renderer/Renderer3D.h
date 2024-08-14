@@ -29,7 +29,7 @@ namespace oil{
             //Queries
             static uint32_t GetDepthBufferID();
             static uint32_t GetFrameBufferID();
-            static uint32_t GetSceneNormalBufferID();
+            static uint32_t GetBufferID(std::string bufferName);
 
             //Sprites
 
@@ -95,7 +95,7 @@ namespace oil{
             FrameBufferSpecification fbSpec;
             fbSpec.Attachments = {  FrameBufferTextureFormat::RGBA16F,      //albedo
                                     FrameBufferTextureFormat::RGBA16F,      //position
-                                    FrameBufferTextureFormat::RGB16F,       //normal
+                                    FrameBufferTextureFormat::RGBA16F,      //normal
                                     FrameBufferTextureFormat::RGBA16F,      //texcoord
                                     FrameBufferTextureFormat::R_FLOAT,      //metallic
                                     FrameBufferTextureFormat::R_FLOAT,      //roughness

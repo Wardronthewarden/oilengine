@@ -38,6 +38,7 @@ void EditorLayer::OnAttach()
     //Framebuffer
     m_FrameBuffer = Renderer3D::GetFrameBuffer();
     m_GBuffer = Renderer3D::GetGBuffer();
+    m_ViewportDisplayRendererID = Renderer3D::GetFrameBufferID();
 
 
     //Textures
@@ -243,6 +244,38 @@ void EditorLayer::OnImGuiRender()
             }
 
             if(ImGui::MenuItem("Exit")) Application::Get().CloseApplication();
+            ImGui::EndMenu();
+        }
+        
+        if (ImGui::BeginMenu("Display"))
+        {
+
+            if(ImGui::MenuItem("Lit Scene")){
+                m_ViewportDisplayRendererID = Renderer3D::GetBufferID("LitScene");
+            }
+
+            if(ImGui::MenuItem("Unlit Scene")){
+                m_ViewportDisplayRendererID = Renderer3D::GetBufferID("UnlitScene");
+            }
+
+            ImGui::Separator();
+
+            if(ImGui::BeginMenu("Buffers")){
+                if(ImGui::MenuItem("Scene Depth")) {
+                    m_ViewportDisplayRendererID = Renderer3D::GetBufferID("SceneDepth");
+                }
+                if(ImGui::MenuItem("World Position")) {
+                    m_ViewportDisplayRendererID = Renderer3D::GetBufferID("WorldPosition");
+                }
+                if(ImGui::MenuItem("World Normal")) {
+                    m_ViewportDisplayRendererID = Renderer3D::GetBufferID("WorldNormal");
+                }
+                if(ImGui::MenuItem("Texture Coordinates")) {
+                    m_ViewportDisplayRendererID = Renderer3D::GetBufferID("Texcoords");
+                }
+                ImGui::EndMenu();
+            }
+
             ImGui::EndMenu();
         }
 
@@ -517,13 +550,7 @@ void EditorLayer::RenderViewport()
 
     // VIEWPORT IMAGE RENDERING -----------------------------
     //get the color attachment for display
-    uint32_t textureID;
-    if(true){
-        textureID = Renderer3D::GetFrameBufferID();
-    }else{
-        textureID = Renderer3D::GetDepthBufferID();
-    }
-    ImGui::Image((void*)textureID, ImVec2{m_ViewportSize.x, m_ViewportSize.y}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+    ImGui::Image((void*)m_ViewportDisplayRendererID, ImVec2{m_ViewportSize.x, m_ViewportSize.y}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
     if (ImGui::BeginDragDropTarget()){
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")){

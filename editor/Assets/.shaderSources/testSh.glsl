@@ -78,7 +78,7 @@ uniform sampler2D u_TexTest;
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_Position;
-layout(location = 2) out vec3 o_Normal;
+layout(location = 2) out vec4 o_Normal;
 layout(location = 3) out vec4 o_TexCoord;
 layout(location = 4) out float o_Metallic;
 layout(location = 5) out float o_Roughness;
@@ -98,8 +98,8 @@ void main(){
 
     o_Color = frag.Color * u_Color;
     o_Position = frag.Position;
-    o_Normal = frag.Normal;
-    o_TexCoord = vec4(frag.TexCoord, 1.0, 1.0);
+    o_Normal = vec4(frag.Normal, 1.0);
+    o_TexCoord = vec4(frag.TexCoord, 0.0, 1.0);
     o_Metallic = u_Metallic;
     o_Roughness = u_Roughness;
     o_AO = 1.0;
