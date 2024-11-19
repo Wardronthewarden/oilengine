@@ -77,7 +77,7 @@ layout(location = 3) out vec4 o_TexCoord;
 layout(location = 4) out float o_Metallic;
 layout(location = 5) out float o_Roughness;
 layout(location = 6) out float o_AO;
-layout(location = 7) out float o_EntityID;
+layout(location = 7) out int o_EntityID;
 
 in f_Data{
     vec4 Position;
@@ -101,5 +101,5 @@ void main(){
     o_Roughness = 0.8;
     o_AO = 1.0;
     
-    o_EntityID = float(frag.EntityID);
+    o_EntityID = frag.EntityID;
 }

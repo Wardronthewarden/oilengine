@@ -32,7 +32,6 @@ namespace oil{
             static uint32_t GetBufferID(std::string bufferName);
 
             //Sprites
-
             static void DrawSprite();
 
             //Meshes
@@ -42,7 +41,6 @@ namespace oil{
             static void DrawMesh(const glm::mat4& transform, MeshComponent& meshComp, int entityID);
 
             //Lights
-
             static void SubmitLight(const glm::mat4& transform, PointLightComponent& light, int entityID);
             static void SubmitLight(const glm::mat4& transform, SpotLightComponent& light, int entityID);
             static void SubmitLight(const glm::mat4& transform, DirecLightComponent& light, int entityID);
@@ -50,15 +48,23 @@ namespace oil{
 
             //Lighting
             static void InitLightingInfo();
-            static void RenderLighting();
             static void StartLightingPass();
+            static void EndLightingPass();
+
 
             //Environment
+            static void CubemapFromHDRI(Ref<Texture2D> hdri);
+            static void GenerateDiffuseIrradiance();
             static void RenderEnvironment();
+            static void RenderIBL();
 
             //Control steps
             static void ClearBuffers();
             static void RenderLitMeshes();
+            static void RenderUnlitMeshes();
+
+            //Render targets
+            static void SetRenderTarget(Ref<Texture2D> targetTexture);
 
             //Batching
             static void RenderBatch(const Ref<Material> material, const Ref<Render3DBatch> batch);
@@ -93,24 +99,22 @@ namespace oil{
         void Init(){
             //Initialize GBuffer
             FrameBufferSpecification fbSpec;
-            fbSpec.Attachments = {  FrameBufferTextureFormat::RGBA16F,      //albedo
-                                    FrameBufferTextureFormat::RGBA16F,      //position
-                                    FrameBufferTextureFormat::RGBA16F,      //normal
-                                    FrameBufferTextureFormat::RGBA16F,      //texcoord
-                                    FrameBufferTextureFormat::R_FLOAT,      //metallic
-                                    FrameBufferTextureFormat::R_FLOAT,      //roughness
-                                    FrameBufferTextureFormat::R_FLOAT,      //AO
-                                    FrameBufferTextureFormat::R_FLOAT,      //entity ID
-                                    FrameBufferTextureFormat::Depth  
+            fbSpec.Attachments = {  TextureFormat::RGBA16F,         //albedo
+                                    TextureFormat::RGBA16F,         //position
+                                    TextureFormat::RGBA16F,         //normal
+                                    TextureFormat::RGBA16F,         //texcoord
+                                    TextureFormat::RED16F,          //metallic
+                                    TextureFormat::RED16F,          //roughness
+                                    TextureFormat::RED16F,          //AO
+                                    TextureFormat::RED16,           //entity ID
+                                    TextureFormat::DEPTH24STENCIL8  
                                 };
             fbSpec.Width = 1280;
             fbSpec.Height = 720;
             GBuffer = FrameBuffer::Create(fbSpec);
-
+            
             //Initialize FrameBuffer
-            fbSpec.Attachments = { FrameBufferTextureFormat::RGBA8, FrameBufferTextureFormat::R_INT, FrameBufferTextureFormat::Depth };
-            fbSpec.Width = 1280;
-            fbSpec.Height = 720;
+            fbSpec.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
             FBuffer = FrameBuffer::Create(fbSpec);
         }
 

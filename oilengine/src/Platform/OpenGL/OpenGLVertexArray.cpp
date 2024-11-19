@@ -2,7 +2,7 @@
 #include "OpenGLVertexArray.h"
 
 #include <GLAD/glad.h>
-
+#include "OpenGLValidation.h"
 
 namespace oil{
 static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type){
@@ -106,13 +106,15 @@ void OpenGLVertexArray::AddVertexBuffer(const oil::Ref<VertexBuffer> &VertexBuff
         }
     m_VertexBuffers.push_back(VertexBuffer);
     VertexBuffer->Unbind();
-    }
+    GL_VALIDATE("Vertex buffer addition");
+}
 
 
 void OpenGLVertexArray::SetIndexBuffer(const oil::Ref<IndexBuffer> &IndexBuffer)
 {
     glBindVertexArray(m_RendererID);
     IndexBuffer->Bind();
+    GL_VALIDATE("Index buffer addition");
 
     m_IndexBuffer = IndexBuffer;
 }

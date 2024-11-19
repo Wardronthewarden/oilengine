@@ -5,17 +5,17 @@ namespace oil{
     MaterialEditorPanel::MaterialEditorPanel()
         : m_Open(false)
     {
-        m_EmptyThumbnail = Texture2D::Create("Internal/Assets/src/Textures/FileIcon.png");;
+        m_EmptyThumbnail = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("FileIcon"));
     }
 
     MaterialEditorPanel::MaterialEditorPanel(AssetRef<Material> material)
         : m_Open(true)
     {
-        m_EmptyThumbnail = Texture2D::Create("Internal/Assets/src/Textures/FileIcon.png");;
-        OpenMaterialToEdit(material);
+        m_EmptyThumbnail = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("FileIcon"));
+        OpenMaterial(material);
     }
 
-    void MaterialEditorPanel::OpenMaterialToEdit(AssetRef<Material> material)
+    void MaterialEditorPanel::OpenMaterial(AssetRef<Material> material)
     {
         m_Open = true;
         m_OpenedMaterial = material;

@@ -84,28 +84,31 @@ namespace oil{
         #ifdef OIL_ASSET_IMPORTER
             void EditorAssetManager::ReimportInternalAssets()
             {
+                //reimport internal assets
                 std::filesystem::path internalSrc = s_InternalAssetPath/"src";
                 AssetHandle handle;
+                
+                //Import shaders
                 for(const auto it : std::filesystem::directory_iterator(internalSrc/"Shaders")){
-                    //Import any new shaders
-                    if(s_AssetNameRegistry.find(it.path().stem().string()) == s_AssetNameRegistry.end())
-                        CreateAsset<Shader>(it.path().stem().string(), Shader::Create(it.path().string()), s_InternalAssetPath/"Shaders", it.path());
+                    if(s_AssetNameRegistry.find(it.path().stem().string()) == s_AssetNameRegistry.end()){
+                        AssetHandle handle = CreateAsset<Shader>(it.path().stem().string(), Shader::Create(it.path().string()), s_InternalAssetPath/"Shaders", it.path());
+                    }
 
                 }
-                
+                //Import textures
+                for(const auto it : std::filesystem::directory_iterator(internalSrc/"Textures")){
+                    //Import any new Textures
+                    if(s_AssetNameRegistry.find(it.path().stem().string()) == s_AssetNameRegistry.end())
+                        AssetImporter::ImportImage(it.path().string(), s_InternalAssetPath/"Textures");
+                        
+                }
+                //Create default materials
                 if (s_AssetNameRegistry.find("DefaultMaterial") == s_AssetNameRegistry.end()){
                     AssetHandle shaderHandle = GetHandleByName("DefaultSurfaceShader");
                     CreateAsset<Material>("DefaultMaterial", CreateRef<Material>(GetAssetReference<Shader>(shaderHandle)), s_InternalAssetPath/"Materials");
                 }
-
-                for(const auto it : std::filesystem::directory_iterator(internalSrc/"Textures")){
-                    //Import any new Textures
-                    if(s_AssetNameRegistry.find(it.path().stem().string()) == s_AssetNameRegistry.end())
-                        CreateAsset<Texture2D>(it.path().stem().string(), Texture2D::Create(it.path().string()), s_InternalAssetPath/"Textures", it.path());
-
-                }
                 for(const auto it : std::filesystem::directory_iterator(s_InternalAssetPath/"Scenes")){
-                    //Load default scene
+                    //Load default scenes
                     if(s_AssetNameRegistry.find(it.path().stem().string()) == s_AssetNameRegistry.end()){
                         AssetHandle handle = GenerateAssetHandle(10);
                         s_AssetLookup<Scene>[handle] =  CreateRef<Ref<Scene>>(Serializer::DeserializeAsset<Scene>(it.path(), handle));

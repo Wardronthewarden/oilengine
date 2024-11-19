@@ -128,11 +128,14 @@ namespace oil{
         std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
         Ref<Texture2D> WhiteTexture;
         uint32_t TextureSlotsUsed = 0;
+        Ref<Texture2D> DefaultTexture; 
+
 
         //Render targets
-        std::unordered_map<std::string, Ref<FrameBufferTarget>> RenderTargets;
+        std::unordered_map<std::string, Ref<Texture2D>> RenderTargets;
 
         //Environment map
+        Ref<Texture2D> DefaultHDRI;
         Ref<TextureCube> SkyBoxTexture;
 
         //Unit cube
@@ -178,55 +181,6 @@ namespace oil{
         0, 1, 2, 0, 2, 3
     };
 
-    static float skyboxVertices[] = {
-        // positions          
-        -1.0f,  1.0f, -1.0f,    //0
-        -1.0f, -1.0f, -1.0f,    //1
-        1.0f, -1.0f, -1.0f,     //2
-        1.0f, -1.0f, -1.0f,     //2
-        1.0f,  1.0f, -1.0f,     //3
-        -1.0f,  1.0f, -1.0f,    //0
-
-        -1.0f, -1.0f,  1.0f,    //4
-        -1.0f, -1.0f, -1.0f,    //1
-        -1.0f,  1.0f, -1.0f,    //0
-        -1.0f,  1.0f, -1.0f,    //0
-        -1.0f,  1.0f,  1.0f,    //5
-        -1.0f, -1.0f,  1.0f,    //4
-
-        1.0f, -1.0f, -1.0f,     //2
-        1.0f, -1.0f,  1.0f,     //6
-        1.0f,  1.0f,  1.0f,     //7
-        1.0f,  1.0f,  1.0f,     //7
-        1.0f,  1.0f, -1.0f,     //3
-        1.0f, -1.0f, -1.0f,     //2
-
-        -1.0f, -1.0f,  1.0f,    //4
-        -1.0f,  1.0f,  1.0f,    //5
-        1.0f,  1.0f,  1.0f,     //7
-        1.0f,  1.0f,  1.0f,     //7
-        1.0f, -1.0f,  1.0f,     //6
-        -1.0f, -1.0f,  1.0f,    //4
-
-        -1.0f,  1.0f, -1.0f,    //0
-        1.0f,  1.0f, -1.0f,     //3
-        1.0f,  1.0f,  1.0f,     //7
-        1.0f,  1.0f,  1.0f,     //7
-        -1.0f,  1.0f,  1.0f,    //5
-        -1.0f,  1.0f, -1.0f,    //0
-
-        -1.0f, -1.0f, -1.0f,    //1
-        -1.0f, -1.0f,  1.0f,    //4
-        1.0f, -1.0f, -1.0f,     //2
-        1.0f, -1.0f, -1.0f,     //2
-        -1.0f, -1.0f,  1.0f,    //4
-        1.0f, -1.0f,  1.0f      //6
-    };
-
-    static float skyboxIndices[] = {
-        0
-    };
-
     void Renderer3D::Init(){
 
         OIL_INFO("Current working directory is: {0}", std::filesystem::current_path());
@@ -262,27 +216,18 @@ namespace oil{
         s_3DRenderData.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
 
         // Setup base shader
-        s_3DRenderData.ShaderLib = CreateRef<ShaderLibrary>();
-
-        s_3DRenderData.ShaderLib->Load("First pass", "Assets/Shaders/Principled.glsl");
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("First pass"); 
-        s_3DRenderData.ActiveShader->Bind();
-        s_3DRenderData.ActiveShader->SetIntArray("u_Textures", samplers, s_3DRenderData.MaxTextureSlots);
-        //create the default material from the default surface shader asset
-        s_3DRenderData.DefaultMaterial = AssetManager::GetHandleByName("DefaultMaterial");
-        //s_3DRenderData.DefaultMaterial->SetUniform<int*>("u_Textures", samplers);
-
         
-        s_3DRenderData.ShaderLib->Load("Light pass","Assets/Shaders/Lighting.glsl");
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("Light pass"); 
-        s_3DRenderData.ActiveShader->Bind();
         //Find a better way
-        s_3DRenderData.ActiveShader->SetIntArray("u_Textures", samplers, s_3DRenderData.MaxTextureSlots);
+        Texture2D::Create(1,1);
 
+        s_3DRenderData.ShaderLib = CreateRef<ShaderLibrary>();
+        Texture2D::Create(1,1);
         s_3DRenderData.ShaderLib->Load("PBR","Internal/Assets/src/Shaders/PBR.glsl");
         
-        
         s_3DRenderData.ShaderLib->Add("SkyBox", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("SkyBoxShader")));
+        s_3DRenderData.ShaderLib->Add("SkyLight", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("SkyLightShader")));
+        s_3DRenderData.ShaderLib->Add("LightApply", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("LightApplication")));
+        s_3DRenderData.ShaderLib->Add("CubeProjection", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("CubeProjection")));
 
 
         //Setup screen quad
@@ -307,36 +252,46 @@ namespace oil{
         s_3DRenderData.CubeIndexBuffer = IndexBuffer::Create(s_3DRenderData.Cube->GetIndexBuffer()->As<uint32_t>(),  s_3DRenderData.Cube->GetIndexBuffer()->GetSize());
         s_3DRenderData.CubeVertexArray->SetIndexBuffer(s_3DRenderData.CubeIndexBuffer);
 
-        //cubemap test
-        std::vector<Ref<Texture2D>> faces;
-        for (int i = 0; i < 6; i++){
-            faces.push_back(Texture2D::Create("Internal/Assets/src/Textures/Checkerboard.png"));
-        }
-
-        s_3DRenderData.SkyBoxTexture = TextureCube::Create(faces);
-
 
         //Set up render buffers
         RBuffers.Init();
 
-        s_3DRenderData.RenderTargets["LitScene"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA8, 1280, 720);
+        s_3DRenderData.RenderTargets["LitScene"] = Texture2D::Create(1280, 720, TextureFormat::RGBA8);
         RBuffers.FBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["LitScene"], 0);
 
-        s_3DRenderData.RenderTargets["UnlitScene"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        s_3DRenderData.RenderTargets["UnlitScene"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
         RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["UnlitScene"], 0);
         
-        s_3DRenderData.RenderTargets["SceneDepth"] = FrameBufferTarget::Create(FrameBufferTextureFormat::DEPTH24STENCIL8, 1280, 720);
+        s_3DRenderData.RenderTargets["SceneDepth"] = Texture2D::Create(1280, 720, TextureFormat::DEPTH24STENCIL8);
         RBuffers.GBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
         RBuffers.FBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
 
-        s_3DRenderData.RenderTargets["WorldPosition"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        s_3DRenderData.RenderTargets["WorldPosition"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
         RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["WorldPosition"], 1);
 
-        s_3DRenderData.RenderTargets["WorldNormal"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        s_3DRenderData.RenderTargets["WorldNormal"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
         RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["WorldNormal"], 2);
         
-        s_3DRenderData.RenderTargets["Texcoords"] = FrameBufferTarget::Create(FrameBufferTextureFormat::RGBA16F, 1280, 720);
+        s_3DRenderData.RenderTargets["Texcoords"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
         RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["Texcoords"], 3);
+
+        //Set up lighting info
+        InitLightingInfo();
+
+        //Default textures
+        s_3DRenderData.DefaultTexture = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("Checkerboard"));
+        s_3DRenderData.DefaultHDRI = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("default_hdri"));
+        
+        //cubemap test
+        std::vector<Ref<Texture2D>> faces;
+        for (int i = 0; i < 6; i++){
+            faces.push_back(s_3DRenderData.DefaultTexture);
+            //faces.push_back(s_3DRenderData.WhiteTexture);
+        }
+
+        s_3DRenderData.SkyBoxTexture = TextureCube::Create(faces);
+        CubemapFromHDRI(s_3DRenderData.DefaultHDRI);
+
 
     }
 
@@ -392,8 +347,8 @@ namespace oil{
         RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
-        RBuffers.GBuffer->ClearAttachment(7, -1.0f);
-        RBuffers.FBuffer->ClearAttachment(1, -1);
+        RBuffers.GBuffer->ClearAttachment(7, -1);
+
     }
 
     Ref<FrameBuffer> Renderer3D::GetFrameBuffer()
@@ -420,16 +375,10 @@ namespace oil{
     {
         //Render flow
         RenderLitMeshes(); 
-
-        InitLightingInfo();
-        RenderLighting();
-
-        RenderEnvironment();
     }
 
     uint32_t Renderer3D::GetDepthBufferID()
     {
-        
         return s_3DRenderData.RenderTargets["SceneDepth"]->GetRendererID();
     }
 
@@ -498,6 +447,19 @@ namespace oil{
             RenderBatch(AssetManager::GetAsset<Material>(it.first), it.second);
             it.second->ResetData();
         }
+
+    }
+
+    void Renderer3D::RenderUnlitMeshes()
+    {
+        RenderCommand::EnableFaceCulling();
+        RenderCommand::SetDepthTestOperator(DepthOperator::Less);
+        //CubemapFromHDRI(s_3DRenderData.DefaultHDRI);
+
+    }
+
+    void Renderer3D::SetRenderTarget(Ref<Texture2D> targetTexture)
+    {
     }
 
     void Renderer3D::RenderBatch(const Ref<Material> material, const Ref<Render3DBatch> batch)
@@ -527,40 +489,91 @@ namespace oil{
         s_3DRenderData.stats.DrawCalls++;
     }
 
+
+    void Renderer3D::StartLightingPass(){
+        InitLightingInfo();
+        RenderCommand::DisableDepthWriting();
+
+        s_3DRenderData.QuadVertexArray->Bind();
+        RBuffers.FBuffer->Bind();
+        RBuffers.GBuffer->BindColorAttachments();
+        RBuffers.GBuffer->BindDepthAttachment();
+
+
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("PBR");
+        s_3DRenderData.ActiveShader->Bind();
+        s_3DRenderData.ActiveShader->SetFloat3("u_CamPos", s_3DRenderData.CamPosition);
+    }
     
     void Renderer3D::SubmitLight(const glm::mat4 &transform, PointLightComponent &light, int entityID)
     {
         PointLightInfo lightInfo = light.light.GetLightInfo();
 
-        s_3DRenderData.PointLightBufferPtr->LightPosition = glm::vec4(transform[3]);
-        s_3DRenderData.PointLightBufferPtr->LightColor = lightInfo.LightColor;
-        s_3DRenderData.PointLightBufferPtr->LightIntensity = lightInfo.LightIntensity;
-        s_3DRenderData.PointLightBufferPtr->EntityID = entityID;
-        ++s_3DRenderData.PointLightBufferPtr;
-        ++s_3DRenderData.PointLightCount;
+        s_3DRenderData.ActiveShader->SetFloat3("u_LightColor", lightInfo.LightColor);
+        s_3DRenderData.ActiveShader->SetFloat("u_LightIntensity", lightInfo.LightIntensity);
+        s_3DRenderData.ActiveShader->SetFloat3("u_LightPosition", glm::vec3(transform[3]));
+
+        RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
+        
     }
 
-    void Renderer3D::StartLightingPass(){
-        
+    void Renderer3D::CubemapFromHDRI(Ref<Texture2D> hdri)
+    {
+        //setup render target buffer
+        FrameBufferSpecification spec;
+        spec.Attachments = {    TextureFormat::RGBA16F, TextureFormat::RGBA16F, TextureFormat::RGBA16F, 
+                                TextureFormat::RGBA16F, TextureFormat::RGBA16F, TextureFormat::RGBA16F
+                            };
+        spec.Width = 512;
+        spec.Height = 512;
+        Ref<FrameBuffer> renderbuffer = FrameBuffer::Create(spec);
+        renderbuffer->Bind();
+
+        //set up views and projection
+        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+        glm::mat4 captureViews[] = {
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+        };
+
+        renderbuffer->SetColorAttachment(TextureCube::Create(512, 512, TextureFormat::RGBA16F), 0);
+
+        //bind shader and upload data
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("CubeProjection");
+        s_3DRenderData.ActiveShader->Bind();
+        s_3DRenderData.ActiveShader->SetMat4("u_Projection", captureProjection);
+        hdri->Bind();
+        s_3DRenderData.ActiveShader->SetInt("u_EquirectangularMap", 0);
+
+        s_3DRenderData.CubeVertexArray->Bind();
+        for (int i = 0; i < 6; ++i){
+            s_3DRenderData.ActiveShader->SetMat4("u_View", captureViews[i]);
+            renderbuffer->SetAttachmentTextureTarget(s_3DRenderData.SkyBoxTexture->GetRendererID(), TextureTarget::TextureCube_Xpos + i, 0);
+            RenderCommand::DrawIndexed(s_3DRenderData.CubeVertexArray, 36);
+        }
     }
 
     void Renderer3D::RenderEnvironment()
     {
-        s_3DRenderData.CubeVertexArray->Bind();
-        RenderCommand::DisableFaceCulling();
+        glm::mat4 vpmat = s_3DRenderData.u_ProjMatrix * glm::mat4(glm::mat3(s_3DRenderData.u_ViewMatrix));
+
+        //Display sky box
         RenderCommand::DisableDepthWriting();
+        RenderCommand::DisableFaceCulling();
         RenderCommand::SetDepthTestOperator(DepthOperator::Equal);
         RBuffers.FBuffer->Bind();
 
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("SkyBox");
         s_3DRenderData.ActiveShader->Bind();
-        glm::mat4 vpmat = s_3DRenderData.u_ProjMatrix * glm::mat4(glm::mat3(s_3DRenderData.u_ViewMatrix));
         s_3DRenderData.ActiveShader->SetMat4("u_VPMat", vpmat);
-        s_3DRenderData.ActiveShader->SetInt("u_SkyBoxTexture", s_3DRenderData.SkyBoxTexture->GetRendererID());
-        RBuffers.GBuffer->BindDepthAttachment();
-        s_3DRenderData.ActiveShader->SetInt("u_SceneDepth", RBuffers.GBuffer->GetDepthAttachmentRendererID());
-        
+        s_3DRenderData.SkyBoxTexture->Bind(0);
+        s_3DRenderData.ActiveShader->SetInt("u_SkyBoxTexture", 0);        
 
+        s_3DRenderData.CubeVertexArray->Bind();
         RenderCommand::DrawIndexed(s_3DRenderData.CubeVertexArray, 36);
 
         //Cleanup
@@ -568,32 +581,31 @@ namespace oil{
         RenderCommand::EnableFaceCulling();
     }
 
-    void Renderer3D::InitLightingInfo()
+    void Renderer3D::RenderIBL()
     {
-        s_3DRenderData.PointLightCount = 0;
-        s_3DRenderData.PointLightBufferPtr = s_3DRenderData.PointLightBufferBase;
-
-        s_3DRenderData.PointLightArray->Bind();
-
-        s_3DRenderData.TextureSlotsUsed = 0;
-    }
-
-    void Renderer3D::RenderLighting()
-    {
-        RenderCommand::DisableDepthWriting();
-        uint32_t dataSize = (uint8_t *)s_3DRenderData.PointLightBufferPtr - (uint8_t *)s_3DRenderData.PointLightBufferBase;
-        s_3DRenderData.PointLightArray->SetData(s_3DRenderData.PointLightBufferBase, dataSize);
-
-        s_3DRenderData.QuadVertexArray->Bind();
-
-
+        RenderCommand::DisableDepthTesting();
+        RenderCommand::SetDepthTestOperator(DepthOperator::NotEqual);
         RBuffers.FBuffer->Bind();
-        RBuffers.GBuffer->BindColorAttachments();
-        RBuffers.GBuffer->BindDepthAttachment();
-
-        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("PBR");
+        glm::mat4 vpmat = s_3DRenderData.u_ProjMatrix * glm::mat4(glm::mat3(s_3DRenderData.u_ViewMatrix));
+        
+        //Apply environment lighting
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("SkyLight");
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetFloat3("u_CamPos", s_3DRenderData.CamPosition);
+        s_3DRenderData.SkyBoxTexture->Bind(10);
+        s_3DRenderData.ActiveShader->SetInt("u_DiffuseIrradiance", 10); 
+        s_3DRenderData.ActiveShader->SetInt("u_SpecularIrradiance", 10);
+
+        s_3DRenderData.QuadVertexArray->Bind();
+        RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
+        RenderCommand::EnableDepthTesting();
+
+    }
+
+    void Renderer3D::InitLightingInfo()
+    {
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("PBR");
+        s_3DRenderData.ActiveShader->Bind();
 
         int i = 0;
         s_3DRenderData.ActiveShader->SetInt("u_Albedo", i++);
@@ -606,11 +618,28 @@ namespace oil{
         s_3DRenderData.ActiveShader->SetInt("u_ID", i++);
         
         s_3DRenderData.ActiveShader->SetInt("u_SceneDepth", i++);
+        
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("SkyLight");
+        s_3DRenderData.ActiveShader->Bind();
 
+        i = 0;
+        s_3DRenderData.ActiveShader->SetInt("u_Albedo", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Position", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Normal", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Texcoord", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Metallic", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_Roughness", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_AO", i++);
+        s_3DRenderData.ActiveShader->SetInt("u_ID", i++);
+        
+        s_3DRenderData.ActiveShader->SetInt("u_SceneDepth", i++);
 
+    }
 
-        RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
-
-        RenderCommand::EnableDepthWriting();
+    void Renderer3D::EndLightingPass()
+    {
+        RenderIBL();
+        RenderEnvironment();
+        //RenderUnlitMeshes();
     }
 }

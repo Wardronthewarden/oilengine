@@ -10,18 +10,14 @@
   - 1413830706
   - Internal\Assets/Textures\Checkerboard.oil
   - Internal\Assets/src\Textures\Checkerboard.png
-6762098500268395147:
-  - 1413830706
-  - Internal\Assets/Textures\DirectoryIcon.oil
-  - Internal\Assets/src\Textures\DirectoryIcon.png
+4141301625323442931:
+  - 1397245010
+  - Internal\Assets/Shaders\CubeProjection.oil
+  - Internal\Assets/src\Shaders\CubeProjection.glsl
 6014992387509125073:
   - 1413830706
   - Internal\Assets/Textures\SimulateButton.oil
   - Internal\Assets/src\Textures\SimulateButton.png
-9324495369708253647:
-  - 1413830706
-  - Internal\Assets/Textures\StepButton.oil
-  - Internal\Assets/src\Textures\StepButton.png
 16996166409656902962:
   - 5062996
   - Assets\Shaders\materials\test.oil
@@ -30,6 +26,10 @@
   - 1397245010
   - Assets\Shaders\testSh.oil
   - Assets\.shaderSources\testSh.glsl
+9324495369708253647:
+  - 1413830706
+  - Internal\Assets/Textures\StepButton.oil
+  - Internal\Assets/src\Textures\StepButton.png
 9216179194776731503:
   - 5062996
   - Assets\Shaders\materials\unnamed_material1.oil
@@ -54,6 +54,10 @@
   - 1413830706
   - Internal\Assets/Textures\StopButton.oil
   - Internal\Assets/src\Textures\StopButton.png
+1274337507700113303:
+  - 1413830706
+  - Internal\Assets/Textures\DirectoryIcon.oil
+  - Internal\Assets/src\Textures\DirectoryIcon.png
 11692393473627067245:
   - 1396919877
   - Internal\Assets/Scenes\DefaultScene.oil
@@ -66,6 +70,10 @@
   - 0
   - ""
   - ""
+7874532558577446409:
+  - 1413830706
+  - Internal\Assets/Textures\default_hdri.oil
+  - Internal\Assets/src\Textures\default_hdri.hdr
 7566013175594810801:
   - 1297040460
   - Assets\Models\monkey.oil
@@ -74,6 +82,10 @@
   - 5062996
   - Internal\Assets/Materials\DefaultMaterial.oil
   - ""
+4837060938119102823:
+  - 1297040460
+  - Assets\Models\sphere.oil
+  - C:\dev\c++\oilengine\editor\Assets\Models\sphere.obj
 3454827853140715664:
   - 5062996
   - Assets\Shaders\materials\unnamed_material.oil
@@ -90,3 +102,11 @@
   - 1413830706
   - Assets\Textures\lonely_road_afternoon_puresky_2k.oil
   - C:\dev\c++\oilengine\editor\Assets\Textures\lonely_road_afternoon_puresky_2k.hdr
+11150684564815021319:
+  - 1397245010
+  - Internal\Assets/Shaders\LightApplication.oil
+  - Internal\Assets/src\Shaders\LightApplication.glsl
+15175888222727840956:
+  - 1397245010
+  - Internal\Assets/Shaders\SkyLightShader.oil
+  - Internal\Assets/src\Shaders\SkyLightShader.glsl

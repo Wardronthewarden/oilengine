@@ -1,5 +1,4 @@
 #domain engine
-#model none
 
 #type vertex
 #version 440 core
@@ -24,7 +23,6 @@ void main(){
 #version 440 core
 
 layout(location = 0) out vec4 o_Color;
-layout(location = 1) out int o_EntityID;
 
 in vec2 v_Position;
 in vec2 v_TexCoord;
@@ -39,11 +37,12 @@ uniform sampler2D u_Texcoord;
 uniform sampler2D u_Metallic;
 uniform sampler2D u_Roughness;
 uniform sampler2D u_AO;
-uniform sampler2D u_ID;
 
 uniform sampler2D u_SceneDepth;
 
-uniform vec3 u_LightPos;
+uniform vec3 u_LightColor;
+uniform vec3 u_LightIntensity;
+uniform vec3 u_LightPosition;
 
 
 
@@ -80,62 +79,51 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness){
 //main function
 void main(){
     //variable setup
-    //engine data
-    int id = int(texture(u_ID, v_TexCoord).r);
-
-
-    //pbr
     vec3 albedo = texture(u_Albedo, v_TexCoord).rgb;
     float metallic = texture(u_Metallic, v_TexCoord).r;
     float roughness = texture(u_Roughness, v_TexCoord).r;
     float AO = texture(u_AO, v_TexCoord).r;
 
     vec3 normal = normalize(texture(u_Normal, v_TexCoord).rgb);
+
     vec3 worldPos = texture(u_Position, v_TexCoord).rgb;
 
     vec3 viewDir = normalize(u_CamPos - worldPos);
-
-    //temp
-    vec3 lightPos = vec3(0.0, 0.0, 2.0);
-    vec3 lightColor = vec3(1.0, 1.0, 1.0);
-    int noLights = 1;
 
 
     vec3 F0 = vec3(0.4);
     F0 = mix(F0, albedo, metallic);
 
-
     //render all lights
     vec3 Lo = vec3(0.0);
-    for (int i = 0; i < noLights; i++){
-        vec3 lightDir = normalize(lightPos - worldPos);
-        vec3 halfwayVector = normalize(lightDir + viewDir);
+    vec3 lightDir = normalize(u_LightPosition - worldPos);
+    vec3 halfwayVector = normalize(lightDir + viewDir);
 
-        float dist = length(lightPos - worldPos);
-        float attenuation = 1/(dist * dist);
+    float dist = length(u_LightPosition - worldPos);
+    float attenuation = 1/(dist * dist);
 
-        vec3 radiance = lightColor * attenuation;
+    vec3 radiance = u_LightColor * attenuation;
 
-        
+    
 
-        vec3 F = fresnelSchlick(max(dot(halfwayVector, viewDir), 0.0), F0);
-        float NDF = distributionGGX(normal, halfwayVector, roughness);
-        float G = geometrySmith(normal, viewDir, lightDir, roughness);
+    vec3 F = fresnelSchlick(max(dot(halfwayVector, viewDir), 0.0), F0);
+    float NDF = distributionGGX(normal, halfwayVector, roughness);
+    float G = geometrySmith(normal, viewDir, lightDir, roughness);
 
-        vec3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
-        vec3 specular = numerator / denominator;
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
+    vec3 specular = numerator / denominator;
 
-        vec3 kS = F;
-        vec3 kD = vec3(1.0) - kS;
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
 
-        kD *= 1.0 - metallic;
+    kD *= 1.0 - metallic;
 
 
-        float NdotL = max(dot(normal, lightDir), 0.0);
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    float NdotL = max(dot(normal, lightDir), 0.0);
+    Lo += (kD * albedo / PI + specular) * radiance * NdotL;
 
-    }
+    
 
     vec3 ambient = vec3(0.03) * albedo; // * AO
     vec3 color = ambient + Lo;
@@ -146,6 +134,5 @@ void main(){
     color = pow(color, vec3(1.0/2.2));
 
     o_Color = vec4(color, 1.0);
-    o_EntityID = id;
 
 }

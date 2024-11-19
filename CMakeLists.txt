@@ -42,6 +42,7 @@ add_executable(Editor   editor/src/EditorApp.cpp
                         editor/src/Panels/SceneHierarchyPanel.cpp
                         editor/src/Panels/ContentBrowserPanel.cpp
                         editor/src/Panels/MaterialEditorPanel.cpp
+                        editor/src/Panels/TextureEditorPanel.cpp
 )
 
 target_include_directories(Editor PUBLIC editor/src)
@@ -51,3 +52,4 @@ target_link_libraries(Editor PUBLIC oilengine)
 target_compile_definitions(Editor PRIVATE -DOIL_DEBUG -DOIL_EDITOR -DOIL_ASSET_IMPORTER)
 
 set_property(TARGET Editor PROPERTY CXX_STANDARD 23)
+

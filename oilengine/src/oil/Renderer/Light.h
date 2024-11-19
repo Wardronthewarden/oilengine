@@ -63,12 +63,16 @@ namespace oil{
     class PointLight{
     public:
         PointLight();
-        ~PointLight();
+        ~PointLight() {}
 
         void SetLightColor(const glm::vec4& color) { m_LightInfo.LightColor = color; };
         void SetLightIntensity(float intensity) { m_LightInfo.LightIntensity = intensity; };
 
         PointLightInfo GetLightInfo() { return m_LightInfo; };
+
+        operator bool() const{
+            return (bool) m_LightInfo.LightIntensity;
+        }
 
     private:
         PointLightInfo m_LightInfo;

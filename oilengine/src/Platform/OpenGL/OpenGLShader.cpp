@@ -6,6 +6,7 @@
 #include <GLAD/glad.h>
 
 #include <glm/gtc/type_ptr.hpp>
+#include "OpenGLValidation.h"
 
 namespace oil{
 
@@ -50,11 +51,16 @@ static ShaderModel ShaderModelFromString(const std::string& model){
 OpenGLShader::OpenGLShader(const std::string &filepath)
 	: m_Path(filepath)
 {
+	OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Error Before file reading!");
 	std::string src = ReadFile(filepath);
+	OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Error Before pre process!");
 	auto shaderSources = PreProcess(src);
+
+	OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Error Before compilation!");
 
 	Compile(shaderSources);
 
+	OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Error after compilation!");
 	auto lastSlash = filepath.find_last_of("/\\");
 	lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
 	auto lastDot = filepath.rfind('.');	
@@ -282,9 +288,11 @@ void OpenGLShader::UploadUniformFloat4(const std::string &name, const glm::vec4 
 void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSources)
 {
 	GLuint program = glCreateProgram();
+	
 	const size_t shaderNum = shaderSources.size();
 	OIL_CORE_ASSERT(shaderNum <= 3, "We only support 3 shaders!");
-	std::array<GLenum, 3> glShaderIDs;
+	std::vector<GLenum> glShaderIDs;
+	glShaderIDs.resize(shaderNum);
 	int glShaderIDIndex = 0;
 	for (auto& kv : shaderSources){
 		GLenum shaderType = kv.first;
@@ -292,14 +300,17 @@ void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSource
 
 		// Create an empty vertex shader handle
 		GLuint shader = glCreateShader(shaderType);
+		OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Shader creation failure!");
 
 		// Send the vertex shader source code to GL
 		// Note that std::string's .c_str is NULL character terminated.
 		const GLchar *sourceCStr = (const GLchar *)source.c_str();
 		glShaderSource(shader, 1, &sourceCStr, 0);
+		OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Shader source failure!");
 
 		// Compile the vertex shader
 		glCompileShader(shader);
+		OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Shader compilation failure!");
 
 		GLint isCompiled = 0;
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
@@ -325,6 +336,7 @@ void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSource
 			break;
 		}
 	glAttachShader(program, shader);
+	OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Shader attachment failure!");
 	glShaderIDs[glShaderIDIndex++] = shader;
 
 	}
@@ -360,12 +372,16 @@ void OpenGLShader::Compile(std::unordered_map<GLenum, std::string> &shaderSource
 		// In this simple program, we'll just leave
 		return;
 	}
+	OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Shader linking failure!");
 
 	// Always detach shaders after a successful link.
 	for (auto id : glShaderIDs)
 		glDetachShader(program, id);
 
+	OIL_CORE_ASSERT(glGetError() == GL_NO_ERROR, "Shader detachment failure!");
 	m_RendererID = program;
+	GL_VALIDATE("Shader program creation");
+
 }
 
 std::unordered_map<GLenum, std::string> OpenGLShader::PreProcess(const std::string &source)

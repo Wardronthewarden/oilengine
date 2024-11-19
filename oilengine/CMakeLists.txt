@@ -32,6 +32,7 @@ add_library(oilengine STATIC
                 src/Platform/OpenGL/OpenGLVertexArray.cpp
                 src/Platform/OpenGL/OpenGLRenderAPI.cpp
                 src/Platform/OpenGL/OpenGLShader.cpp
+                src/Platform/OpenGL/OpenGLValidation.cpp
                 src/Platform/OpenGL/OpenGLTexture.cpp
                 src/oil/Scene/Scene.cpp
                 src/oil/Scene/SceneCamera.cpp

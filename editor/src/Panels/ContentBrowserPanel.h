@@ -16,6 +16,7 @@ namespace oil{
     };
 
     class MaterialEditorPanel;
+    class TextureEditorPanel;
 
     class ContentBrowserPanel{
     public:
@@ -25,6 +26,7 @@ namespace oil{
 
         //load all assets from AssetManager::CurrentAssetPath into m_CurrentFolderContents 
         void LoadCurrentFolderContents();
+        void LoadEngineContents();
 
         //return the folder contents from a path relative to AssetManager::RootPath.
         //Returns directories
@@ -53,10 +55,12 @@ namespace oil{
         std::unordered_set<uint32_t> m_SelectedItems; //indices into m_CurrentFolderContents
 
         //inputs
+        bool m_ShowEngineContent = false;
         bool m_NameEditMode = false;
         std::string m_NameInputBuffer = "";
 
         Ref<MaterialEditorPanel> m_MaterialEditorPanel;
+        Ref<TextureEditorPanel> m_TextureEditorPanel;
     };
 
 }

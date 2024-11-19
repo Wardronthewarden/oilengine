@@ -1,6 +1,7 @@
 #include "pch/oilpch.h"
 #include "ContentBrowserPanel.h"
 #include "MaterialEditorPanel.h"
+#include "TextureEditorPanel.h"
 
 #include "utils/UIlib.h"
 
@@ -9,9 +10,10 @@ namespace oil{
 
     ContentBrowserPanel::ContentBrowserPanel()
     {
-        m_DirectoryIcon = Texture2D::Create("Internal/Assets/src/Textures/DirectoryIcon.png");
-        m_FileIcon = Texture2D::Create("Internal/Assets/src/Textures/FileIcon.png");
+        m_DirectoryIcon = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("DirectoryIcon"));
+        m_FileIcon = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("FileIcon"));
         m_MaterialEditorPanel = CreateRef<MaterialEditorPanel>();
+        m_TextureEditorPanel = CreateRef<TextureEditorPanel>();
     }
 
     void ContentBrowserPanel::Init()
@@ -65,6 +67,12 @@ namespace oil{
                 m_CurrentFolderContents.push_back(fi);
         }
 
+    }
+
+    void ContentBrowserPanel::LoadEngineContents()
+    {
+        m_CurrentFolderContents.clear();
+        m_SelectedItems.clear();
     }
 
     std::vector<FolderContentInfo> ContentBrowserPanel::GetFolderContents(std::string path)
@@ -124,13 +132,15 @@ namespace oil{
 
         ImGui::Begin("Content Browser panel");
 
+        //Nav buttons
+
         if (!AssetManager::IsCurrentRootDirectory()){
             if (ImGui::Button("<=")){
                 AssetManager::StepOutOfDirectory();
                 LoadCurrentFolderContents();
             }
             if (ImGui::BeginDragDropTarget()){
-                //Accept asset drop
+                //Accept asset drop 
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OIL_ASSET")){
                     OIL_ASSERT(payload->DataSize == sizeof(UUID), "Payload size mismatch!");
                     UUID draggedID = *(UUID*)payload->Data;
@@ -146,9 +156,27 @@ namespace oil{
 
                 ImGui::EndDragDropTarget();
             }
+            ImGui::SameLine();
         }
 
+        if (m_ShowEngineContent){
 
+            if(ImGui::Button("User Content")){
+                m_ShowEngineContent = false;
+                LoadCurrentFolderContents();
+            }
+
+        }else{
+
+            if(ImGui::Button("Engine Content")){
+                m_ShowEngineContent = true;
+            }
+
+        }
+
+        ImGui::Separator();
+
+        //Context menu
         static float padding = 16.0f;
         static float thumbnailSize = 96.0f;
         float cellSize = thumbnailSize + padding;
@@ -157,7 +185,7 @@ namespace oil{
         int columnCount = (int)(panelWidth / cellSize);
         if(columnCount < 1) columnCount = 1;
 
-        //Draw browser context menu
+
         if(ImGui::BeginPopupContextWindow()){
             if(ImGui::BeginMenu("Create Asset")){
                 if (ImGui::MenuItem("Scene")){
@@ -264,7 +292,11 @@ namespace oil{
 
                 switch(directoryEntry.type){
                     case ContentType::Material:{
-                        m_MaterialEditorPanel->OpenMaterialToEdit(AssetManager::GetAssetReference<Material>(directoryEntry.ID));
+                        m_MaterialEditorPanel->OpenMaterial(AssetManager::GetAssetReference<Material>(directoryEntry.ID));
+                        break;
+                    } 
+                    case ContentType::Texture2D:{
+                        m_TextureEditorPanel->OpenTexture(AssetManager::GetAssetReference<Texture2D>(directoryEntry.ID));
                         break;
                     } 
                     case ContentType::Shader:{
@@ -366,6 +398,7 @@ namespace oil{
         ImGui::End();
 
         m_MaterialEditorPanel->OnImguiRender();
+        m_TextureEditorPanel->OnImguiRender();
     }
     bool IsHidden(const std::filesystem::path path)
     {

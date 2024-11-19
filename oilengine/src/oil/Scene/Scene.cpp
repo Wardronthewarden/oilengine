@@ -114,7 +114,6 @@ namespace oil{
                 Renderer3D::InitLightingInfo();
 
                 //Submit Lights
-                Renderer3D::RenderLighting();
 
             }
             
@@ -144,21 +143,34 @@ namespace oil{
 
             //3D Rendering
             Renderer3D::BeginScene(camera);
-               
-                auto group = m_Registry.group<TransformComponent>(entt::get<ModelComponent>);
-                for (auto entity : group){
-                    auto [transform, model] = group.get<TransformComponent, ModelComponent>(entity);
-                    if(!model.model)
-                        continue;
-                    for(auto mesh : model.model->GetMeshes()){
-                        //Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
-                        Renderer3D::SubmitMesh(transform.GetTransform(), mesh, model.Materials[mesh->GetMaterialIndex()], (uint32_t)entity);
-                    }
+
+            //Submit meshes for rendering
+            auto models = m_Registry.view<TransformComponent, ModelComponent>();
+            for (auto entity : models){
+                auto [transform, model] = models.get<TransformComponent, ModelComponent>(entity);
+                if(!model.model)
+                    continue;
+                for(auto mesh : model.model->GetMeshes()){
+                    //Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
+                    Renderer3D::SubmitMesh(transform.GetTransform(), mesh, model.Materials[mesh->GetMaterialIndex()], (uint32_t)entity);
                 }
-                
+            }
 
             Renderer3D::EndScene();
+            //Move this into renderer
+            //the scene should only submit objects, not control the render flow!
+            Renderer3D::StartLightingPass();
+            //Submit point lights
+            auto pointLights = m_Registry.view<TransformComponent, PointLightComponent>();
+            for (auto entity : pointLights){
+                auto [transform, light] = pointLights.get<TransformComponent, PointLightComponent>(entity);
+                if(!light.light)
+                    continue;
+                Renderer3D::SubmitLight(transform.GetTransform(), light, (uint32_t)entity); 
+            }
 
+            Renderer3D::EndLightingPass();
+            
 
         }
     }

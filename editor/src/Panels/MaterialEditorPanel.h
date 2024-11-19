@@ -8,7 +8,7 @@ namespace oil{
         MaterialEditorPanel();
         MaterialEditorPanel(AssetRef<Material> material);
 
-        void OpenMaterialToEdit(AssetRef<Material> material);
+        void OpenMaterial(AssetRef<Material> material);
 
         void OnImguiRender();
 

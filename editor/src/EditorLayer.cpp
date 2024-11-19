@@ -42,12 +42,9 @@ void EditorLayer::OnAttach()
 
 
     //Textures
-    /* AssetManager::GetAsset(AssetManager::GetHandleByName("Checkerboard"))
-    AssetManager::GetAsset(AssetManager::GetHandleByName("PlayButton"))
-    AssetManager::GetAsset(AssetManager::GetHandleByName("StopButton")) */
-    m_DefaultTexture = Texture2D::Create("Internal/Assets/src/Textures/Checkerboard.png");
-    m_IconPlay = Texture2D::Create("Internal/Assets/src/Textures/PlayButton.png");
-    m_IconStop = Texture2D::Create("Internal/Assets/src/Textures/StopButton.png");
+    m_DefaultTexture = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("Checkerboard"));
+    m_IconPlay = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("PlayButton"));
+    m_IconStop = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("StopButton"));
 
 
 #if 0
@@ -139,10 +136,10 @@ void EditorLayer::OnUpdate(Timestep dt)
     //stats
     //Renderer3D::ResetStats();
     //PROFILE_SCOPE("EditorLayer::Render", m_ProfileResults);
-    m_FrameBuffer->Bind();
+    m_GBuffer->Bind();
 
     // Clear entity ID attachment
-    m_FrameBuffer->ClearAttachment(1, -1);
+    m_GBuffer->ClearAttachment(7, -1);
 
     switch (m_SceneState){
         case SceneState::Edit:{
@@ -166,11 +163,12 @@ void EditorLayer::OnUpdate(Timestep dt)
     int mouseY = (int)my;
 
     if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y){
-        int pixelData = m_FrameBuffer->ReadPixel(1, mouseX, mouseY);
+        int pixelData = m_GBuffer->ReadPixel(7, mouseX, mouseY);
+        //OIL_INFO("Data: {0}", pixelData);
         m_HoveredEntity = pixelData < 0 ? Entity() : Entity((entt::entity)pixelData, m_ActiveScene.Get().get());
     }
 
-    m_FrameBuffer->Unbind();
+    m_GBuffer->Unbind();
 }
 
 void EditorLayer::OnImGuiRender()
@@ -474,7 +472,7 @@ void EditorLayer::SaveScene()
 }
 void EditorLayer::Import()
 {
-    std::filesystem::path importSrc = FileDialogs::OpenFile("Import target\0*.png;*.jpg;*.hdr;*.obj;*.gltf;*.fbx\0\0");
+    std::filesystem::path importSrc = FileDialogs::OpenFile("Import target\0*.png;*.jpg;*.hdr;*.obj;*.gltf;*.glb;*.fbx\0\0");
     if(!importSrc.empty()){
         std::string extension = importSrc.extension().string();
         if(extension == ".png" || extension == ".jpg" || extension == ".hdr")

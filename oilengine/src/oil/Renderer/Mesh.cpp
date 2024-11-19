@@ -45,4 +45,8 @@ namespace oil{
             CreateRef<DataBuffer<unsigned char>>((unsigned char*)&cubeIndices[0], sizeof(cubeIndices))
         );
     }
+    Ref<Mesh> Mesh::CreateSphere()
+    {
+        return Ref<Mesh>();
+    }
 }

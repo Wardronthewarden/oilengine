@@ -206,7 +206,7 @@ namespace oil{
             static bool StepIntoDirectory(std::filesystem::path path);
             static bool StepOutOfDirectory();
             static bool IsCurrentRootDirectory() { return s_CurrentAssetPath == s_RootAssetPath; }
-            // --------------------------------------------------
+
 
         private:
             //Asset registry functions

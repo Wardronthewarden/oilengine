@@ -1,5 +1,4 @@
 #domain engine
-#model none
 
 #type vertex
 #version 440 core
@@ -16,10 +15,13 @@ uniform mat4 u_VPMat;
 out vec3 v_TexCoords;
 out vec2 s_TexCoords;
 
+
 void main(){
-    //send screen quad over to fragment shader
+
     v_TexCoords = a_Position.xyz;
-    gl_Position = u_VPMat * vec4(a_Position.xyz, 1.0);
+    vec4 clipPos = u_VPMat * vec4(a_Position.xyz, 1.0);
+
+    gl_Position = clipPos.xyww;
 }
 
 
@@ -27,19 +29,22 @@ void main(){
 #version 440 core
 
 layout(location = 0) out vec4 o_Color;
-layout(location = 1) out int o_EntityID;
 
 in vec3 v_TexCoords;
 in vec2 s_TexCoords;
 
 uniform samplerCube u_SkyBoxTexture;
-uniform sampler2D u_SceneDepth;
 
 //main function
 void main(){
-
     gl_FragDepth = 1.0;
-    o_Color = texture(u_SkyBoxTexture, v_TexCoords);
-    o_EntityID = -1;
+
+
+    vec3 envColor = texture(u_SkyBoxTexture, v_TexCoords).rgb;
+
+    envColor = envColor / (envColor + vec3(1.0));
+    envColor = pow(envColor, vec3(1.0/2.2));
+
+    o_Color = vec4(envColor, 1.0);
 
 }

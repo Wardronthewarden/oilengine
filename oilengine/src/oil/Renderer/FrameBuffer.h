@@ -1,33 +1,16 @@
 #pragma once
 
 #include <oil/core/core.h>
+#include "Texture.h"
 
 namespace oil{
 
-    enum class FrameBufferTextureFormat{
-        None = 0,
-
-        //Color
-        RGB8,
-        RGBA8,
-        RGB16F,
-        RGBA16F,
-        R_INT,
-        R_FLOAT,
-
-        //Depth/stencil
-        DEPTH24STENCIL8,
-
-        // Defaults
-        Depth = DEPTH24STENCIL8
-    };
-
     struct FrameBufferTextureSpecification{
         FrameBufferTextureSpecification() = default;
-        FrameBufferTextureSpecification(FrameBufferTextureFormat format)
+        FrameBufferTextureSpecification(TextureFormat format)
             : TextureFormat(format){}
 
-        FrameBufferTextureFormat TextureFormat = FrameBufferTextureFormat::None;
+        TextureFormat TextureFormat = TextureFormat::None;
         // TODO: filtering and wrap
     };
 
@@ -47,24 +30,6 @@ namespace oil{
         bool SwapChainTarget = false;
     };
 
-    class FrameBufferTarget{
-    public:
-
-        virtual void Resize(uint32_t width, uint32_t height) = 0;
-        virtual void Bind(uint32_t slot) = 0;
-
-        virtual void Clear(int value) = 0;
-        virtual void Clear(float value) = 0;
-        
-        virtual inline uint32_t GetRendererID() = 0;
-        virtual inline uint32_t GetWidth() = 0;
-        virtual inline uint32_t GetHeight() = 0;
-        virtual inline FrameBufferTextureFormat GetTextureFormat() = 0;
-
-        static Ref<FrameBufferTarget> Create(FrameBufferTextureFormat format, uint32_t width, uint32_t height);
-
-    };
-
     class FrameBuffer{
     public:
         virtual void Bind() = 0;
@@ -78,12 +43,14 @@ namespace oil{
 
         //Binds color attachments, startin from texture slot 0
         virtual void BindColorAttachments() = 0;
+        virtual void BindAttachment(uint32_t attachmentIndex, uint32_t slot) = 0;
 
         //Binds the depth attachment to texture slot == num color attachments
         virtual void BindDepthAttachment() = 0;
 
-        virtual void SetColorAttachment(Ref<FrameBufferTarget> tgt, uint32_t slotIndex) = 0;
-        virtual void SetDepthAttachment(Ref<FrameBufferTarget> tgt) = 0;
+        virtual void SetColorAttachment(Ref<Texture> tgt, uint32_t slotIndex) = 0;
+        virtual void SetDepthAttachment(Ref<Texture> tgt) = 0;
+        virtual void SetAttachmentTextureTarget(uint32_t TextureRendererID, TextureTarget target, uint32_t attachmentIndex) = 0;
 
         virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const = 0;
         virtual uint32_t GetDepthAttachmentRendererID() const = 0;
