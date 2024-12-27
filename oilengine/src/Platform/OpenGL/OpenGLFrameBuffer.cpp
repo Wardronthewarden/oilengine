@@ -240,12 +240,20 @@ namespace oil{
         }
     }
 
-    void OpenGLFrameBuffer::SetAttachmentTextureTarget(uint32_t TextureRendererID, TextureTarget target = TextureTarget::Texture2D, uint32_t attachmentIndex = 0)
+    void OpenGLFrameBuffer::SetAttachmentTextureTarget(TextureTarget target = TextureTarget::Texture2D, uint32_t attachmentIndex = 0)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 
-        utils::BindTexture(target, m_ColorAttachments[attachmentIndex]->GetRendererID());
         utils::AttachColorTexture(m_ColorAttachments[attachmentIndex]->GetRendererID(), target, attachmentIndex);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    void OpenGLFrameBuffer::SetAttachmentTextureTargetLayer(uint32_t attachmentIndex, uint32_t layerDepthIndex)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+
+        //utils::AttachColorTexture(m_ColorAttachments[attachmentIndex]->GetRendererID(), target, attachmentIndex);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }

@@ -68,7 +68,18 @@ namespace oil{
 
             //Batching
             static void RenderBatch(const Ref<Material> material, const Ref<Render3DBatch> batch);
+
             
+            //-----------------------------------------------------------------------------------------
+            //we will try to create a new approach, building architectural blocks first
+
+            //define pass
+            //static void DefinePass(const RenderPassInfo& info);
+
+            //render to quad
+            //static void DrawToQuad(const Ref<Material> material, const Ref<RenderData> renderData, const Ref<FrameBuffer> framebuffer);
+
+            //-----------------------------------------------------------------------------------------
 
             //Stats
             struct Stats{

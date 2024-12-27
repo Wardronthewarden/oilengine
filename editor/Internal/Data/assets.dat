@@ -30,22 +30,22 @@
   - 1413830706
   - Internal\Assets/Textures\StepButton.oil
   - Internal\Assets/src\Textures\StepButton.png
-9216179194776731503:
-  - 5062996
-  - Assets\Shaders\materials\unnamed_material1.oil
-  - ""
 17787947900419123578:
   - 1413830706
   - Internal\Assets/Textures\PlayButton.oil
   - Internal\Assets/src\Textures\PlayButton.png
-17850041304124276049:
-  - 1413830706
-  - Internal\Assets/Textures\PauseButton.oil
-  - Internal\Assets/src\Textures\PauseButton.png
+9216179194776731503:
+  - 5062996
+  - Assets\Shaders\materials\unnamed_material1.oil
+  - ""
 4789201687886590943:
   - 1413830706
   - Assets\Textures\PauseButton1.oil
   - C:\dev\c++\oilengine\editor\Internal\Assets\src\Textures\PauseButton.png
+17850041304124276049:
+  - 1413830706
+  - Internal\Assets/Textures\PauseButton.oil
+  - Internal\Assets/src\Textures\PauseButton.png
 17311520877676789082:
   - 1413830706
   - Internal\Assets/Textures\FileIcon.oil
@@ -54,38 +54,38 @@
   - 1413830706
   - Internal\Assets/Textures\StopButton.oil
   - Internal\Assets/src\Textures\StopButton.png
+11692393473627067245:
+  - 1396919877
+  - Internal\Assets/Scenes\DefaultScene.oil
+  - ""
 1274337507700113303:
   - 1413830706
   - Internal\Assets/Textures\DirectoryIcon.oil
   - Internal\Assets/src\Textures\DirectoryIcon.png
-11692393473627067245:
-  - 1396919877
-  - Internal\Assets/Scenes\DefaultScene.oil
+0:
+  - 0
+  - ""
   - ""
 14587630775644326890:
   - 1397245010
   - Assets\Shaders\TestShader.oil
   - Assets\.shaderSources\TestShader.glsl
-0:
-  - 0
-  - ""
-  - ""
-7874532558577446409:
-  - 1413830706
-  - Internal\Assets/Textures\default_hdri.oil
-  - Internal\Assets/src\Textures\default_hdri.hdr
 7566013175594810801:
   - 1297040460
   - Assets\Models\monkey.oil
   - C:\dev\c++\oilengine\editor\Assets\Models\monkey.obj
-2855796369329426157:
-  - 5062996
-  - Internal\Assets/Materials\DefaultMaterial.oil
-  - ""
+7874532558577446409:
+  - 1413830706
+  - Internal\Assets/Textures\default_hdri.oil
+  - Internal\Assets/src\Textures\default_hdri.hdr
 4837060938119102823:
   - 1297040460
   - Assets\Models\sphere.oil
   - C:\dev\c++\oilengine\editor\Assets\Models\sphere.obj
+2855796369329426157:
+  - 5062996
+  - Internal\Assets/Materials\DefaultMaterial.oil
+  - ""
 3454827853140715664:
   - 5062996
   - Assets\Shaders\materials\unnamed_material.oil
@@ -110,3 +110,7 @@
   - 1397245010
   - Internal\Assets/Shaders\SkyLightShader.oil
   - Internal\Assets/src\Shaders\SkyLightShader.glsl
+17643494286035657250:
+  - 1397245010
+  - Internal\Assets/Shaders\TestPassthroughShader.oil
+  - Internal\Assets/src\Shaders\TestPassthroughShader.glsl

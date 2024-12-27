@@ -8,14 +8,15 @@ layout(location = 0) in vec4 a_Position;
 layout(location = 1) in vec4 a_Color;  
 layout(location = 2) in vec2 a_TexCoord;  
 
-uniform mat4 u_VPMat;
+uniform mat4 u_View;
+uniform mat4 u_Projection;
 
 out vec3 v_LocalPos;
 
 void main(){
     //send screen quad over to fragment shader
     v_LocalPos = a_Position.xyz;
-    gl_Position = u_VPMat * vec4(a_Position.xyz, 1.0);
+    gl_Position = u_Projection * u_View * vec4(a_Position.xyz, 1.0);
 }
 
 
@@ -41,4 +42,5 @@ void main(){
     vec3 color = texture(u_EquirectangularMap, uv).rgb;
 
     o_Color = vec4(color, 1.0);
+    //o_Color = vec4(1.0, 0.0, 0.0, 1.0);
 }

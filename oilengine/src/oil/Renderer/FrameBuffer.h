@@ -50,7 +50,8 @@ namespace oil{
 
         virtual void SetColorAttachment(Ref<Texture> tgt, uint32_t slotIndex) = 0;
         virtual void SetDepthAttachment(Ref<Texture> tgt) = 0;
-        virtual void SetAttachmentTextureTarget(uint32_t TextureRendererID, TextureTarget target, uint32_t attachmentIndex) = 0;
+        virtual void SetAttachmentTextureTarget(TextureTarget target, uint32_t attachmentIndex) = 0;
+        virtual void SetAttachmentTextureTargetLayer(uint32_t attachmentIndex, uint32_t layerDepthIndex) = 0;
 
         virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const = 0;
         virtual uint32_t GetDepthAttachmentRendererID() const = 0;

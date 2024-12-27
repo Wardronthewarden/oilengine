@@ -218,16 +218,15 @@ namespace oil{
         // Setup base shader
         
         //Find a better way
-        Texture2D::Create(1,1);
 
         s_3DRenderData.ShaderLib = CreateRef<ShaderLibrary>();
-        Texture2D::Create(1,1);
         s_3DRenderData.ShaderLib->Load("PBR","Internal/Assets/src/Shaders/PBR.glsl");
-        
+        //Change this
         s_3DRenderData.ShaderLib->Add("SkyBox", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("SkyBoxShader")));
         s_3DRenderData.ShaderLib->Add("SkyLight", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("SkyLightShader")));
         s_3DRenderData.ShaderLib->Add("LightApply", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("LightApplication")));
         s_3DRenderData.ShaderLib->Add("CubeProjection", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("CubeProjection")));
+        s_3DRenderData.ShaderLib->Add("TestShader", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("TestPassthroughShader")));
 
 
         //Setup screen quad
@@ -286,12 +285,22 @@ namespace oil{
         std::vector<Ref<Texture2D>> faces;
         for (int i = 0; i < 6; i++){
             faces.push_back(s_3DRenderData.DefaultTexture);
-            //faces.push_back(s_3DRenderData.WhiteTexture);
         }
 
         s_3DRenderData.SkyBoxTexture = TextureCube::Create(faces);
+
         CubemapFromHDRI(s_3DRenderData.DefaultHDRI);
 
+        TextureSettings settings{};
+
+        settings.StorageType = OIL_TEXTURE_2D | OIL_TEXTURE_STORAGE_MUTABLE;
+        settings.Width = 512;
+        settings.Height = 512;
+        settings.TextureFormat = OIL_TEXTURE_FORMAT_RGBA8;
+        
+        TextureParams params{};
+
+        Ref<Texture2D> testTex = Texture2D::Create(settings, params);
 
     }
 
@@ -519,11 +528,10 @@ namespace oil{
 
     void Renderer3D::CubemapFromHDRI(Ref<Texture2D> hdri)
     {
+        RenderCommand::DisableDepthTesting();
         //setup render target buffer
         FrameBufferSpecification spec;
-        spec.Attachments = {    TextureFormat::RGBA16F, TextureFormat::RGBA16F, TextureFormat::RGBA16F, 
-                                TextureFormat::RGBA16F, TextureFormat::RGBA16F, TextureFormat::RGBA16F
-                            };
+        spec.Attachments = { TextureFormat::RGB8 };
         spec.Width = 512;
         spec.Height = 512;
         Ref<FrameBuffer> renderbuffer = FrameBuffer::Create(spec);
@@ -540,21 +548,26 @@ namespace oil{
             glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
         };
 
-        renderbuffer->SetColorAttachment(TextureCube::Create(512, 512, TextureFormat::RGBA16F), 0);
+        //how do we want to do this?
+        s_3DRenderData.SkyBoxTexture = TextureCube::Create(512, 512, TextureFormat::RGB8);                                                            
+        renderbuffer->SetColorAttachment(s_3DRenderData.SkyBoxTexture, 0);
 
+        //RenderCommand::DisableFaceCulling();
         //bind shader and upload data
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("CubeProjection");
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetMat4("u_Projection", captureProjection);
         hdri->Bind();
-        s_3DRenderData.ActiveShader->SetInt("u_EquirectangularMap", 0);
 
         s_3DRenderData.CubeVertexArray->Bind();
         for (int i = 0; i < 6; ++i){
             s_3DRenderData.ActiveShader->SetMat4("u_View", captureViews[i]);
-            renderbuffer->SetAttachmentTextureTarget(s_3DRenderData.SkyBoxTexture->GetRendererID(), TextureTarget::TextureCube_Xpos + i, 0);
+            renderbuffer->SetAttachmentTextureTarget(TextureTarget::TextureCube_Xpos + i, 0);
+            renderbuffer->Bind();
             RenderCommand::DrawIndexed(s_3DRenderData.CubeVertexArray, 36);
         }
+        RenderCommand::EnableDepthTesting();
+
     }
 
     void Renderer3D::RenderEnvironment()
@@ -596,6 +609,7 @@ namespace oil{
         s_3DRenderData.ActiveShader->SetInt("u_DiffuseIrradiance", 10); 
         s_3DRenderData.ActiveShader->SetInt("u_SpecularIrradiance", 10);
 
+        
         s_3DRenderData.QuadVertexArray->Bind();
         RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
         RenderCommand::EnableDepthTesting();

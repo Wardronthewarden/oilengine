@@ -12,6 +12,7 @@ namespace oil{
 
     class OpenGLTexture2D : public Texture2D{
     public:
+        OpenGLTexture2D(TextureSettings settings, TextureParams params);
         OpenGLTexture2D(uint32_t width, uint32_t height);
         OpenGLTexture2D(uint32_t width, uint32_t height, TextureFormat format);
         virtual ~OpenGLTexture2D();
@@ -28,6 +29,11 @@ namespace oil{
         virtual void ResetMetadata(uint32_t width, uint32_t height, TextureFormat format) override;
         virtual DataBuffer<unsigned char> GetData() override;
 
+        
+        virtual void SetWrapS(OILTexenum wrapMethod) override;
+        virtual void SetWrapT(OILTexenum wrapMethod) override;
+        virtual void SetWrapR(OILTexenum wrapMethod) override;
+
         virtual void Bind(uint32_t slot = 0) const override;
 
         virtual bool operator==(const Texture& other) const override { 
@@ -36,12 +42,13 @@ namespace oil{
 
     private:
         void SetupTexture();
+        void InitTexture();
 
     private:
         uint32_t m_Width, m_Height;
         uint32_t m_RendererID;
+        GLenum m_TexTarget;
         GLenum m_DataFormat, m_FormatComponentType;
-        DataBuffer<unsigned char> m_Data;
     };
 
     class OpenGLTextureCube : public TextureCube{
@@ -61,6 +68,10 @@ namespace oil{
         virtual void Resize(uint32_t width, uint32_t height) override;
         virtual void ResetMetadata(uint32_t width, uint32_t height, TextureFormat format) override;
         virtual DataBuffer<unsigned char> GetData() override;
+                
+        virtual void SetWrapS(OILTexenum wrapMethod) override;
+        virtual void SetWrapT(OILTexenum wrapMethod) override;
+        virtual void SetWrapR(OILTexenum wrapMethod) override;
 
         virtual void Bind(uint32_t slot = 0) const override;
 
@@ -74,6 +85,7 @@ namespace oil{
     private:
         uint32_t m_Width, m_Height;
         uint32_t m_RendererID;
+        GLenum m_TexTarget;
         GLenum m_DataFormat, m_FormatComponentType;
     };
 }

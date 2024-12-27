@@ -28,7 +28,8 @@ namespace oil{
 
         virtual void SetColorAttachment(Ref<Texture> tgt, uint32_t slotIndex) override;
         virtual void SetDepthAttachment(Ref<Texture> tgt) override;
-        virtual void SetAttachmentTextureTarget(uint32_t TextureRendererID, TextureTarget target, uint32_t attachmentIndex) override;
+        virtual void SetAttachmentTextureTarget(TextureTarget target, uint32_t attachmentIndex) override;
+        virtual void SetAttachmentTextureTargetLayer(uint32_t attachmentIndex, uint32_t layerDepthIndex) override;
 
         virtual const FrameBufferSpecification& GetSpecification() const override { return m_Specification; }
         virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const override { OIL_CORE_ASSERT(index < m_ColorAttachments.size(), "The maximum color attachments possible are 6"); return m_ColorAttachments[index]->GetRendererID(); }
