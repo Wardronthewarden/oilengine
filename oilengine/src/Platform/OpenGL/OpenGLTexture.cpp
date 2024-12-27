@@ -229,7 +229,7 @@ namespace oil{
             }
         }
 
-        static uint32_t GetBytesPerChannels(TextureFormat format){
+        static uint32_t GetBytesPerChannels(OILTexenum format){
             switch (format){
                 case OIL_TEXTURE_FORMAT_DEPTH24STENCIL8:
                 case OIL_TEXTURE_FORMAT_RGB8:
