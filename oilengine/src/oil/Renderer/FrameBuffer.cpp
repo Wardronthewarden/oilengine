@@ -16,5 +16,4 @@ namespace oil{
         OIL_CORE_ASSERT(false, "Unknown RendererAPI!")
         return nullptr;
     }
-
 }

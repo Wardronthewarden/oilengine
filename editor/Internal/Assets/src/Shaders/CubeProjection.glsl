@@ -42,5 +42,4 @@ void main(){
     vec3 color = texture(u_EquirectangularMap, uv).rgb;
 
     o_Color = vec4(color, 1.0);
-    //o_Color = vec4(1.0, 0.0, 0.0, 1.0);
 }

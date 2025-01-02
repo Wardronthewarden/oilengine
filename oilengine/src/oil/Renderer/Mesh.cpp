@@ -47,6 +47,65 @@ namespace oil{
     }
     Ref<Mesh> Mesh::CreateSphere()
     {
-        return Ref<Mesh>();
+        OIL_INFO("Creating sphere vertices!");
+        Ref<DataBuffer<BaseVertex>> verts = GenerateSphereVertices(64, 64);
+        Ref<DataBuffer<uint32_t>> indices = GenerateSphereIndices(64, 64);
+        return CreateRef<Mesh>(
+            CreateRef<DataBuffer<unsigned char>>((unsigned char*)verts->GetData(), verts->GetSize()),
+            CreateRef<DataBuffer<unsigned char>>((unsigned char*)indices->GetData(), indices->GetSize())
+        );
+    }
+
+    Ref<DataBuffer<BaseVertex>> oil::GenerateSphereVertices(uint32_t xSegments, uint32_t ySegments) {
+        const float PI = 3.14159265359f;
+
+        BaseVertex currentVert;
+        std::vector<BaseVertex> verts;
+        for (unsigned int x = 0; x <= xSegments; ++x)
+        {
+            for (unsigned int y = 0; y <= ySegments; ++y)
+            {
+                float xSegment = (float)x / (float)xSegments;
+                float ySegment = (float)y / (float)ySegments;
+                float xPos = std::cos(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
+                float yPos = std::cos(ySegment * PI);
+                float zPos = std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
+
+                currentVert.Position = glm::vec4(xPos, yPos, zPos, 1.0);
+                currentVert.Color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+                currentVert.TexCoord = glm::vec2(xSegment, ySegment);
+                currentVert.EntityID = 0;
+                //currentVert.Normal = glm::vec3(xPos, yPos, zPos);
+
+                verts.push_back(currentVert);
+            }
+        }
+        return CreateRef<DataBuffer<BaseVertex>>(verts.data(), verts.size());
+    }
+    Ref<DataBuffer<uint32_t>> GenerateSphereIndices(uint32_t xSegments, uint32_t ySegments)
+    {
+        bool oddRow = false;
+        std::vector<uint32_t> indices;
+        for (uint32_t y = 0; y < ySegments; ++y)
+        {
+            if (!oddRow) // even rows: y == 0, y == 2; and so on
+            {
+                for (uint32_t x = 0; x <= xSegments; ++x)
+                {
+                    indices.push_back(y       * (xSegments + 1) + x);
+                    indices.push_back((y + 1) * (xSegments + 1) + x);
+                }
+            }
+            else
+            {
+                for (int x = xSegments; x >= 0; --x)
+                {
+                    indices.push_back((y + 1) * (xSegments + 1) + x);
+                    indices.push_back(y       * (xSegments + 1) + x);
+                }
+            }
+            oddRow = !oddRow;
+        }
+        return CreateRef<DataBuffer<uint32_t>>(indices.data(), indices.size());
     }
 }

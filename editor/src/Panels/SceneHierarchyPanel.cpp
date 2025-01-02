@@ -77,6 +77,9 @@ namespace oil{
                         if (ImGui::MenuItem("Model")){
                             m_SelectionContext.AddComponent<ModelComponent>();
                         }
+                        if (ImGui::MenuItem("Mesh")){
+                            m_SelectionContext.AddComponent<MeshComponent>();
+                        }
             
                 
                     ImGui::EndMenu();
@@ -163,8 +166,12 @@ namespace oil{
                 m_SelectionContext.AddComponent<CameraComponent>();
                 ImGui::CloseCurrentPopup();
             }
-           if (ImGui::MenuItem("Model")){
+            if (ImGui::MenuItem("Model")){
                 m_SelectionContext.AddComponent<ModelComponent>();
+                ImGui::CloseCurrentPopup();
+            }
+            if (ImGui::MenuItem("Mesh")){
+                m_SelectionContext.AddComponent<MeshComponent>();
                 ImGui::CloseCurrentPopup();
             }
                 
@@ -245,20 +252,39 @@ namespace oil{
 
         if(ImGui::BeginPopup("SetMesh")){
            if (ImGui::MenuItem("Plane")){
-                component.mesh = Mesh::CreatePlane();
+                component.SetMesh(Mesh::CreatePlane());
                 ImGui::CloseCurrentPopup();
             }
             if (ImGui::MenuItem("Cube")){
-                component.mesh = Mesh::CreateCube();
+                component.SetMesh(Mesh::CreateCube());
                 ImGui::CloseCurrentPopup();
             }
            if (ImGui::MenuItem("Sphere")){
-                component.mesh = Mesh::CreateCube();
+                component.SetMesh(Mesh::CreateSphere());
                 ImGui::CloseCurrentPopup();
             }
                 
             ImGui::EndPopup();
         }
+
+        if(ImGui::Button("+", ImVec2(50.0f, 50.0f)));
+
+            //drag drop 
+            UUID draggedID = UI::AcceptAssetDrop(ContentType::Material);
+            if (draggedID){
+                component.SetMaterial(draggedID); 
+            }
+
+            std::string buttonLabel;
+
+            ImGui::SameLine();
+            if(component.material){
+                //buttonLabel = AssetManager::GetName(component.material);
+                buttonLabel = "Material Assigned";
+            }else{
+                buttonLabel = "Material";
+            }
+            ImGui::TextWrapped(buttonLabel.c_str());
 
         });
 
@@ -287,17 +313,17 @@ namespace oil{
         for (uint32_t i = 0; i < component.Materials.size(); ++i){
 
 
-                if(ImGui::Button("+", ImVec2(50.0f, 50.0f)));
+            if(ImGui::Button("+", ImVec2(50.0f, 50.0f)));
 
-                //drag drop 
-                UUID draggedID = UI::AcceptAssetDrop(ContentType::Material);
-                if (draggedID){
-                    component.Materials[i] = draggedID; 
-                }
+            //drag drop 
+            UUID draggedID = UI::AcceptAssetDrop(ContentType::Material);
+            if (draggedID){
+                component.Materials[i] = draggedID; 
+            }
 
-                ImGui::SameLine();
-                buttonLabel = AssetManager::GetName(component.Materials[i]);
-                ImGui::TextWrapped(buttonLabel.c_str());
+            ImGui::SameLine();
+            buttonLabel = AssetManager::GetName(component.Materials[i]);
+            ImGui::TextWrapped(buttonLabel.c_str());
         }
     
         });

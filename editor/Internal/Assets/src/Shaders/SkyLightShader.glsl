@@ -24,6 +24,7 @@ in vec2 v_TexCoords;
 
 uniform samplerCube u_DiffuseIrradiance;
 uniform samplerCube u_SpecularIrradiance;
+uniform sampler2D u_BRDFlut;
 
 uniform sampler2D u_Albedo;
 uniform sampler2D u_Position;
@@ -40,7 +41,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness){
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-
 //main function
 void main(){
     //setup
@@ -51,13 +51,16 @@ void main(){
     float roughness = texture(u_Roughness, v_TexCoords).r;
     float AO = texture(u_AO, v_TexCoords).r;
 
-    vec3 normal = normalize(texture(u_Normal, v_TexCoords).rgb);
+    vec3 normal = normalize(texture(u_Normal, v_TexCoords).rgb) * 2.0 - 1.0;
 
     vec3 worldPos = texture(u_Position, v_TexCoords).rgb;
 
     vec3 viewDir = normalize(u_CamPos - worldPos);
 
+    vec3 R = reflect(-viewDir, normal);
 
+
+    //diffuse
     vec3 F0 = vec3(0.4);
     F0 = mix(F0, albedo, metallic);
 
@@ -65,10 +68,16 @@ void main(){
     vec3 kD = 1.0 - kS;
     vec3 irradiance = texture(u_DiffuseIrradiance, normal).rgb;
     vec3 diffuse = irradiance * albedo;
-    vec3 ambient = (kD * diffuse); //* AO;
 
+    //specular
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(u_SpecularIrradiance, R,  roughness * MAX_REFLECTION_LOD).rgb;   
+    vec2 envBRDF  = texture(u_BRDFlut, vec2(max(dot(normal, viewDir), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (kS * envBRDF.x + envBRDF.y);
+    
+    //combination
+    vec3 ambient = (kD * diffuse + specular); //* AO;
 
 
     o_Lighting = vec4(ambient, 1.0);
-    //o_Lighting = vec4(1.0);
 }

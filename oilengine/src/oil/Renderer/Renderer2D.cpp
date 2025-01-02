@@ -30,7 +30,6 @@ namespace oil{
         Ref<VertexArray> QuadVertexArray;
         Ref<VertexBuffer> QuadVertexBuffer;
         Ref<Shader> TextureShader;
-        Ref<Texture2D> WhiteTexture;
 
         uint32_t QuadIndexCount = 0;
         QuadVertex* QuadVertexBufferBase = nullptr;
@@ -92,10 +91,6 @@ namespace oil{
 
     delete[] quadIndices;
 
-    s_2DRenderData.WhiteTexture = Texture2D::Create(1,1);
-    uint32_t whiteTextureData = 0xffffffff;
-    s_2DRenderData.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
-
     int32_t samplers[s_2DRenderData.MaxTextureSlots];
     for (uint32_t i = 0; i<s_2DRenderData.MaxTextureSlots; ++i)
         samplers[i] = i;
@@ -104,8 +99,6 @@ namespace oil{
     s_2DRenderData.TextureShader->Bind();
     s_2DRenderData.TextureShader->SetIntArray("u_Textures", samplers, s_2DRenderData.MaxTextureSlots);
 
-    //initialize all tex slots to 0
-    s_2DRenderData.TextureSlots[0] = s_2DRenderData.WhiteTexture;
 
     s_2DRenderData.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.0f, 1.0f };
     s_2DRenderData.QuadVertexPositions[1] = {  0.5f, -0.5f, 0.0f, 1.0f };
@@ -209,7 +202,7 @@ namespace oil{
         
         float textureIndex = 0.0f;
 
-        for (uint32_t i = 1; i< s_2DRenderData.TextureSlotIndex; ++i){
+        for (uint32_t i = 0; i< s_2DRenderData.TextureSlotIndex; ++i){
             if (*s_2DRenderData.TextureSlots[i].get() == *texture.get()){
                 textureIndex = (float)i;
                 break;

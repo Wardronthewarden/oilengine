@@ -78,9 +78,18 @@ namespace oil{
 
     struct MeshComponent{
         Ref<Mesh> mesh;
+        AssetHandle material = 0;
 
         MeshComponent() = default;
         MeshComponent(const MeshComponent&) = default;
+
+        void SetMesh(Ref<Mesh> inMesh){
+            mesh = inMesh;
+        }
+
+        void SetMaterial(AssetHandle mat){
+            material = mat;
+        }
     };
 
 

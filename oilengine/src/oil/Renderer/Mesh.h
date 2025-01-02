@@ -62,6 +62,9 @@ namespace oil{
             4, 6, 7, 4, 7, 5  // Back
     };
 
+    //Sphere generation
+    static Ref<DataBuffer<BaseVertex>> GenerateSphereVertices(uint32_t xSegments, uint32_t ySegments);
+    static Ref<DataBuffer<uint32_t>> GenerateSphereIndices(uint32_t xSegments, uint32_t ySegments);
     
     class Mesh{
     public:
@@ -93,7 +96,7 @@ namespace oil{
         static Ref<Mesh> CreateSphere();
 
     private:
-        //Use binary memory block to store vertex data, its size, and store layout directly
+        Ref<VertexArray> m_VertexArray;
         Ref<DataBuffer<unsigned char>> m_VertexBuffer;
         Ref<DataBuffer<unsigned char>> m_IndexBuffer;
         BufferLayout m_Layout;

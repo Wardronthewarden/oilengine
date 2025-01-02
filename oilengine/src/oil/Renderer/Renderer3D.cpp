@@ -124,11 +124,12 @@ namespace oil{
         Ref<ShaderLibrary> ShaderLib;
         Ref<Shader> ActiveShader;
 
-        //Textures
+        //Engine Textures
         std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
-        Ref<Texture2D> WhiteTexture;
         uint32_t TextureSlotsUsed = 0;
+        Ref<Texture2D> DebugTexture; 
         Ref<Texture2D> DefaultTexture; 
+        Ref<Texture2D> BRDFIntegrationMap; 
 
 
         //Render targets
@@ -137,6 +138,8 @@ namespace oil{
         //Environment map
         Ref<Texture2D> DefaultHDRI;
         Ref<TextureCube> SkyBoxTexture;
+        Ref<TextureCube> DiffuseIrradianceMap;
+        Ref<TextureCube> PreFilteredEnvironmentMap;
 
         //Unit cube
         Ref<VertexArray> CubeVertexArray;
@@ -184,6 +187,8 @@ namespace oil{
     void Renderer3D::Init(){
 
         OIL_INFO("Current working directory is: {0}", std::filesystem::current_path());
+
+        RenderCommand::SetClearColor({1.0, 0.0, 1.0, 1.0});
         
         //Create vertex array
         s_3DRenderData.MeshVertexArray = VertexArray::Create();
@@ -211,10 +216,6 @@ namespace oil{
         for (uint32_t i = 0; i<s_3DRenderData.MaxTextureSlots; ++i)
             samplers[i] = i;
 
-        s_3DRenderData.WhiteTexture = Texture2D::Create(1,1);
-        uint32_t whiteTextureData = 0xffffffff;
-        s_3DRenderData.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
-
         // Setup base shader
         
         //Find a better way
@@ -226,7 +227,10 @@ namespace oil{
         s_3DRenderData.ShaderLib->Add("SkyLight", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("SkyLightShader")));
         s_3DRenderData.ShaderLib->Add("LightApply", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("LightApplication")));
         s_3DRenderData.ShaderLib->Add("CubeProjection", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("CubeProjection")));
+        s_3DRenderData.ShaderLib->Add("CubemapConvolution", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("CubemapConvolution")));
         s_3DRenderData.ShaderLib->Add("TestShader", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("TestPassthroughShader")));
+        s_3DRenderData.ShaderLib->Add("BRDFIntegration", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("BRDFIntegration")));
+        s_3DRenderData.ShaderLib->Add("TexDisplayShader", AssetManager::GetAsset<Shader>(AssetManager::GetHandleByName("TexDisplayShader")));
 
 
         //Setup screen quad
@@ -255,24 +259,43 @@ namespace oil{
         //Set up render buffers
         RBuffers.Init();
 
-        s_3DRenderData.RenderTargets["LitScene"] = Texture2D::Create(1280, 720, TextureFormat::RGBA8);
+        TextureSettings FBSettings{};
+        FBSettings.StorageType = OIL_TEXTURE_STORAGE_MUTABLE | OIL_TEXTURE_2D;
+        FBSettings.Width = 1280;
+        FBSettings.Height = 720;
+
+        TextureParams FBParams{};
+
+        FBSettings.TextureFormat = OIL_TEXTURE_FORMAT_RGBA8;
+        s_3DRenderData.RenderTargets["LitScene"] = Texture2D::Create(FBSettings, FBParams);
         RBuffers.FBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["LitScene"], 0);
 
-        s_3DRenderData.RenderTargets["UnlitScene"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
-        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["UnlitScene"], 0);
         
-        s_3DRenderData.RenderTargets["SceneDepth"] = Texture2D::Create(1280, 720, TextureFormat::DEPTH24STENCIL8);
+        FBSettings.TextureFormat = OIL_TEXTURE_FORMAT_DEPTH24STENCIL8;
+        s_3DRenderData.RenderTargets["SceneDepth"] = Texture2D::Create(FBSettings, FBParams);
         RBuffers.GBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
         RBuffers.FBuffer->SetDepthAttachment(s_3DRenderData.RenderTargets["SceneDepth"]);
 
-        s_3DRenderData.RenderTargets["WorldPosition"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
+
+        FBSettings.TextureFormat = OIL_TEXTURE_FORMAT_RGBA16F;
+        s_3DRenderData.RenderTargets["UnlitScene"] = Texture2D::Create(FBSettings, FBParams);
+        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["UnlitScene"], 0);
+
+        s_3DRenderData.RenderTargets["WorldPosition"] = Texture2D::Create(FBSettings, FBParams);
         RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["WorldPosition"], 1);
 
-        s_3DRenderData.RenderTargets["WorldNormal"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
+        s_3DRenderData.RenderTargets["WorldNormal"] = Texture2D::Create(FBSettings, FBParams);
         RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["WorldNormal"], 2);
         
-        s_3DRenderData.RenderTargets["Texcoords"] = Texture2D::Create(1280, 720, TextureFormat::RGBA16F);
+        s_3DRenderData.RenderTargets["Texcoords"] = Texture2D::Create(FBSettings, FBParams);
         RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["Texcoords"], 3);
+        
+        FBSettings.TextureFormat = OIL_TEXTURE_FORMAT_RED16F;
+        s_3DRenderData.RenderTargets["Metallic"] = Texture2D::Create(FBSettings, FBParams);
+        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["Metallic"], 4);
+        
+        s_3DRenderData.RenderTargets["Roughness"] = Texture2D::Create(FBSettings, FBParams);
+        RBuffers.GBuffer->SetColorAttachment(s_3DRenderData.RenderTargets["Roughness"], 5);
 
         //Set up lighting info
         InitLightingInfo();
@@ -280,28 +303,24 @@ namespace oil{
         //Default textures
         s_3DRenderData.DefaultTexture = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("Checkerboard"));
         s_3DRenderData.DefaultHDRI = AssetManager::GetAsset<Texture2D>(AssetManager::GetHandleByName("default_hdri"));
-        
-        //cubemap test
-        std::vector<Ref<Texture2D>> faces;
-        for (int i = 0; i < 6; i++){
-            faces.push_back(s_3DRenderData.DefaultTexture);
-        }
 
-        s_3DRenderData.SkyBoxTexture = TextureCube::Create(faces);
+        s_3DRenderData.SkyBoxTexture = CubemapFromHDRI(s_3DRenderData.DefaultHDRI);
+        s_3DRenderData.SkyBoxTexture->GenerateMipmaps();
+        s_3DRenderData.SkyBoxTexture->SetMinFilter(OIL_TEXTURE_FILTER_LINEAR | OIL_TEXTURE_MIPFILTER_LINEAR);
+        GenerateDiffuseIrradiance();
 
-        CubemapFromHDRI(s_3DRenderData.DefaultHDRI);
+        PreFilterEnvironmentMap();
 
-        TextureSettings settings{};
+        GenerateBRDFIntegrationMap();
 
-        settings.StorageType = OIL_TEXTURE_2D | OIL_TEXTURE_STORAGE_MUTABLE;
-        settings.Width = 512;
-        settings.Height = 512;
-        settings.TextureFormat = OIL_TEXTURE_FORMAT_RGBA8;
-        
-        TextureParams params{};
+        FBSettings.TextureFormat = OIL_TEXTURE_FORMAT_RGBA8;
 
-        Ref<Texture2D> testTex = Texture2D::Create(settings, params);
+        s_3DRenderData.DebugTexture = Texture2D::Create(FBSettings, FBParams);
 
+        utils::SetDebugTexture(s_3DRenderData.BRDFIntegrationMap);
+
+        //Default material
+        s_3DRenderData.DefaultMaterial = AssetManager::GetHandleByName("DefaultMaterial");
     }
 
     void Renderer3D::ShutDown(){
@@ -327,8 +346,7 @@ namespace oil{
         s_3DRenderData.CamPosition = camera.GetPosition();
         
         ClearBuffers();
-        s_3DRenderData.TextureSlotsUsed = 0;
-        s_3DRenderData.WhiteTexture->Bind(s_3DRenderData.TextureSlotsUsed++);            
+        s_3DRenderData.TextureSlotsUsed = 0;           
 
         
         StartNewBatch();
@@ -341,7 +359,7 @@ namespace oil{
         ClearBuffers();
         s_3DRenderData.TextureSlotsUsed = 0;
         //Bind all engine textures
-        s_3DRenderData.WhiteTexture->Bind(s_3DRenderData.TextureSlotsUsed++);            
+         
 
 
         StartNewBatch();
@@ -350,13 +368,14 @@ namespace oil{
     
     void Renderer3D::ClearBuffers()
     {
-        RenderCommand::SetClearColor({1.0f, 0.0f, 1.0f, 1.0f});
+        RenderCommand::SetClearColor({0.0f, 0.0f, 0.0f, 1.0f});
 
         RBuffers.FBuffer->Bind();
         RenderCommand::Clear();
         RBuffers.GBuffer->Bind();
         RenderCommand::Clear();
         RBuffers.GBuffer->ClearAttachment(7, -1);
+        RenderCommand::SetClearColor({1.0f, 0.0f, 1.0f, 1.0f});
 
     }
 
@@ -399,6 +418,11 @@ namespace oil{
     uint32_t Renderer3D::GetBufferID(std::string bufferName)
     {
         return s_3DRenderData.RenderTargets[bufferName]->GetRendererID();
+    }
+
+    uint32_t Renderer3D::GetDebugTexture()
+    {  
+        return s_3DRenderData.DebugTexture->GetRendererID();
     }
 
     // Mesh drawing
@@ -463,12 +487,7 @@ namespace oil{
     {
         RenderCommand::EnableFaceCulling();
         RenderCommand::SetDepthTestOperator(DepthOperator::Less);
-        //CubemapFromHDRI(s_3DRenderData.DefaultHDRI);
 
-    }
-
-    void Renderer3D::SetRenderTarget(Ref<Texture2D> targetTexture)
-    {
     }
 
     void Renderer3D::RenderBatch(const Ref<Material> material, const Ref<Render3DBatch> batch)
@@ -526,48 +545,104 @@ namespace oil{
         
     }
 
-    void Renderer3D::CubemapFromHDRI(Ref<Texture2D> hdri)
+    Ref<TextureCube> Renderer3D::CubemapFromHDRI(Ref<Texture2D> hdri)
     {
-        RenderCommand::DisableDepthTesting();
-        //setup render target buffer
-        FrameBufferSpecification spec;
-        spec.Attachments = { TextureFormat::RGB8 };
-        spec.Width = 512;
-        spec.Height = 512;
-        Ref<FrameBuffer> renderbuffer = FrameBuffer::Create(spec);
-        renderbuffer->Bind();
+        TextureSettings settings{};
 
-        //set up views and projection
-        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-        glm::mat4 captureViews[] = {
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-        };
+        settings.StorageType = OIL_TEXTURE_CUBE | OIL_TEXTURE_STORAGE_MUTABLE;
+        settings.Width = 1024;
+        settings.Height = 1024;
+        settings.TextureFormat = OIL_TEXTURE_FORMAT_RGB8;
 
-        //how do we want to do this?
-        s_3DRenderData.SkyBoxTexture = TextureCube::Create(512, 512, TextureFormat::RGB8);                                                            
-        renderbuffer->SetColorAttachment(s_3DRenderData.SkyBoxTexture, 0);
+        TextureParams params{};
+        Ref<TextureCube> targetCube;
+        targetCube = TextureCube::Create(settings, params); 
 
-        //RenderCommand::DisableFaceCulling();
+        CubemapFromHDRI(hdri, targetCube);
+
+        return targetCube;
+    }
+
+    void Renderer3D::CubemapFromHDRI(Ref<Texture2D> hdri, Ref<TextureCube> targetTexture)
+    {
         //bind shader and upload data
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("CubeProjection");
         s_3DRenderData.ActiveShader->Bind();
-        s_3DRenderData.ActiveShader->SetMat4("u_Projection", captureProjection);
         hdri->Bind();
+        s_3DRenderData.ActiveShader->SetInt("u_EquirectangularMap", 0);
 
-        s_3DRenderData.CubeVertexArray->Bind();
-        for (int i = 0; i < 6; ++i){
-            s_3DRenderData.ActiveShader->SetMat4("u_View", captureViews[i]);
-            renderbuffer->SetAttachmentTextureTarget(TextureTarget::TextureCube_Xpos + i, 0);
-            renderbuffer->Bind();
-            RenderCommand::DrawIndexed(s_3DRenderData.CubeVertexArray, 36);
+        utils::RenderActiveShaderToCubemap(targetTexture);
+    }
+
+    void Renderer3D::GenerateDiffuseIrradiance()
+    {
+        TextureSettings settings{};
+
+        settings.StorageType = OIL_TEXTURE_CUBE | OIL_TEXTURE_STORAGE_MUTABLE;
+        settings.Width = 32;
+        settings.Height = 32;
+        settings.TextureFormat = s_3DRenderData.SkyBoxTexture->GetFormat();
+
+        TextureParams params{};
+        params.MinFilter = OIL_TEXTURE_FILTER_LINEAR;
+        params.MagFilter = OIL_TEXTURE_FILTER_LINEAR;
+
+        s_3DRenderData.DiffuseIrradianceMap = TextureCube::Create(settings, params);
+
+        //bind shader and upload data
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("CubemapConvolution");
+        s_3DRenderData.ActiveShader->Bind();
+        s_3DRenderData.SkyBoxTexture->Bind();
+        s_3DRenderData.ActiveShader->SetInt("u_EnvironmentMap", 0);
+
+        utils::RenderActiveShaderToCubemap(s_3DRenderData.DiffuseIrradianceMap);
+    }
+
+    void Renderer3D::GenerateBRDFIntegrationMap()
+    {
+        TextureSettings settings{};
+
+        settings.StorageType = OIL_TEXTURE_2D | OIL_TEXTURE_STORAGE_MUTABLE;
+        settings.Width = 512;
+        settings.Height = 512;
+        settings.TextureFormat = OIL_TEXTURE_FORMAT_RG16F;
+
+        TextureParams params{};
+        params.MinFilter = OIL_TEXTURE_FILTER_LINEAR;
+        params.MagFilter = OIL_TEXTURE_FILTER_LINEAR;
+
+        s_3DRenderData.BRDFIntegrationMap = Texture2D::Create(settings, params);
+        s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("BRDFIntegration");
+
+        utils::RenderActiveShaderToTexture(s_3DRenderData.BRDFIntegrationMap);
+    }
+
+    void Renderer3D::PreFilterEnvironmentMap()
+    {
+        TextureSettings settings{};
+
+        settings.StorageType = s_3DRenderData.SkyBoxTexture->GetStorageType();
+        settings.Width = s_3DRenderData.SkyBoxTexture->GetWidth();
+        settings.Height = s_3DRenderData.SkyBoxTexture->GetHeight();
+        settings.TextureFormat = s_3DRenderData.SkyBoxTexture->GetFormat();
+        settings.MipLevels = 5;
+
+        TextureParams params{};
+        params.MinFilter = OIL_TEXTURE_FILTER_LINEAR | OIL_TEXTURE_MIPFILTER_LINEAR;
+        params.MagFilter = OIL_TEXTURE_FILTER_LINEAR;
+
+        s_3DRenderData.PreFilteredEnvironmentMap = TextureCube::Create(settings, params);
+        s_3DRenderData.SkyBoxTexture->Bind();
+
+        s_3DRenderData.ActiveShader->SetFloat("u_EnvironmentMap", 0);
+        s_3DRenderData.ActiveShader->SetFloat("u_EnvironmentResolution", s_3DRenderData.SkyBoxTexture->GetWidth());
+        uint32_t maxMipLevels = s_3DRenderData.PreFilteredEnvironmentMap->GetMipLevels();
+        float roughness;
+        for (uint32_t mip = 0; mip < maxMipLevels; ++mip){
+            roughness = (float)mip / (float)(maxMipLevels -1);
+            s_3DRenderData.ActiveShader->SetFloat("u_Roughness", roughness);
+            utils::RenderActiveShaderToCubemap(s_3DRenderData.PreFilteredEnvironmentMap, mip);
         }
-        RenderCommand::EnableDepthTesting();
-
     }
 
     void Renderer3D::RenderEnvironment()
@@ -605,9 +680,12 @@ namespace oil{
         s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("SkyLight");
         s_3DRenderData.ActiveShader->Bind();
         s_3DRenderData.ActiveShader->SetFloat3("u_CamPos", s_3DRenderData.CamPosition);
-        s_3DRenderData.SkyBoxTexture->Bind(10);
-        s_3DRenderData.ActiveShader->SetInt("u_DiffuseIrradiance", 10); 
+        s_3DRenderData.PreFilteredEnvironmentMap->Bind(10);
         s_3DRenderData.ActiveShader->SetInt("u_SpecularIrradiance", 10);
+        s_3DRenderData.DiffuseIrradianceMap->Bind(11);
+        s_3DRenderData.ActiveShader->SetInt("u_DiffuseIrradiance", 11); 
+        s_3DRenderData.BRDFIntegrationMap->Bind(12);
+        s_3DRenderData.ActiveShader->SetInt("u_BRDFlut", 12); 
 
         
         s_3DRenderData.QuadVertexArray->Bind();
@@ -656,4 +734,75 @@ namespace oil{
         RenderEnvironment();
         //RenderUnlitMeshes();
     }
+}
+
+void oil::utils::RenderActiveShaderToTexture(Ref<Texture2D> targetTexture, uint32_t miplevel)
+{
+    RenderCommand::DisableDepthTesting();
+    
+    RBuffers.WildcardBuffer->WrapTargetTexture(targetTexture);
+    RBuffers.WildcardBuffer->Bind();
+    RBuffers.WildcardBuffer->SetAttachmentTargetLayer(0, 0, miplevel);
+
+    s_3DRenderData.ActiveShader->Bind();
+    s_3DRenderData.QuadVertexArray->Bind();
+    RenderCommand::Clear();
+
+    RenderCommand::DrawIndexed(s_3DRenderData.QuadVertexArray, 6);
+
+    RenderCommand::EnableDepthTesting();
+}
+
+void oil::utils::RenderActiveShaderToCubemap(Ref<TextureCube> targetTexture, uint32_t miplevel)
+{
+    RenderCommand::DisableDepthTesting();
+    RBuffers.WildcardBuffer->WrapTargetTexture(targetTexture, miplevel);
+    RBuffers.WildcardBuffer->Bind();
+
+    //projection and views
+    glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    glm::mat4 captureViews[] = {
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+    };
+
+    s_3DRenderData.ActiveShader->Bind();
+    s_3DRenderData.ActiveShader->SetMat4("u_Projection", captureProjection);
+
+    s_3DRenderData.CubeVertexArray->Bind();
+        for (int i = 0; i < 6; ++i){
+            s_3DRenderData.ActiveShader->SetMat4("u_View", captureViews[i]);
+            RBuffers.WildcardBuffer->SetAttachmentTargetLayer(0, i, miplevel);
+
+            RenderCommand::Clear();
+
+            RenderCommand::DrawIndexed(s_3DRenderData.CubeVertexArray, 36);
+    }
+    RenderCommand::EnableDepthTesting();
+}
+
+void oil::utils::SetDebugTexture(Ref<Texture2D> targetTexture)
+{
+    s_3DRenderData.DebugTexture->Resize(targetTexture->GetWidth(), targetTexture->GetHeight());
+
+    s_3DRenderData.ActiveShader = s_3DRenderData.ShaderLib->Get("TexDisplayShader");
+    s_3DRenderData.ActiveShader->Bind();
+    switch (targetTexture->GetFormat() & 0xffff0000){
+        case 0x00010000: s_3DRenderData.ActiveShader->SetInt("u_InputComponents", 1);
+            break;
+        case 0x00020000: s_3DRenderData.ActiveShader->SetInt("u_InputComponents", 2);
+            break;
+        case 0x00030000: s_3DRenderData.ActiveShader->SetInt("u_InputComponents", 3);
+            break;
+        case 0x00040000: s_3DRenderData.ActiveShader->SetInt("u_InputComponents", 4);
+            break;
+    }
+    targetTexture->Bind(0);
+    s_3DRenderData.ActiveShader->SetInt("u_InputTexture", 0);
+
+    RenderActiveShaderToTexture(s_3DRenderData.DebugTexture);
 }

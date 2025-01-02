@@ -271,6 +271,12 @@ void EditorLayer::OnImGuiRender()
                 if(ImGui::MenuItem("Texture Coordinates")) {
                     m_ViewportDisplayRendererID = Renderer3D::GetBufferID("Texcoords");
                 }
+                if(ImGui::MenuItem("Metallic")) {
+                    m_ViewportDisplayRendererID = Renderer3D::GetBufferID("Metallic");
+                }
+                if(ImGui::MenuItem("Roughness")) {
+                    m_ViewportDisplayRendererID = Renderer3D::GetBufferID("Roughness");
+                }
                 ImGui::EndMenu();
             }
 
@@ -284,7 +290,13 @@ void EditorLayer::OnImGuiRender()
 
     UI_Toolbar();
 
+    //Engine texture debugging
+    ImGui::Begin("TextureDebug");
+    ImGui::Image((void*)Renderer3D::GetDebugTexture(), ImVec2{512, 512}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
     ImGui::End();
+    
+    ImGui::End();
+
     m_SceneHierarchyPanel.OnImGuiRender();
     m_ContentBrowserPanel.OnImGuiRender();
     }

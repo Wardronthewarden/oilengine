@@ -1,3 +1,7 @@
+10151889282340974246:
+  - 1397245010
+  - Internal\Assets/Shaders\TexDisplayShader.oil
+  - Internal\Assets/src\Shaders\TexDisplayShader.glsl
 7802733880088537660:
   - 1397245010
   - Internal\Assets/Shaders\SkyBoxShader.oil
@@ -18,6 +22,10 @@
   - 1413830706
   - Internal\Assets/Textures\SimulateButton.oil
   - Internal\Assets/src\Textures\SimulateButton.png
+9324495369708253647:
+  - 1413830706
+  - Internal\Assets/Textures\StepButton.oil
+  - Internal\Assets/src\Textures\StepButton.png
 16996166409656902962:
   - 5062996
   - Assets\Shaders\materials\test.oil
@@ -26,10 +34,6 @@
   - 1397245010
   - Assets\Shaders\testSh.oil
   - Assets\.shaderSources\testSh.glsl
-9324495369708253647:
-  - 1413830706
-  - Internal\Assets/Textures\StepButton.oil
-  - Internal\Assets/src\Textures\StepButton.png
 17787947900419123578:
   - 1413830706
   - Internal\Assets/Textures\PlayButton.oil
@@ -114,3 +118,19 @@
   - 1397245010
   - Internal\Assets/Shaders\TestPassthroughShader.oil
   - Internal\Assets/src\Shaders\TestPassthroughShader.glsl
+12234469046633786888:
+  - 1397245010
+  - Internal\Assets/Shaders\EnvironmentPrefilter.oil
+  - Internal\Assets/src\Shaders\EnvironmentPrefilter.glsl
+3351345012424505001:
+  - 1397245010
+  - Internal\Assets/Shaders\CubemapConvolution.oil
+  - Internal\Assets/src\Shaders\CubemapConvolution.glsl
+4530336344684254542:
+  - 1397245010
+  - Internal\Assets/Shaders\BRDFIntegration.oil
+  - Internal\Assets/src\Shaders\BRDFIntegration.glsl
+16019592686463991528:
+  - 1396919877
+  - Assets\Scenes\spheres.oil
+  - ""

@@ -80,9 +80,9 @@ layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_Position;
 layout(location = 2) out vec4 o_Normal;
 layout(location = 3) out vec4 o_TexCoord;
-layout(location = 4) out float o_Metallic;
-layout(location = 5) out float o_Roughness;
-layout(location = 6) out float o_AO;
+layout(location = 4) out vec4 o_Metallic;
+layout(location = 5) out vec4 o_Roughness;
+layout(location = 6) out vec4 o_AO;
 layout(location = 7) out int o_EntityID;
 
 in f_Data{
@@ -100,9 +100,9 @@ void main(){
     o_Position = frag.Position;
     o_Normal = vec4(frag.Normal, 1.0);
     o_TexCoord = vec4(frag.TexCoord, 0.0, 1.0);
-    o_Metallic = u_Metallic;
-    o_Roughness = u_Roughness;
-    o_AO = 1.0;
+    o_Metallic = vec4(u_Metallic, 0.0, 0.0, 1.0);
+    o_Roughness = vec4(u_Roughness, 0.0, 0.0, 1.0);
+    o_AO = vec4(1.0, 1.0, 1.0, 1.0);
     
     o_EntityID = frag.EntityID;
 }

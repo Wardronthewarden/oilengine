@@ -386,6 +386,9 @@ namespace oil{
         uint32_t bpc = 0;
         std::string name = src.filename().stem().string();
 
+        TextureSettings settings{};
+        TextureParams params{};
+
         if(src.extension().string() == ".hdr"){
             meta |= 0x00000012;
             OIL_CORE_INFO("Importing hdr...");
@@ -393,8 +396,13 @@ namespace oil{
             OIL_CORE_INFO("hdr Imported!");
             bpc = 4;
             OIL_CORE_ASSERT(data, "Failed to load hdr image!");
-            TextureFormat form = (TextureFormat)((channels << 16) | meta);
-            Ref<Texture2D> tex = Texture2D::Create(width, height, form);
+
+            settings.StorageType    = OIL_TEXTURE_2D | OIL_TEXTURE_STORAGE_MUTABLE;
+            settings.Width          = width;
+            settings.Height         = height;
+            settings.TextureFormat  = ((channels << 16) | meta);
+
+            Ref<Texture2D> tex = Texture2D::Create(settings, params);
             tex->SetData(data, width*height*channels*bpc);
             return EditorAssetManager::CreateAsset<Texture2D>(name, tex, dest, src);
         }else{
@@ -402,8 +410,13 @@ namespace oil{
             stbi_uc* data = stbi_load(src.string().c_str(), &width, &height, &channels, 0);
             bpc = 1;
             OIL_CORE_ASSERT(data, "Failed to load image!");
-            TextureFormat form = (TextureFormat)((channels << 16) | meta);
-            Ref<Texture2D> tex = Texture2D::Create(width, height, form);
+            
+            settings.StorageType    = OIL_TEXTURE_2D | OIL_TEXTURE_STORAGE_MUTABLE;
+            settings.Width          = width;
+            settings.Height         = height;
+            settings.TextureFormat  = ((channels << 16) | meta);
+
+            Ref<Texture2D> tex = Texture2D::Create(settings, params);
             tex->SetData(data, width*height*channels*bpc);
             return EditorAssetManager::CreateAsset<Texture2D>(name, tex, dest, src);
         }

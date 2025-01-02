@@ -16,6 +16,13 @@ namespace oil{
     struct RenderBuffers;
     class Material;
 
+    namespace utils{
+        //OFFLINE RENDERING ONLY
+        static void RenderActiveShaderToTexture(Ref<Texture2D> targetTexture, uint32_t miplevel = 0);
+        static void RenderActiveShaderToCubemap(Ref<TextureCube> targetTexture, uint32_t miplevel = 0);
+        static void SetDebugTexture(Ref<Texture2D> targetTexture);
+    }
+
     class Renderer3D{
         public:
             static void Init();
@@ -30,6 +37,7 @@ namespace oil{
             static uint32_t GetDepthBufferID();
             static uint32_t GetFrameBufferID();
             static uint32_t GetBufferID(std::string bufferName);
+            static uint32_t GetDebugTexture();
 
             //Sprites
             static void DrawSprite();
@@ -53,8 +61,11 @@ namespace oil{
 
 
             //Environment
-            static void CubemapFromHDRI(Ref<Texture2D> hdri);
+            static Ref<TextureCube> CubemapFromHDRI(Ref<Texture2D> hdri);
+            static void CubemapFromHDRI(Ref<Texture2D> hdri, Ref<TextureCube> targetTexture);
             static void GenerateDiffuseIrradiance();
+            static void GenerateBRDFIntegrationMap();
+            static void PreFilterEnvironmentMap();
             static void RenderEnvironment();
             static void RenderIBL();
 
@@ -63,12 +74,10 @@ namespace oil{
             static void RenderLitMeshes();
             static void RenderUnlitMeshes();
 
-            //Render targets
-            static void SetRenderTarget(Ref<Texture2D> targetTexture);
-
             //Batching
             static void RenderBatch(const Ref<Material> material, const Ref<Render3DBatch> batch);
 
+            //utils
             
             //-----------------------------------------------------------------------------------------
             //we will try to create a new approach, building architectural blocks first
@@ -106,27 +115,32 @@ namespace oil{
     struct RenderBuffers{
         Ref<FrameBuffer> FBuffer;
         Ref<FrameBuffer> GBuffer;
+        Ref<FrameBuffer> WildcardBuffer;
 
         void Init(){
             //Initialize GBuffer
             FrameBufferSpecification fbSpec;
-            fbSpec.Attachments = {  TextureFormat::RGBA16F,         //albedo
-                                    TextureFormat::RGBA16F,         //position
-                                    TextureFormat::RGBA16F,         //normal
-                                    TextureFormat::RGBA16F,         //texcoord
-                                    TextureFormat::RED16F,          //metallic
-                                    TextureFormat::RED16F,          //roughness
-                                    TextureFormat::RED16F,          //AO
-                                    TextureFormat::RED16,           //entity ID
-                                    TextureFormat::DEPTH24STENCIL8  
+            fbSpec.Attachments = {  OIL_TEXTURE_FORMAT_RGBA16F,         //albedo
+                                    OIL_TEXTURE_FORMAT_RGBA16F,         //position
+                                    OIL_TEXTURE_FORMAT_RGBA16F,         //normal
+                                    OIL_TEXTURE_FORMAT_RGBA16F,         //texcoord
+                                    OIL_TEXTURE_FORMAT_RED16F,          //metallic
+                                    OIL_TEXTURE_FORMAT_RED16F,          //roughness
+                                    OIL_TEXTURE_FORMAT_RED16F,          //AO
+                                    OIL_TEXTURE_FORMAT_RED16,           //entity ID
+                                    OIL_TEXTURE_FORMAT_DEPTH24STENCIL8  
                                 };
             fbSpec.Width = 1280;
             fbSpec.Height = 720;
             GBuffer = FrameBuffer::Create(fbSpec);
             
             //Initialize FrameBuffer
-            fbSpec.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
+            fbSpec.Attachments = { OIL_TEXTURE_FORMAT_RGBA8, OIL_TEXTURE_FORMAT_DEPTH24STENCIL8 };
             FBuffer = FrameBuffer::Create(fbSpec);
+
+            //Initialize wildcard buffer
+            fbSpec.Attachments = { OIL_TEXTURE_FORMAT_RGBA8 };
+            WildcardBuffer = FrameBuffer::Create(fbSpec);
         }
 
         void Resize(uint32_t width, uint32_t height){

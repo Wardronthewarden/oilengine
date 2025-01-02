@@ -144,7 +144,7 @@ namespace oil{
             //3D Rendering
             Renderer3D::BeginScene(camera);
 
-            //Submit meshes for rendering
+            //Submit models for rendering
             auto models = m_Registry.view<TransformComponent, ModelComponent>();
             for (auto entity : models){
                 auto [transform, model] = models.get<TransformComponent, ModelComponent>(entity);
@@ -154,6 +154,15 @@ namespace oil{
                     //Renderer3D::DrawMesh(transform.GetTransform(), mesh, (uint32_t)entity);
                     Renderer3D::SubmitMesh(transform.GetTransform(), mesh, model.Materials[mesh->GetMaterialIndex()], (uint32_t)entity);
                 }
+            }
+            //Submit meshes for rendering
+            auto meshes = m_Registry.view<TransformComponent, MeshComponent>();
+            for (auto entity : meshes){
+                auto [transform, mesh] = meshes.get<TransformComponent, MeshComponent>(entity);
+                if(!mesh.mesh)
+                    continue;
+                else
+                    Renderer3D::SubmitMesh(transform.GetTransform(), mesh.mesh, mesh.material, (uint32_t)entity);
             }
 
             Renderer3D::EndScene();

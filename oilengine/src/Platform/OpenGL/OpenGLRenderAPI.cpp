@@ -26,7 +26,21 @@ namespace oil{
     void OpenGLRenderAPI::DrawIndexed(const oil::Ref<VertexArray> &vertexArray, uint32_t indexCount)
     {
         uint32_t count = indexCount ?  indexCount : vertexArray->GetIndexBuffer()->GetCount();
-        glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+
+        OILVertenum drawMode = vertexArray->GetDrawMode();
+
+        switch(drawMode){
+            case OIL_VERT_POINTS: glDrawElements(GL_POINTS, count, GL_UNSIGNED_INT, nullptr);
+                break;
+            case OIL_VERT_TRIANGLES: glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+                break;
+            case OIL_VERT_TRIANGLE_STRIP: glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_INT, nullptr);
+                break;
+            default:
+                OIL_CORE_ASSERT(false, "Invalid draw mode passed to DrawIndexed");
+        }
+
+        
     }
     void OpenGLRenderAPI::SetDepthWriteEnabled(bool enabled)
     {

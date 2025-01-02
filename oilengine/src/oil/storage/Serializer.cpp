@@ -202,20 +202,6 @@
         }
     };
 
-    template<>
-    struct convert<oil::TextureFormat>{
-        static Node encode(const oil::TextureFormat& rhs){
-            Node node;
-            node = (uint32_t)rhs;
-            return node;
-        }
-
-        static bool decode(const Node& node, oil::TextureFormat& rhs){
-            rhs = (oil::TextureFormat)node.as<uint32_t>();
-            return true;
-        }
-    };
-
     //Data structures
     template<>
     struct convert<oil::AssetMetadata>{
@@ -642,16 +628,17 @@ namespace oil{
     Ref<Texture2D> Serializer::DeserializeAssetYAML<Texture2D>(YAML::Node file)
     {
         //Image metadata chunk
-        uint32_t width, height;
-        TextureFormat format;
-        width = file["Body"]["Width"].as<uint32_t>();
-        height = file["Body"]["Height"].as<uint32_t>();
-        format = file["Body"]["Format"].as<TextureFormat>();
+        TextureSettings settings{};
 
-        Ref<Texture2D> texture = Texture2D::Create(width, height, format);
+        settings.StorageType    = OIL_TEXTURE_2D | OIL_TEXTURE_STORAGE_MUTABLE;
+        settings.Width          = file["Body"]["Width"].as<uint32_t>();
+        settings.Height         = file["Body"]["Height"].as<uint32_t>();
+        settings.TextureFormat  = file["Body"]["Format"].as<uint32_t>();
+
+        TextureParams params{};
+
+        Ref<Texture2D> texture = Texture2D::Create(settings, params);
      
-        texture->ResetMetadata(width, height, format);
-
         //Image data chunk
 
         YAML::Binary bin = file["Buffers"]["Data"].as<YAML::Binary>();

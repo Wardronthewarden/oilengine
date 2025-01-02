@@ -26,10 +26,13 @@ namespace oil{
 
         virtual void BindDepthAttachment() override;
 
-        virtual void SetColorAttachment(Ref<Texture> tgt, uint32_t slotIndex) override;
+        virtual void SetColorAttachmentFormat(OILTexenum format, uint32_t attachmentIndex) override;
+
+        virtual void WrapTargetTexture(Ref<Texture> tgt, uint32_t miplevel) override;
+
+        virtual void SetColorAttachment(Ref<Texture> tgt, uint32_t attachmentIndex) override;
         virtual void SetDepthAttachment(Ref<Texture> tgt) override;
-        virtual void SetAttachmentTextureTarget(TextureTarget target, uint32_t attachmentIndex) override;
-        virtual void SetAttachmentTextureTargetLayer(uint32_t attachmentIndex, uint32_t layerDepthIndex) override;
+        virtual void SetAttachmentTargetLayer(uint32_t attachmentIndex, uint32_t layerDepthIndex, uint32_t miplevel) override;
 
         virtual const FrameBufferSpecification& GetSpecification() const override { return m_Specification; }
         virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const override { OIL_CORE_ASSERT(index < m_ColorAttachments.size(), "The maximum color attachments possible are 6"); return m_ColorAttachments[index]->GetRendererID(); }
@@ -40,7 +43,7 @@ namespace oil{
         FrameBufferSpecification m_Specification;
 
         std::vector<FrameBufferTextureSpecification> m_ColorAttachmentSpecs;
-        FrameBufferTextureSpecification m_DepthAttachmentSpec = TextureFormat::None;
+        FrameBufferTextureSpecification m_DepthAttachmentSpec = 0;
 
         std::vector<Ref<Texture>> m_ColorAttachments;
         Ref<Texture> m_DepthAttachment;
